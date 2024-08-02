@@ -34,7 +34,18 @@ const CLIENT_URL = process.env.CLIENT_URL;
 app.use(express.static("client/build"));
 
 // Define las rutas que deseas que sean manejadas por React Router
-const reactRouterRoutes = [];
+const reactRouterRoutes = [
+  "/",
+  "/signin",
+  "/categorias",
+  "/categorias/:name",
+  "/carrito",
+  "/checkout",
+  "/order-confirmation",
+  "/admin",
+  "/orders",
+  "/orders/:id"
+];
 
 // Middleware para las rutas manejadas por React Router
 const reactRouterMiddleware = (req, res, next) => {
