@@ -46,6 +46,7 @@ const reactRouterRoutes = [
   "/orders/:id"
 ];
 
+console.log('started');
 // Middleware para las rutas manejadas por React Router
 const reactRouterMiddleware = (req, res, next) => {
   if (reactRouterRoutes.includes(req.url)) {
