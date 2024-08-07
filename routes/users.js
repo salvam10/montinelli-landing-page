@@ -4,7 +4,7 @@ const postgresDB = require("../db/postgres");
 
 /*La función bcrypt es utilizada para crear un hash único a partir de una contraseña o cualquier otro 
 tipo de información sensible, para guardar la información de manera segura en una base de datos o almacenamiento externo. */
-const bcrypt = require("bcrypt");
+//const bcrypt = require("bcrypt");
 
 //Obtener todos los usuarios
 router.get("/", async (req, res, next) => {
@@ -45,7 +45,7 @@ router.post("/signup", async (req, res, next) => {
   try {
     const { id, username, firstname, lastname, phone, role, secret_password } =
       req.body;
-    const hashedPassword = await bcrypt.hash(secret_password, 10);
+    const hashedPassword = secret_password; //await bcrypt.hash(secret_password, 10);
     const { rows } = await postgresDB.query(
       `INSERT INTO users(id,username, firstname, lastname, phone, role, secret_password) VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
       [id, username, firstname, lastname, phone, role, hashedPassword]
