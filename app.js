@@ -32,7 +32,7 @@ const CLIENT_URL = process.env.CLIENT_URL;
 
 /* React como motor de vistas */
 app.use(express.static("client/build"));
-
+console.log('hola');
 // Define las rutas que deseas que sean manejadas por React Router
 const reactRouterRoutes = [
   "/",
