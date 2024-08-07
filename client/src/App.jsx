@@ -49,11 +49,12 @@ const App = () => {
   }, [redux_user]);
 
   return (
-    <AuthContext.Provider value={contextValues}>
+    <div className="">Holaaa</div>
+   /*  <AuthContext.Provider value={contextValues}>
       <BrowserRouter>
         <Routes>
           <Route element={<AuthLayout />}>
-            {/* <Route path="/signup" element={<SignupPage />} /> */}
+            }
             <Route path="/signin" element={<LoginPage />} />
           </Route>
           <Route element={<ProtectedLayout />}>
@@ -72,7 +73,7 @@ const App = () => {
           </Route>
         </Routes>
       </BrowserRouter>
-    </AuthContext.Provider>
+    </AuthContext.Provider> */
   );
 };
 
