@@ -81,6 +81,7 @@ app.use(
     credentials: true,
   })
 );
+console.log('this is my client url', CLIENT_URL);
 
 app.use("/api/product-variation-attributes", productVariationAttsRouter);
 app.use("/api/product-variations", productVariationsRouter);

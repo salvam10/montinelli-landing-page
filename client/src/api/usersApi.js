@@ -35,6 +35,7 @@ export const fetchAddUser = async (
 };
 
 export const fetchAuthLocalUser = async (username, password) => {
+  console.log('this is my SERVER_URL in the frontend', SERVER_URL);
   try {
     const response = await fetch(`${SERVER_URL}/api/auth/local`, {
       method: "POST",
