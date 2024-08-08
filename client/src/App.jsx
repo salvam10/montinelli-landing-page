@@ -27,6 +27,7 @@ import Order from "./features/order/Order";
 /* Css */
 import "./App.css";
 
+
 export const AuthContext = React.createContext();
 
 const App = () => {
@@ -48,24 +49,30 @@ const App = () => {
   }, [redux_user]);
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Trial />} />
-        <Route path="/signin" element={<Hey />} />
-      </Routes>
-    </BrowserRouter>
+    <AuthContext.Provider value={contextValues}>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<AuthLayout />}>
+            <Route path="/signin" element={<LoginPage />} />
+          </Route>
+          <Route element={<ProtectedLayout />}>
+            <Route path="/" element={<HomePage />} />
+            <Route element={<SellerLayout />}>
+              <Route path="categorias" element={<CategoriesPage />} />
+              <Route path="categorias/:name" element={<Category />} />
+              <Route path="carrito" element={<CartPage />} />
+              <Route path="checkout" element={<CheckoutPage />} />
+              <Route path="order-confirmation" element={<SuccesfullPage />} />
+            </Route>
+          </Route>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route path="orders" element={<OrdersPage />} />
+            <Route path="orders/:id" element={<Order/>} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthContext.Provider>
   );
 };
 
-const Trial = () => {
-  return (<div className="font-bold">HOLA MUNDOOOOO</div>)
-}
-
-
-const Hey = () => {
-  return <div className="font-bold">Hello motoooo</div>;
-};
-
-
 export default App;
-/*  */
