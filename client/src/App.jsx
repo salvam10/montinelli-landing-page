@@ -49,7 +49,12 @@ const App = () => {
   }, [redux_user]);
 
   return (
-    <AuthContext.Provider value={contextValues}>
+  <div className="font-bold">HOLA MUNDO</div>
+  );
+};
+
+export default App;
+  /* <AuthContext.Provider value={contextValues}>
       <BrowserRouter>
         <Routes>
           <Route element={<AuthLayout />}>
@@ -71,8 +76,4 @@ const App = () => {
           </Route>
         </Routes>
       </BrowserRouter>
-    </AuthContext.Provider>
-  );
-};
-
-export default App;
+    </AuthContext.Provider> */

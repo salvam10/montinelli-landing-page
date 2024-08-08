@@ -35,8 +35,6 @@ const LoginPage = () => {
     }
   }, [user]);
 
-  console.log('Spinner', Spinner);
-
   //Si no se valido correctamente el usuario, entonces isLoading=false
   useEffect(() => {
     if (!isValidUser) {

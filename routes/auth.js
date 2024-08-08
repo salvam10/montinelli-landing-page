@@ -2,7 +2,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 var express = require("express");
 var passport = require("passport");
-//const bcrypt = require("bcrypt");
+const bcrypt = require("bcrypt");
 
 var postgresDB = require("../db/postgres");
 var router = express.Router();
