@@ -34,7 +34,7 @@ const CLIENT_URL = process.env.CLIENT_URL;
 app.use(express.static("client/build"));
 // Define las rutas que deseas que sean manejadas por React Router
 
-/* const reactRouterRoutes = [
+const reactRouterRoutes = [
   "/",
   "/signin",
   "/categorias",
@@ -43,9 +43,8 @@ app.use(express.static("client/build"));
   "/order-confirmation",
   "/admin",
   "/admin/orders"
-]; */
+];
 
-/* console.log('ddd');
 // Middleware para las rutas manejadas por React Router
 const reactRouterMiddleware = (req, res, next) => {
   if (reactRouterRoutes.includes(req.url)) {
@@ -55,10 +54,10 @@ const reactRouterMiddleware = (req, res, next) => {
     // Si la ruta no está en reactRouterRoutes, continúa con el siguiente middleware
     next();
   }
-}; */
+};
 
 // Aplica el middleware para las rutas manejadas por React Router
-//app.use(reactRouterMiddleware);
+app.use(reactRouterMiddleware);
 
 app.use(express.json({ limit: "25mb" }));
 app.use(express.urlencoded({ extended: true, limit: "25mb" }));

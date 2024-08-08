@@ -27,7 +27,6 @@ import Order from "./features/order/Order";
 /* Css */
 import "./App.css";
 
-
 export const AuthContext = React.createContext();
 
 const App = () => {
@@ -49,12 +48,20 @@ const App = () => {
   }, [redux_user]);
 
   return (
-  <div className="font-bold">HOLA MUNDO</div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Trial />} />
+      </Routes>
+    </BrowserRouter>
   );
 };
 
+const Trial = () => {
+  return (<div className="font-bold">HOLA MUNDOOOOO</div>)
+}
+
 export default App;
-  /* <AuthContext.Provider value={contextValues}>
+/* <AuthContext.Provider value={contextValues}>
       <BrowserRouter>
         <Routes>
           <Route element={<AuthLayout />}>
