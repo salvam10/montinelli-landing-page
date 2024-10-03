@@ -43,8 +43,6 @@ router.get("/category/:categoryId", async (req, res) => {
   }
 });
 
-
-
 /* agregar un nuevo producto */
 router.post("/", async (req, res, next) => {
   const {
@@ -55,6 +53,7 @@ router.post("/", async (req, res, next) => {
     media_url,
     brand_id,
     category_id,
+    profit_code,
   } = req.body;
 
   let insertQuery = "INSERT INTO products(";
@@ -105,6 +104,12 @@ router.post("/", async (req, res, next) => {
     insertValues.push(category_id);
     count++;
   }
+  if (profit_code !== undefined) {
+    insertQuery += "profit_code, ";
+    valueQuery += `$${count}, `;
+    insertValues.push(profit_code);
+    count++;
+  }
 
   // Eliminar la coma adicional al final y cerrar las consultas
   insertQuery = insertQuery.slice(0, -2) + ") ";
@@ -138,7 +143,16 @@ router.delete("/:id", async (req, res) => {
 //actualizar a un producto
 router.put("/:id", async (req, res, next) => {
   const { id } = req.params;
-  const { name, description, base_price, stock, media_url, brand_id, category_id } = req.body;
+  const {
+    name,
+    description,
+    base_price,
+    stock,
+    media_url,
+    brand_id,
+    category_id,
+    profit_code,
+  } = req.body;
 
   let updateQuery = "UPDATE products SET ";
   let updateValues = [];
@@ -170,17 +184,21 @@ router.put("/:id", async (req, res, next) => {
     updateValues.push(media_url);
     count++;
   }
-   if (brand_id !== undefined) {
-     updateQuery += `brand_id = $${count}, `;
-     updateValues.push(brand_id);
-     count++;
-   }
-   if (category_id !== undefined) {
-     updateQuery += `category_id = $${count}, `;
-     updateValues.push(category_id);
-     count++;
-   }
-
+  if (brand_id !== undefined) {
+    updateQuery += `brand_id = $${count}, `;
+    updateValues.push(brand_id);
+    count++;
+  }
+  if (category_id !== undefined) {
+    updateQuery += `category_id = $${count}, `;
+    updateValues.push(category_id);
+    count++;
+  }
+ if (profit_code !== undefined) {
+   updateQuery += `profit_code = $${count}, `;
+   updateValues.push(profit_code);
+   count++;
+ }
   // Eliminar la coma adicional al final y agregar la condición WHERE
   updateQuery = updateQuery.slice(0, -2); // Eliminar la coma y el espacio al final
   updateQuery += ` WHERE id = $${count} RETURNING *`;

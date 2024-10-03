@@ -28,9 +28,11 @@ const Order = () => {
 
   return (
     <div className="page-container md:flex-col overflow-auto bg-transparent">
-      <OrderProductsDetails orderProducts={orderProducts} />
-      <OrderBillingDetails order={order} />
-      <OrderClientDetails orderClient={orderClient} />
+      <div className="xs:w-full md:w-[50%] flex-center flex-col gap-5">
+        <OrderProductsDetails orderProducts={orderProducts} />
+        <OrderBillingDetails order={order} />
+        <OrderClientDetails orderClient={orderClient} />
+      </div>
     </div>
   );
 };

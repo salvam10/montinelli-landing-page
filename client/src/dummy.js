@@ -133,6 +133,10 @@ export const paymentOptions = [
     value: "transferencia",
     label: "transferencia",
   },
+  {
+    value: "crédito",
+    label: "credito",
+  },
 ];
 
 

@@ -52,7 +52,7 @@ const CheckoutPage = () => {
         shipping_status: "pendiente",
         subtotal: cartSubtotal,
         total:cartSubtotal + shippingCost,
-        payment_method: paymentMethod,
+        payment_method: "credito",
         client_id: client.rif,
         productsInCart: productsInCart,
       })
@@ -80,12 +80,12 @@ const CheckoutPage = () => {
             title="Clientes"
           />
         )}
-        <RadioInputSection
+       {/*  <RadioInputSection
           setCheckedOption={setPaymentMethod}
           checkedOption={paymentMethod}
           options={paymentOptions}
           title="Método de Pago"
-        />
+        /> */}
       </div>
       <div className="xs:w-full md:w-[30%] md:h-[50%] py-10">
         <OrderSummary

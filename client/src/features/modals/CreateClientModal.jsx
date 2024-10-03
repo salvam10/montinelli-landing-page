@@ -12,14 +12,14 @@ const CreateClientModal = ({ setOpenModal }) => {
   /* local states */
   const [legalRepresentative, setLegalRepresentative] = useState("");
   const [streetAddress, setStreetAddress] = useState("");
-  const [municipality, setMunicipality] = useState("");
+  const [municipality, setMunicipality] = useState(municipalities[0].value);
   const [mobilePhone, setMobilePhone] = useState("");
-  const [mobileCode, setmobileCode] = useState("");
+  const [mobileCode, setmobileCode] = useState(phoneAreaCodes[0].value);
   const [localPhone, setLocalPhone] = useState("");
-  const [localCode, setLocalCode] = useState("");
-  const [state, setState] = useState("");
+  const [localCode, setLocalCode] = useState("212");
+  const [state, setState] = useState(states[0].value);
   const [name, setName] = useState("");
-  const [city, setCity] = useState("");
+  const [city, setCity] = useState(cities[0].value);
   const [rif, setRif] = useState("");
 
   const dispatch = useDispatch();
@@ -43,6 +43,7 @@ const CreateClientModal = ({ setOpenModal }) => {
         state: state.toLowerCase(),
       })
     );
+    setOpenModal(false);
   };
 
   return (
@@ -106,7 +107,7 @@ const CreateClientModal = ({ setOpenModal }) => {
           />
           <div className="flex gap-2">
             <CustomSelect
-              options={["212"]}
+              options={[{ label: "212", value: "212" }]}
               label="Código"
               width="w-[30%]"
               value={localCode}
@@ -139,10 +140,7 @@ const CreateClientModal = ({ setOpenModal }) => {
           <div className="w-full flex-center">
             <CustomFormButton handleClickFunction={handleSubmitClick} />
           </div>
-          <button
-            className="modal-close-button"
-            onClick={handleCloseClick}
-          >
+          <button className="modal-close-button" onClick={handleCloseClick}>
             <CloseIcon />
           </button>
         </div>

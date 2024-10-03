@@ -16,22 +16,22 @@ const ExistingClientModal = ({ setOpenModal }) => {
     dispatch(getClients());
   }, []);
 
- useEffect(() => {
-   if (clients) {
-     const formattedClients = clients
-       .filter((client) => typeof client.name === "string")
-       .map((client) => {
-         const name = client.name.toLowerCase();
-         const formattedName = name.charAt(0).toUpperCase() + name.slice(1);
-         return {
-           label: formattedName,
-           value: client.rif,
-         };
-       });
-
-     setOptions(formattedClients);
-   }
- }, [clients]);
+  useEffect(() => {
+    if (clients) {
+      const formattedClients = clients
+        .filter((client) => typeof client.name === "string")
+        .map((client) => {
+          const name = client.name.toLowerCase();
+          const formattedName = name.charAt(0).toUpperCase() + name.slice(1);
+          return {
+            label: formattedName,
+            value: client.rif,
+          };
+        });
+      setSelectedRif(formattedClients[0]?.value);
+      setOptions(formattedClients);
+    }
+  }, [clients]);
 
   const handleCloseClick = () => {
     setOpenModal(false);

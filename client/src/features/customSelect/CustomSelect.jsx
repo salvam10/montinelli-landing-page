@@ -2,7 +2,6 @@ import React from "react";
 
 const CustomSelect = ({value, setValue, options, label, width }) => {
 
-
   const handleChange = (event) => {
     setValue(event.target.value);
   };

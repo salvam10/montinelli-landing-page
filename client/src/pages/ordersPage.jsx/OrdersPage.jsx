@@ -38,7 +38,7 @@ const columns = [
     headerName: "Total $",
     width: 90,
     type: "number",
-    valueFormatter: (params) => `${params} $`,
+    valueFormatter: (params) => `$${parseFloat(params).toFixed(2)}`,
   },
   {
     field: "user_fullname",
@@ -47,8 +47,7 @@ const columns = [
     type: "string",
     valueFormatter: (params) => {
       return params;
-    }
-      
+    },
   },
 ];
 

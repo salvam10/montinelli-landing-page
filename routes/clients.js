@@ -40,9 +40,9 @@ router.post("/", async (req, res, next) => {
     city,
     municipality,
     state,
+    profit_code,
   } = req.body;
 
-  console.log('helloooo');
   let insertQuery = "INSERT INTO clients(";
   let valueQuery = "VALUES(";
   let insertValues = [];
@@ -103,6 +103,12 @@ router.post("/", async (req, res, next) => {
     insertValues.push(state);
     count++;
   }
+  if (profit_code !== undefined) {
+    insertQuery += "profit_code, ";
+    valueQuery += `$${count}, `;
+    insertValues.push(profit_code);
+    count++;
+  }
 
   // Eliminar la coma adicional al final y cerrar las consultas
   insertQuery = insertQuery.slice(0, -2) + ") ";
@@ -145,6 +151,7 @@ router.put("/:rif", async (req, res, next) => {
     city,
     municipality,
     state,
+    profit_code,
   } = req.body;
 
   let updateQuery = "UPDATE clients SET ";
@@ -192,13 +199,16 @@ router.put("/:rif", async (req, res, next) => {
     updateValues.push(state);
     count++;
   }
+  if (profit_code !== undefined) {
+    updateQuery += `profit_code = $${count}, `;
+    updateValues.push(profit_code);
+    count++;
+  }
 
   // Eliminar la coma adicional al final y agregar la condición WHERE
   updateQuery = updateQuery.slice(0, -2); // Eliminar la coma y el espacio al final
   updateQuery += ` WHERE rif = $${count} RETURNING *`;
   updateValues.push(rif);
-
-  console.log("query", updateQuery);
 
   try {
     // Ejecutar la consulta de actualización

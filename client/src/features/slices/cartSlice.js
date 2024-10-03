@@ -98,7 +98,7 @@ const cartSlice = createSlice({
         (product) =>
           (acum +=
             product.quantity *
-            (product.base_price * (1 + product.tax_percentage / 100)))
+            (product.base_price ))
       );
       state.cartSubtotal = acum.toFixed(2);
     },
