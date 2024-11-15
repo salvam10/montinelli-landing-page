@@ -98,7 +98,7 @@ app.use("/api/cart", cartsRouter);
 app.use("/api/auth", authRouter);
 
 app.get("/", async (req, res, next) => {
-  res.send("Welcome to GSM");
+  res.send("Welcome to GSM.");
 });
 
 app.listen(PORT, async () => {
