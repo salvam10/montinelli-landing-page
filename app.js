@@ -37,6 +37,7 @@ app.use(express.static("client/build"));
 const reactRouterRoutes = [
   "/",
   "/signin",
+  "/privacy-policy",
   "/categorias",
   "/carrito",
   "/checkout",

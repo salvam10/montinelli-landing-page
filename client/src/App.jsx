@@ -15,6 +15,7 @@ import OrdersPage from "./pages/ordersPage.jsx/OrdersPage";
 import CartPage from "./pages/CartPage.jsx/CartPage.jsx";
 import LoginPage from "./pages/LoginPage/LoginPage";
 import HomePage from "./pages/HomePage/HomePage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage/PrivacyPolicyPage.jsx";
 /* Layouts */
 import SellerLayout from "./features/layouts/sellerLayout/SellerLayout";
 import AdminLayout from "./features/layouts/adminLayout/AdminLayout";
@@ -54,6 +55,7 @@ const App = () => {
         <Routes>
           <Route element={<AuthLayout />}>
             <Route path="/signin" element={<LoginPage />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           </Route>
           <Route element={<ProtectedLayout />}>
             <Route path="/" element={<HomePage />} />
@@ -67,7 +69,7 @@ const App = () => {
           </Route>
           <Route path="/admin" element={<AdminLayout />}>
             <Route path="orders" element={<OrdersPage />} />
-            <Route path="orders/:id" element={<Order/>} />
+            <Route path="orders/:id" element={<Order />} />
           </Route>
         </Routes>
       </BrowserRouter>
