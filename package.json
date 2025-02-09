@@ -20,6 +20,7 @@
   },
   "homepage": "https://kontevo.herokuapp.com",
   "dependencies": {
+    "@google-cloud/storage": "^7.15.0",
     "axios": "^1.4.0",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",
