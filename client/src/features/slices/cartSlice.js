@@ -25,6 +25,7 @@ export const addProductToCart = createAsyncThunk(
   "cart/addProductToCart",
   async ({ user_id, product, quantity }, thunkAPI) => {
     try {
+      
       const response = await axios.post(
         `${SERVER_URL}/api/cart/${user_id}/items`,
         {

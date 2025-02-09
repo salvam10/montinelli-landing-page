@@ -31,7 +31,8 @@ export const getSingleClient = createAsyncThunk(
   }
 );
 
-/* crear un cliente */
+
+/* Crear un nuevo cliente */
 export const createClient = createAsyncThunk(
   "clients/createClient",
   async (
@@ -45,20 +46,12 @@ export const createClient = createAsyncThunk(
       city,
       municipality,
       state,
+      formData,
     },
     thunkAPI
   ) => {
     try {
-      console.log("rif:", rif);
-      console.log("name:", name);
-      console.log("mobile_phone:", mobile_phone);
-      console.log("local_phone:", local_phone);
-      console.log("legal_representative:", legal_representative);
-      console.log("street_address:", street_address);
-      console.log("city:", city);
-      console.log("municipality:", municipality);
-      console.log("state:", state);
-      const response = await axios.post(`${SERVER_URL}/api/clients/`, {
+      const clientData = {
         rif,
         name,
         mobile_phone,
@@ -68,14 +61,44 @@ export const createClient = createAsyncThunk(
         city,
         municipality,
         state,
-      });
-      const newClient = response.data;
-      return newClient;
+      };
+
+      // Enviar datos del cliente (primera solicitud)
+      const clientResponse = await axios.post(
+        `${SERVER_URL}/api/clients/`,
+        clientData
+      );
+      const clientId = clientResponse.data.id;
+
+      if (formData && formData.get("file")) {
+        // Adjuntar el archivo y subirlo (segunda solicitud)
+        const uploadResponse = await axios.post(
+          `${SERVER_URL}/api/firebase/upload/${clientId}`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+
+        return {
+          ...clientResponse.data,
+          rif_url: uploadResponse.data.url,
+        };
+      }
+
+      return clientResponse.data;
     } catch (error) {
-      console.log(error);
+      console.error("Error al crear el cliente:", error);
+      return thunkAPI.rejectWithValue(
+        error.response?.data || "Error desconocido"
+      );
     }
   }
 );
+
+
 
 const clientsSlice = createSlice({
   name: "clients",

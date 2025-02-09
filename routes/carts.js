@@ -69,18 +69,26 @@ router.post("/:userId", async (req, res) => {
 router.post("/:userId/items", async (req, res, next) => {
   const { userId } = req.params;
   const { productId, quantity } = req.body;
+  
   try {
     // Verificar si el carrito existe
-    const checkCart = await postgresDB.query(
+    let checkCart = await postgresDB.query(
       "SELECT id FROM carts WHERE user_id = $1",
       [userId]
     );
 
+    let cartId;
     if (checkCart.rows.length === 0) {
-      return res.status(404).json({ message: "Carrito no encontrado" });
+      // Crear un nuevo carrito si no existe
+      const newCart = await postgresDB.query(
+        "INSERT INTO carts (user_id) VALUES ($1) RETURNING *",
+        [userId]
+      );
+      cartId = newCart.rows[0].id;
+    } else {
+      cartId = checkCart.rows[0].id;
     }
 
-    const cartId = checkCart.rows[0].id;
     // Verificar si el producto ya está en el carrito
     const checkItem = await postgresDB.query(
       "SELECT * FROM cart_items WHERE cart_id = $1 AND product_id = $2",

@@ -15,12 +15,12 @@ const CLIENT_URL = process.env.CLIENT_URL;
 /* Passport Strategy Local */
 passport.use(
   new LocalStrategy(
-    { usernameField: "username" },
-    async (username, password, done) => {
+    { usernameField: "cedula" },
+    async (cedula, password, done) => {
       try {
         const userFound = await postgresDB.query(
-          "SELECT * FROM users WHERE username = $1",
-          [username]
+          "SELECT * FROM users WHERE id = $1",
+          [cedula]
         );
         if (userFound.rows.length === 0) {
           console.log('nada que verr');

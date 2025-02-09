@@ -118,6 +118,7 @@ router.post("/", async (req, res, next) => {
 
   try {
     const { rows } = await postgresDB.query(finalQuery, insertValues);
+
     res.status(201).send(rows[0]);
   } catch (err) {
     res.status(400).json({ message: err.message });

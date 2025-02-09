@@ -14,6 +14,7 @@ import CheckoutPage from "./pages/CheckoutPage/CheckoutPage";
 import OrdersPage from "./pages/ordersPage.jsx/OrdersPage";
 import CartPage from "./pages/CartPage.jsx/CartPage.jsx";
 import LoginPage from "./pages/LoginPage/LoginPage";
+import CedulaLoginPage from "./pages/LoginPage/CedulaLoginPage.jsx"
 import HomePage from "./pages/HomePage/HomePage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage/PrivacyPolicyPage.jsx";
 /* Layouts */
@@ -54,7 +55,7 @@ const App = () => {
       <BrowserRouter>
         <Routes>
           <Route element={<AuthLayout />}>
-            <Route path="/signin" element={<LoginPage />} />
+            <Route path="/signin" element={<CedulaLoginPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           </Route>
           <Route element={<ProtectedLayout />}>

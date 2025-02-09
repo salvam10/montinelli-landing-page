@@ -21,6 +21,7 @@ const attributesValuesRouter = require("./routes/attributesValues");
 const categoriesRouter = require("./routes/product_categories");
 const attributesRouter = require("./routes/attributes");
 const brandsRouter = require("./routes/product_brands");
+const firebaseRouter = require("./routes/firebase");
 const productsRouter = require("./routes/products");
 const clientsRouter = require("./routes/clients");
 const ordersRouter = require("./routes/orders")
@@ -90,6 +91,7 @@ app.use("/api/attributes-values", attributesValuesRouter);
 app.use("/api/attributes", attributesRouter);
 app.use("/api/categories", categoriesRouter);
 app.use("/api/products", productsRouter);
+app.use("/api/firebase", firebaseRouter);
 app.use("/api/clients", clientsRouter);
 app.use("/api/brands", brandsRouter);
 app.use("/api/orders", ordersRouter);

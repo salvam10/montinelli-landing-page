@@ -139,7 +139,6 @@ export const paymentOptions = [
   },
 ];
 
-
 export const states = [
   { label: "Distrito Capital", value: "Distrito Capital" },
   { label: "Miranda", value: "Miranda" },
@@ -150,7 +149,11 @@ export const cities = [
   { label: "Caracas", value: "Caracas" },
   { label: "San Antonio de los altos", value: "San Antonio de los altos" },
   { label: "Los Teques", value: "Los Teques" },
-];
+  { label: "Maracay", value: "Maracay" },
+  { label: "La Victoria", value: "La Victoria" },
+  { label: "Carrizal", value: "Carrizal" },
+  { label: "Catia La Mar", value: "Catia La Mar" },
+].sort((a, b) => a.label.localeCompare(b.label));
 
 export const phoneAreaCodes = [
   { label: "414", value: "414" },
@@ -158,13 +161,25 @@ export const phoneAreaCodes = [
   { label: "416", value: "416" },
   { label: "424", value: "424" },
   { label: "426", value: "426" },
+  { label: "212", value: "212" },
+];
+
+export const rifTypes = [
+  { label: "J", value: "J" },
+  { label: "V", value: "V" },
+  { label: "E", value: "E" },
 ];
 
 export const municipalities = [
- { label: "Chacao", value: "Chacao" },
+  { label: "Chacao", value: "Chacao" },
   { label: "El Hatillo", value: "El Hatillo" },
   { label: "Baruta", value: "Baruta" },
   { label: "Sucre", value: "Sucre" },
   { label: "Libertador", value: "Libertador" },
-  {label:"Los Salias", value:"Los Salias"}
-];
+  { label: "Los Salias", value: "Los Salias" },
+  { label: "Carrizal", value: "Carrizal" },
+  { label: "Girardot", value: "Girardot" },
+  { label: "Guaicaipuro", value: "Guaicaipuro" },
+  { label: "Ribas", value: "Ribas" },
+  { label: "Vargas", value: "Vargas" },
+].sort((a, b) => a.label.localeCompare(b.label));

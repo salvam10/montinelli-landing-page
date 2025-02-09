@@ -34,14 +34,14 @@ export const fetchAddUser = async (
   }
 };
 
-export const fetchAuthLocalUser = async (username, password) => {
+export const fetchAuthLocalUser = async (cedula, password) => {
   
   try {
     const response = await fetch(`${SERVER_URL}/api/auth/local`, {
       method: "POST",
       credentials: "include",
       body: JSON.stringify({
-        username,
+        cedula,
         password,
       }),
       headers: {

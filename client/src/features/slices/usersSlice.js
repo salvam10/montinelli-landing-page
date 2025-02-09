@@ -60,10 +60,10 @@ export const checkUserExistence = createAsyncThunk(
 
 export const localAuthenticateUser = createAsyncThunk(
   "users/localAuthenticateUser",
-  async ({ username, password }, thunkAPI) => {
+  async ({ cedula, password }, thunkAPI) => {
     try {
       console.log("local Authenticate User");
-      const status = await fetchAuthLocalUser(username, password);
+      const status = await fetchAuthLocalUser(cedula, password);
       if (status.message === "Succesfully Authenticated"){
         thunkAPI.dispatch(getLocalUser());
         return true;

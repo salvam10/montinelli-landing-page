@@ -1,26 +1,36 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import CustomSelect from "../customSelect/CustomSelect";
-import { cities, municipalities, phoneAreaCodes, states } from "../../dummy";
+import {
+  cities,
+  municipalities,
+  phoneAreaCodes,
+  states,
+  rifTypes,
+} from "../../dummy";
 import CustomFormButton from "../customFormButton/CustomFormButton";
 import CustomTextInput from "../customTextInput/CustomTextInput";
 import CloseIcon from "@mui/icons-material/Close";
+import FileUploader from "../fileUploader/FileUploader";
 import { createClient } from "../slices/clientsSlice";
-import CustomTextarea from "../customTextarea/CustomTextarea";
 
 const CreateClientModal = ({ setOpenModal }) => {
-  /* local states */
   const [legalRepresentative, setLegalRepresentative] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
   const [streetAddress, setStreetAddress] = useState("");
-  const [municipality, setMunicipality] = useState(municipalities[0].value);
+  const [municipality, setMunicipality] = useState(
+    municipalities[0]?.value || ""
+  );
   const [mobilePhone, setMobilePhone] = useState("");
-  const [mobileCode, setmobileCode] = useState(phoneAreaCodes[0].value);
+  const [mobileCode, setMobileCode] = useState(phoneAreaCodes[0]?.value || "");
+  const [rifType, setRifType] = useState(rifTypes[0]?.value || "");
   const [localPhone, setLocalPhone] = useState("");
   const [localCode, setLocalCode] = useState("212");
-  const [state, setState] = useState(states[0].value);
+  const [state, setState] = useState(states[0]?.value || "");
   const [name, setName] = useState("");
-  const [city, setCity] = useState(cities[0].value);
+  const [city, setCity] = useState(cities[0]?.value || "");
   const [rif, setRif] = useState("");
+  const [isFormValid, setIsFormValid] = useState(false);
 
   const dispatch = useDispatch();
 
@@ -28,122 +38,144 @@ const CreateClientModal = ({ setOpenModal }) => {
     setOpenModal(false);
   };
 
-  const handleSubmitClick = (e) => {
+  const handleSubmitClick = async (e) => {
     e.preventDefault();
-    dispatch(
-      createClient({
-        rif: rif.toLowerCase(),
-        name: name.toLowerCase(),
-        mobile_phone: mobilePhone.toLowerCase(),
-        local_phone: localPhone.toLowerCase(),
-        legal_representative: legalRepresentative.toLowerCase(),
-        street_address: streetAddress.toLowerCase(),
-        city: city.toLowerCase(),
-        municipality: municipality.toLowerCase(),
-        state: state.toLowerCase(),
-      })
-    );
+
+    if (!isFormValid) {
+      alert("Por favor, completa todos los campos obligatorios.");
+      return;
+    }
+
+    const formData = new FormData();
+    if (selectedFile) {
+      formData.append("file", selectedFile);
+    }
+
+    const clientData = {
+      rif: `${rifType}${rif.toLowerCase()}`,
+      name: name.toLowerCase(),
+      mobile_phone: `${mobileCode}${mobilePhone}`,
+      local_phone: `${localCode}${localPhone}`,
+      legal_representative: legalRepresentative.toLowerCase(),
+      street_address: streetAddress.toLowerCase(),
+      city: city.toLowerCase(),
+      municipality: municipality.toLowerCase(),
+      state: state.toLowerCase(),
+      formData,
+    };
+
+    dispatch(createClient(clientData));
     setOpenModal(false);
   };
+
+  useEffect(() => {
+    // Validar si todos los campos están completos
+    const isValid =
+      rif.trim() &&
+      name.trim() &&
+      mobilePhone.trim() &&
+      legalRepresentative.trim() &&
+      streetAddress.trim() &&
+      city.trim() &&
+      municipality.trim() &&
+      state.trim() &&
+      selectedFile !== null;
+
+    setIsFormValid(isValid);
+  }, [
+    rif,
+    name,
+    mobilePhone,
+    legalRepresentative,
+    streetAddress,
+    city,
+    municipality,
+    state,
+    selectedFile,
+  ]);
 
   return (
     <div className="modal-overlay">
       <div className="modal">
         <div className="modal-header">
           <h3 className="text-[20px]">Agregar cliente</h3>
+          <button className="modal-close-button" onClick={handleCloseClick}>
+            <CloseIcon />
+          </button>
         </div>
-        <div className="modal-inputs-container">
+        <form onSubmit={handleSubmitClick} className="modal-inputs-container">
           <CustomTextInput
             label="Nombre del negocio *"
             type="text"
-            width="w-full"
             value={name}
             setValue={setName}
           />
+          <div className="flex gap-2 items-end justify-around">
+            <div className="w-full flex gap-2">
+              <CustomSelect
+                options={rifTypes}
+                label="Tipo de rif *"
+                value={rifType}
+                setValue={setRifType}
+              />
+              <CustomTextInput
+                label="Rif *"
+                type="text"
+                value={rif}
+                width='w-full'
+                setValue={setRif}
+              />
+            </div>
+            <div className="w-[40%] flex justify-center">
+              <FileUploader
+                setSelectedFile={setSelectedFile}
+                selectedFile={selectedFile}
+              />
+            </div>
+          </div>
           <CustomTextInput
-            label="Rif *"
+            label="Representante legal *"
             type="text"
-            width="w-full"
-            value={rif}
-            setValue={setRif}
-          />
-          <CustomTextInput
-            label="Representante legal"
-            type="text"
-            width="w-full"
             value={legalRepresentative}
             setValue={setLegalRepresentative}
           />
-          <div className="w-full flex-between">
-            <CustomSelect
-              options={cities}
-              label="Ciudad"
-              width="w-[48%]"
-              value={city}
-              setValue={setCity}
-            />
-            <CustomSelect
-              options={states}
-              label="Estado"
-              width="w-[48%]"
-              value={state}
-              setValue={setState}
-            />
-          </div>
-
+          <CustomSelect
+            options={states}
+            label="Estado *"
+            value={state}
+            setValue={setState}
+          />
+          <CustomSelect
+            options={cities}
+            label="Ciudad *"
+            value={city}
+            setValue={setCity}
+          />
           <CustomSelect
             options={municipalities}
-            label="Municipio"
+            label="Municipio *"
             value={municipality}
             setValue={setMunicipality}
           />
-          <CustomTextarea
-            label="Dirección *"
-            type="text"
-            width="w-full"
-            height="h-[10%]"
-            value={streetAddress}
-            setValue={setStreetAddress}
-          />
-          <div className="flex gap-2">
-            <CustomSelect
-              options={[{ label: "212", value: "212" }]}
-              label="Código"
-              width="w-[30%]"
-              value={localCode}
-              setValue={setLocalCode}
-            />
-            <CustomTextInput
-              label="Telf local"
-              type="phone"
-              width="w-full"
-              value={localPhone}
-              setValue={setLocalPhone}
-            />
-          </div>
           <div className="flex gap-2">
             <CustomSelect
               options={phoneAreaCodes}
-              label="Código"
-              width="w-[30%]"
+              label="Código *"
               value={mobileCode}
-              setValue={setmobileCode}
+              setValue={setMobileCode}
             />
             <CustomTextInput
-              label="Telf móvil "
+              label="Telf móvil *"
               type="phone"
-              width="w-full"
+              width='w-full'
               value={mobilePhone}
               setValue={setMobilePhone}
             />
           </div>
           <div className="w-full flex-center">
-            <CustomFormButton handleClickFunction={handleSubmitClick} />
+            <CustomFormButton type="submit" disabled={!isFormValid} />
           </div>
-          <button className="modal-close-button" onClick={handleCloseClick}>
-            <CloseIcon />
-          </button>
-        </div>
+        </form>
       </div>
     </div>
   );

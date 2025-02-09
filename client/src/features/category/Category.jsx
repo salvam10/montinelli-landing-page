@@ -27,6 +27,8 @@ const Category = () => {
     }
   }, []);
 
+
+
   return products ? (
     <div className="page-container md:justify-center">
       <div className="md:w-[80%] flex flex-wrap justify-around gap-5">

@@ -172,6 +172,13 @@ body{
   @apply flex justify-between items-center;
 }
 
+.flex-around {
+  @apply flex justify-around items-center;
+}
+
+.flex-evenly {
+  @apply flex justify-evenly items-center;
+}
 /* Page Container */
 .page-container {
   @apply w-screen h-[100%] flex-center xs:flex-col gap-5 md:flex-row light-gray-bg  pt-10 pb-20 md:px-20;
