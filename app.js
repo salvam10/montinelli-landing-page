@@ -103,6 +103,12 @@ app.get("/", async (req, res, next) => {
   res.send("Welcome to GSM.");
 });
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
+});
+
 app.listen(PORT, async () => {
   console.log(`Servidor escuchando en el puerto ${PORT}`);
 });
