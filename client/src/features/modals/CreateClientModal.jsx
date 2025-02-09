@@ -75,7 +75,6 @@ const CreateClientModal = ({ setOpenModal }) => {
       name.trim() &&
       mobilePhone.trim() &&
       legalRepresentative.trim() &&
-      streetAddress.trim() &&
       city.trim() &&
       municipality.trim() &&
       state.trim();
