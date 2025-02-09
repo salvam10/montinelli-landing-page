@@ -78,8 +78,8 @@ const CreateClientModal = ({ setOpenModal }) => {
       streetAddress.trim() &&
       city.trim() &&
       municipality.trim() &&
-      state.trim() &&
-      selectedFile !== null;
+      state.trim();
+      //selectedFile !== null;
 
     setIsFormValid(isValid);
   }, [
@@ -110,23 +110,24 @@ const CreateClientModal = ({ setOpenModal }) => {
             value={name}
             setValue={setName}
           />
-          <div className="flex gap-2 items-end justify-around">
+          <div className="w-full flex flex-col gap-2 ">
             <div className="w-full flex gap-2">
               <CustomSelect
                 options={rifTypes}
                 label="Tipo de rif *"
+                width='w-full'
                 value={rifType}
                 setValue={setRifType}
               />
               <CustomTextInput
                 label="Rif *"
+                width='w-full'
                 type="text"
                 value={rif}
-                width='w-full'
                 setValue={setRif}
               />
             </div>
-            <div className="w-[40%] flex justify-center">
+            <div className="w-full flex justify-center">
               <FileUploader
                 setSelectedFile={setSelectedFile}
                 selectedFile={selectedFile}

@@ -10,7 +10,7 @@ const handleFileChange = (event) => {
 
     
 return (
-  <div className="flex gap-2 items-center">
+  <div className="w-full flex gap-2 items-center">
     <input
       type="file"
       id="file-upload"
@@ -22,7 +22,7 @@ return (
       className="flex gap-2 items-center darker-gray-bg text-white px-4 py-2 rounded cursor-pointer hover:bg-[#ff9f1a] transition text-[12px] flex-shrink-0"
     >
       <CloudUploadIcon style={{ fontSize: "20px" }} />
-      Subir Rif
+      Añadir Rif
     </label>
     {selectedFile && (
       <span className="text-gray-600 text-[12px] italic">
