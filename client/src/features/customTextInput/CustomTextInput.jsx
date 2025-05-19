@@ -8,7 +8,7 @@ const CustomTextInput = ({ value, setValue, label, type, width }) => {
 
   return (
     <div className={`${width} flex flex-col gap-2`}>
-      <label className="xs:text-[10px]">{label}:</label>
+      {label && <label className="xs:text-[10px]">{label}:</label>}
       <input
         type={type}
         value={value}

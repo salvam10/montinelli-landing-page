@@ -62,18 +62,7 @@ const CartList = () => {
             <div className="w-full flex justify-between p-4 xs:items-center md:items-center">
               {/* Price Section*/}
               <div className="md:w-[20%] flex-center flex-col xs:text-lg text-[#0079bf] font-bold">
-                <span>{product.base_price}$</span>
-                <span className="responsive-text text-[#B3B3B3] font-bold">
-                  Bs.{(product.base_price * bsExchangeRate).toFixed(2)}
-                </span>
-                <span className="responsive-text text-[#B3B3B3] font-bold">
-                  I.V.A{" "}
-                  {(
-                    product.base_price *
-                    (product.tax_percentage / 100)
-                  ).toFixed(2)}
-                  $
-                </span>
+                <span>${product.base_price}</span>
               </div>
               {/* Counter Section*/}
               <div className="md:w-[20%] flex">

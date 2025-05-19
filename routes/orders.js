@@ -4,11 +4,13 @@ const postgresDB = require("../db/postgres");
 
 //Obtener todas las ordenes
 router.get("/", async (req, res) => {
-  try {
-    const result = await postgresDB.query(`
-        SELECT 
+  let { manager_approval_status, product_category_id } = req.query;
+
+  let query = `
+    SELECT 
       orders.id, 
-      orders.payment_status,
+      orders.payment_status_id,
+      orders.invoice_number,
       orders.shipping_cost,
       orders.shipping_status,
       orders.subtotal, 
@@ -18,16 +20,48 @@ router.get("/", async (req, res) => {
       orders.client_id, 
       orders.created_at, 
       orders.updated_at,
+      orders.payment_term_id,
+      orders.due_date,
+      orders.manager_approval_status,
+      orders.actual_dispatch_date,
+      orders.scheduled_dispatch_date,
+      orders.shipping_company,
+      orders.product_category_id,
       clients.name AS client_name,
+      orders.status,
       users.firstname || ' ' || users.lastname AS user_fullname
     FROM orders
-    JOIN clients ON orders.client_id = clients.rif
+    JOIN clients ON orders.client_id = clients.id
     JOIN users ON orders.user_id = users.id
-    `);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Órdenes no encontradas" });
-    }
+  `;
 
+  const conditions = [];
+  const values = [];
+
+  // Condición por manager_approval_status
+  if (manager_approval_status) {
+    conditions.push(
+      `LOWER(orders.manager_approval_status) = $${values.length + 1}`
+    );
+    values.push(manager_approval_status.toLowerCase());
+  }
+
+  // Condición por product_category_id
+  if (product_category_id) {
+    conditions.push(`orders.product_category_id = $${values.length + 1}`);
+    values.push(product_category_id);
+  }
+
+  // Agregar condiciones dinámicas si existen
+  if (conditions.length > 0) {
+    query += ` WHERE ` + conditions.join(" AND ");
+  }
+
+  // Orden final
+  query += ` ORDER BY orders.id DESC`;
+
+  try {
+    const result = await postgresDB.query(query, values);
     res.status(200).json(result.rows);
   } catch (error) {
     console.error("Error al obtener las órdenes:", error);
@@ -37,7 +71,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-
 // Obtener una orden por su id
 router.get("/:orderId", async (req, res) => {
   const { orderId } = req.params;
@@ -46,9 +79,11 @@ router.get("/:orderId", async (req, res) => {
       `
       SELECT 
         orders.id, 
-        orders.payment_status,
         orders.shipping_cost,
         orders.shipping_status,
+        orders.shipping_company,
+        orders.scheduled_dispatch_date,
+        orders.actual_dispatch_date,
         orders.subtotal, 
         orders.total, 
         orders.payment_method, 
@@ -57,10 +92,22 @@ router.get("/:orderId", async (req, res) => {
         orders.created_at, 
         orders.updated_at,
         clients.name AS client_name,
+        orders.status,
+        orders.invoice_number,
+        orders.payment_term_id,
+        orders.due_date,
+        orders.manager_approval_status,
+        orders.product_category_id,
+        payment_terms.days AS payment_term_days,
+        payment_terms.description AS payment_term_description,
+        payment_terms.name AS payment_term_name,
+        payment_statuses.status AS payment_status,
         users.firstname || ' ' || users.lastname AS user_fullname
       FROM orders
-      JOIN clients ON orders.client_id = clients.rif
+      JOIN clients ON orders.client_id = clients.id
       JOIN users ON orders.user_id = users.id
+      JOIN payment_statuses ON orders.payment_status_id = payment_statuses.id
+      JOIN payment_terms ON orders.payment_term_id = payment_terms.id
       WHERE orders.id = $1
     `,
       [orderId]
@@ -75,18 +122,65 @@ router.get("/:orderId", async (req, res) => {
   }
 });
 
-
-// Obtener todas las órdenes de un usuario
-router.get("/:userId/orders", async (req, res) => {
+// Obtener todas las órdenes de un vendedor o usuario
+router.get("/seller/:userId", async (req, res) => {
   const { userId } = req.params;
+  let { product_category_id } = req.query;
+  
+  let query = `
+    SELECT 
+      orders.id, 
+      orders.payment_status_id,
+      orders.invoice_number,
+      orders.shipping_cost,
+      orders.shipping_status,
+      orders.subtotal, 
+      orders.total, 
+      orders.payment_method, 
+      orders.user_id, 
+      orders.client_id, 
+      orders.created_at, 
+      orders.updated_at,
+      orders.payment_term_id,
+      orders.due_date,
+      orders.manager_approval_status,
+      orders.actual_dispatch_date,
+      orders.scheduled_dispatch_date,
+      orders.shipping_company,
+      orders.product_category_id,
+      clients.name AS client_name,
+      orders.status,
+      users.firstname || ' ' || users.lastname AS user_fullname
+    FROM orders
+    JOIN clients ON orders.client_id = clients.id
+    JOIN users ON orders.user_id = users.id
+  `;
+
+  const conditions = [];
+  const values = [];
+
+  // Condición por product_category_id
+  if (product_category_id) {
+    conditions.push(`orders.product_category_id = $${values.length + 1}`);
+    values.push(product_category_id);
+  }
+
+  // Condición por user_id
+  if (userId) {
+    conditions.push(`orders.user_id = $${values.length + 1}`);
+    values.push(userId);
+  }
+
+  // Agregar condiciones dinámicas si existen
+  if (conditions.length > 0) {
+    query += ` WHERE ` + conditions.join(" AND ");
+  }
+
+  // Orden final
+  query += ` ORDER BY orders.id DESC`;
+
   try {
-    const result = await postgresDB.query(
-      "SELECT * FROM orders WHERE user_id = $1",
-      [userId]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Órdenes no encontradas" });
-    }
+    const result = await postgresDB.query(query, values);
     res.status(200).json(result.rows);
   } catch (error) {
     console.error("Error al obtener las órdenes:", error);
@@ -95,6 +189,7 @@ router.get("/:userId/orders", async (req, res) => {
     });
   }
 });
+
 
 // Obtener productos de una orden
 router.get("/:orderId/items", async (req, res) => {
@@ -125,7 +220,7 @@ router.get("/:orderId/client", async (req, res) => {
     const query = `
       SELECT c.*
       FROM Clients c
-      JOIN Orders o ON c.rif = o.client_id
+      JOIN Orders o ON c.id = o.client_id
       WHERE o.id = $1
     `;
     const { rows } = await postgresDB.query(query, [orderId]);
@@ -141,7 +236,7 @@ router.get("/:orderId/client", async (req, res) => {
 router.post("/user/:userId", async (req, res) => {
   const { userId } = req.params;
   const {
-    payment_status,
+    payment_status_id,
     subtotal,
     shipping_cost,
     shipping_status,
@@ -149,16 +244,16 @@ router.post("/user/:userId", async (req, res) => {
     payment_method,
     client_id,
   } = req.body;
-  console.log("payment_method", payment_method);
+
   const insertQuery = `
-    INSERT INTO orders (payment_status, subtotal, shipping_cost, shipping_status, total, payment_method, user_id, client_id)
+    INSERT INTO orders (payment_status_id, subtotal, shipping_cost, shipping_status, total, payment_method, user_id, client_id)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     RETURNING *
   `;
 
   try {
     const { rows } = await postgresDB.query(insertQuery, [
-      payment_status,
+      payment_status_id,
       subtotal,
       shipping_cost,
       shipping_status,
@@ -193,7 +288,7 @@ router.post("/:orderId/items", async (req, res) => {
       product_id,
       quantity,
       price,
-      tax_percentage
+      tax_percentage,
     ]);
     res.status(201).json(rows[0]);
   } catch (error) {
@@ -203,6 +298,124 @@ router.post("/:orderId/items", async (req, res) => {
     });
   }
 });
+
+//Crear ordenes para cada categoria de producto y además agregar los productos a la orden.
+router.post("/split-by-category", async (req, res) => {
+  const {
+    user_id,
+    client_id,
+    payment_method,
+    payment_status_id,
+    shipping_status,
+    shipping_cost,
+    products = [],
+  } = req.body;
+
+  try {
+    // Obtener todas las categorías únicas presentes en el carrito
+    const uniqueCategoryIds = [...new Set(products.map((p) => p.category_id))];
+
+    // Consulta en una sola query los nombres de esas categorías
+    const categoryQuery = `
+      SELECT id, name
+      FROM product_categories
+      WHERE id = ANY($1)
+    `;
+    const { rows: categoryRows } = await postgresDB.query(categoryQuery, [
+      uniqueCategoryIds,
+    ]);
+
+    // Crear un mapa de category_id => category_name
+    const categoryMap = {};
+    categoryRows.forEach((cat) => {
+      categoryMap[cat.id] = cat.name;
+    });
+
+    // Agrupar productos por nombre de categoría
+    const productsByCategory = products.reduce((acc, product) => {
+      const categoryName = categoryMap[product.category_id] || "otros";
+      if (!acc[categoryName]) acc[categoryName] = [];
+      acc[categoryName].push(product);
+      return acc;
+    }, {});
+
+    const ordersCreated = [];
+
+    for (const [category, categoryProducts] of Object.entries(
+      productsByCategory
+    )) {
+      const subtotal = categoryProducts.reduce(
+        (sum, product) => sum + product.base_price * product.quantity,
+        0
+      );
+      const total = subtotal + shipping_cost;
+
+      // Obtener la categoría desde el primer producto del grupo
+      const product_category_id = categoryProducts[0].category_id;
+
+      const createOrderQuery = `
+        INSERT INTO orders (
+          payment_status_id,
+          subtotal,
+          shipping_cost,
+          shipping_status,
+          total,
+          payment_method,
+          user_id,
+          product_category_id,
+          client_id
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING *
+      `;
+
+      const {
+        rows: [order],
+      } = await postgresDB.query(createOrderQuery, [
+        payment_status_id,
+        subtotal,
+        shipping_cost,
+        shipping_status,
+        total,
+        payment_method,
+        user_id,
+        product_category_id,
+        client_id,
+      ]);
+
+      for (const product of categoryProducts) {
+        const createOrderItemQuery = `
+          INSERT INTO order_items (
+            order_id,
+            product_id,
+            quantity,
+            price,
+            tax_percentage
+          )
+          VALUES ($1, $2, $3, $4, $5)
+        `;
+
+        await postgresDB.query(createOrderItemQuery, [
+          order.id,
+          product.id,
+          product.quantity,
+          product.base_price,
+          product.tax_percentage,
+        ]);
+      }
+
+      ordersCreated.push(order);
+    }
+
+    res.status(201).json(ordersCreated);
+  } catch (error) {
+    console.error("Error al crear órdenes por categoría:", error);
+    res.status(500).json({
+      error: "Hubo un error al crear las órdenes por categoría",
+    });
+  }
+});
+
 
 // Eliminar una orden
 router.delete("/:orderId", async (req, res) => {
@@ -228,13 +441,20 @@ router.delete("/:orderId", async (req, res) => {
 router.put("/:orderId", async (req, res, next) => {
   const { orderId } = req.params;
   const {
-    payment_status,
+    payment_status_id,
     payment_method,
     subtotal,
     shipping_cost,
     shipping_status,
+    shipping_company,
+    scheduled_dispatch_date,
+    actual_dispatch_date,
     total,
     client_id,
+    payment_term_id,
+    manager_approval_status,
+    due_date,
+    invoice_number,
   } = req.body;
 
   let updateQuery = "UPDATE orders SET ";
@@ -242,9 +462,44 @@ router.put("/:orderId", async (req, res, next) => {
   let count = 1;
 
   // Construir la consulta de actualización dinámica
-  if (payment_status !== undefined) {
-    updateQuery += `payment_status = $${count}, `;
-    updateValues.push(payment_status);
+  if (invoice_number !== undefined) {
+    updateQuery += `invoice_number = $${count}, `;
+    updateValues.push(invoice_number);
+    count++;
+  }
+  if (shipping_company !== undefined) {
+    updateQuery += `shipping_company = $${count}, `;
+    updateValues.push(shipping_company);
+    count++;
+  }
+  if (scheduled_dispatch_date !== undefined) {
+    updateQuery += `scheduled_dispatch_date = $${count}, `;
+    updateValues.push(scheduled_dispatch_date);
+    count++;
+  }
+  if (actual_dispatch_date !== undefined) {
+    updateQuery += `actual_dispatch_date = $${count}, `;
+    updateValues.push(actual_dispatch_date);
+    count++;
+  }
+  if (manager_approval_status !== undefined) {
+    updateQuery += `manager_approval_status = $${count}, `;
+    updateValues.push(manager_approval_status);
+    count++;
+  }
+  if (due_date !== undefined) {
+    updateQuery += `due_date = $${count}, `;
+    updateValues.push(due_date);
+    count++;
+  }
+  if (payment_term_id !== undefined) {
+    updateQuery += `payment_term_id = $${count}, `;
+    updateValues.push(payment_term_id);
+    count++;
+  }
+  if (payment_status_id !== undefined) {
+    updateQuery += `payment_status_id = $${count}, `;
+    updateValues.push(payment_status_id);
     count++;
   }
   if (payment_method !== undefined) {

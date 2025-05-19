@@ -12,8 +12,9 @@ const AdminLayout = () => {
       {user.role === "admin" ? (
         <div>
           <AdminNavbar />
-          <div className="w-screen h-screen flex xs:flex-col gap-5 md:flex-row 
-           bg-[#f1f1f1]">
+          {/* w-screen h-screen flex xs:flex-col gap-5 md:flex-row 
+           bg-[#f1f1f1] */}
+          <div className="flex">
             <AdminSidebar />
             <Outlet />
           </div>

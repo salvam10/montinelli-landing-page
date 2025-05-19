@@ -1,22 +1,43 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import InboxOutlinedIcon from "@mui/icons-material/InboxOutlined";
+import { adminSidebarItems } from "../../dummy";
 
 const AdminSidebar = () => {
   const navigate = useNavigate();
+
   return (
-    <div className="w-[15%] medium-gray-bg p-5 ">
-      <li
-        className="admin-sidebar-li"
-        onClick={() => navigate("/admin/orders")}
-      >
-        <div className="flex">
-          <InboxOutlinedIcon style={{ fontSize: "20px" }} />
-        </div>
-        <div className="w-[80%] flex-start">
-          <p className="text-[13px] font-bold">Pedidos</p>
-        </div>
-      </li>
+    <div className="w-[15%] h-screen medium-gray-bg p-5">
+      <ul className="space-y-4">
+        {adminSidebarItems.map((item, index) => (
+          <li
+            key={index}
+            className="admin-sidebar-li cursor-pointer"
+            onClick={() => navigate(item.route)}
+          >
+            <div className="flex items-center gap-2">
+              {item.icon}
+              <span className="text-[13px] font-bold">{item.label}</span>
+            </div>
+
+            {item.subItems && (
+              <div className="mt-2 pl-6 flex flex-col gap-1">
+                {item.subItems.map((sub, subIndex) => (
+                  <button
+                    key={subIndex}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(sub.route);
+                    }}
+                    className="text-[13px] ml-1 text-left hover:underline"
+                  >
+                    {sub.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };

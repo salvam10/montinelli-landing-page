@@ -1,7 +1,7 @@
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import CustomButton from "../customButton/customButton";
-import { resetClient } from "../slices/clientsSlice";
+import clientsSlice, { resetClient } from "../slices/clientsSlice";
 
 const ClientInfoSection = ({ client }) => {
   const dispatch = useDispatch();
@@ -10,19 +10,62 @@ const ClientInfoSection = ({ client }) => {
     dispatch(resetClient());
   };
 
+  const capitalizeFirstLetter = (text) => {
+    if (!text) return "";
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  };
+
   return (
     <div className="section-container !gap-1">
-      <div className="w-full flex">
-        <h3 className="font-bold">
-          <span>[{client.city}]</span> {client.name}
-        </h3>
+      <div className="w-full flex flex-col">
+        <span className="responsive-text font-bold">Cliente:</span>
+        <span className="responsive-text">
+          {capitalizeFirstLetter(client.name)}
+        </span>
       </div>
       <div className="w-full flex ">
         <div className="w-[80%]">
-          <p className="">{client.street_address}</p>
-          <div className="flex gap-5">
-            <span>Municipio {client.municipality}</span>
-            <span>Estado {client.state}</span>
+          <div className="flex flex-col">
+            <span className="responsive-text font-bold">
+              Representante legal:
+            </span>
+            <span className="responsive-text">
+              {capitalizeFirstLetter(
+                client.legal_representative || "No disponible"
+              )}
+            </span>
+          </div>
+          <div className="w-full flex flex-col">
+            <span className="responsive-text font-bold">Teléfono:</span>
+            <span className="responsive-text">
+              {capitalizeFirstLetter(client.phone || "No disponible")}
+            </span>
+          </div>
+          <div className="w-full flex flex-col">
+            <span className="responsive-text font-bold">Código Sica:</span>
+            <span className="responsive-text">
+              {client.sunagro_code || "No disponible"}
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <div className="flex gap-1">
+              <span className="responsive-text font-bold">Ciudad:</span>
+              <span className="responsive-text">
+                {capitalizeFirstLetter(client.city || "No disponible")}
+              </span>
+            </div>
+            <div className="flex gap-1">
+              <span className="responsive-text font-bold">Estado:</span>
+              <span className="responsive-text">
+                {capitalizeFirstLetter(client.state || "No disponible")}
+              </span>
+            </div>
+            <div className="flex gap-1">
+              <span className="responsive-text font-bold">Municipio:</span>
+              <span className="responsive-text">
+                {capitalizeFirstLetter(client.municipality || "No disponible")}
+              </span>
+            </div>
           </div>
         </div>
         <div className="w-[20%] flex-center">

@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 /* components */
 import CustomButton from "../../features/customButton/customButton";
 import OrderSummary from "../../features/orderSummary/OrderSummary";
-import { retrieveCart } from "../../features/slices/cartSlice";
+import { getProductsInCart } from "../../features/slices/cartSlice";
 import CartList from "../../features/cartList/CartList";
 import { AuthContext } from "../../App";
 /* react router */
@@ -29,7 +29,7 @@ const CartPage = () => {
 
   useEffect(() => {
     try {
-      dispatch(retrieveCart({ user_id: user.id }));
+      dispatch(getProductsInCart({ user_id: user.id }));
     } catch (error) {
       console.log(error);
     }

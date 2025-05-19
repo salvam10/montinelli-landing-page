@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 
 const ProductsSummary = ({ title }) => {
   const { cartItemsCount, productsInCart } = useSelector((state) => state.cart);
-  const { bsExchangeRate } = useSelector(state => state.products);
+  const { bsExchangeRate } = useSelector((state) => state.products);
 
   return (
     <div className="section-container">
@@ -30,14 +30,7 @@ const ProductsSummary = ({ title }) => {
                 $ {product.base_price}
               </p>
               <span className="responsive-text text-[#B3B3B3] font-bold">
-                Bs.{(product.base_price * bsExchangeRate).toFixed(2)}
-              </span>
-              <span className="responsive-text text-[#B3B3B3] font-bold">
-                I.V.A{" "}
-                {(product.base_price * (product.tax_percentage / 100)).toFixed(
-                  2
-                )}
-                $
+                I.V.A ${(product.base_price * 0.16).toFixed(2)}
               </span>
             </div>
           </li>

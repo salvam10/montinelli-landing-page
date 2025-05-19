@@ -1,3 +1,10 @@
+import ThumbUpAltOutlinedIcon from "@mui/icons-material/ThumbUpAltOutlined";
+import ThumbDownOffAltOutlinedIcon from "@mui/icons-material/ThumbDownOffAltOutlined";
+import HourglassEmptyOutlinedIcon from "@mui/icons-material/HourglassEmptyOutlined";
+import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
+import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
+import InboxOutlinedIcon from "@mui/icons-material/InboxOutlined";
+
 export const categories = [
   {
     id: 1,
@@ -183,3 +190,96 @@ export const municipalities = [
   { label: "Ribas", value: "Ribas" },
   { label: "Vargas", value: "Vargas" },
 ].sort((a, b) => a.label.localeCompare(b.label));
+
+export const orderStatuses = [
+  { label: "Pendiente", value: "pendiente" },
+  { label: "Facturada", value: "facturada" },
+  { label: "Despachada", value: "despachada" },
+  { label: "Recibida", value: "recibida" },
+  { label: "Cancelada", value: "cancelada" },
+  { label: "Eliminada", value: "eliminada" },
+  { label: "Pagada", value: "pagada" },
+];
+
+export const paymentTerms = [
+  { label: "En un plazo de 7 días", value: 7 },
+  { label: "En un plazo de 15 días", value: 15 },
+  { label: "En un plazo de 30 días", value: 30 },
+  { label: "Fecha Fija", value: 0 },
+  { label: "Contado", value: 0 },
+];
+
+export const managerApprovalStatuses = [
+  {
+    icon: (
+      <CheckCircleOutlinedIcon
+        style={{
+          fontSize: "large",
+          transform: "scaleX(-1)",
+          color: "mediun-gray-bg",
+        }}
+      />
+    ),
+    text: "Aprobado",
+    value: "aprobado",
+  },
+  {
+    icon: (
+      <CancelOutlinedIcon
+        style={{
+          fontSize: "large",
+          color: "mediun-gray-bg",
+        }}
+      />
+    ),
+    text: "Negado",
+    value: "negado",
+  },
+  {
+    icon: (
+      <HourglassEmptyOutlinedIcon
+        style={{
+          fontSize: "large",
+          color: "mediun-gray-bg",
+        }}
+      />
+    ),
+    text: "Pendiente",
+    value: "pendiente",
+  },
+];
+
+export const debtStatuses = [
+  { text: "Al dia", value: false },
+  { text: "Con deuda", value: true },
+];
+
+export const shippingCompanies = [
+  { label: "GSM 747", value: "GSM 747" },
+  { label: "Sr Tereso", value: "Sr Tereso" },
+];
+
+export const dispatchStatuses = [
+  { text: "Sin despacho asignado" },
+  { text: "Rechazado por cliente" },
+  { text: "Despachado" },
+];
+
+export const adminSidebarItems = [
+  {
+    label: "Pedidos",
+    icon: <InboxOutlinedIcon style={{ fontSize: "20px" }} />,
+    route: "/admin/orders",
+    subItems: [
+      { label: "Alimentos", route: "/admin/orders/category/34" },
+      { label: "Limpieza", route: "/admin/orders/category/35" },
+    ],
+  },
+  // Puedes agregar más secciones aquí fácilmente
+];
+
+export const orderTableFilters = [
+  { label: "Pendientes", value: "pendiente" },
+  { label: "Aprobados", value: "aprobado" },
+  { label: "Rechazados", value: "negado" },
+];

@@ -1,16 +1,21 @@
-import React, {useEffect} from "react";
-import { useDispatch } from 'react-redux';
-import { resetCart } from "../../features/slices/cartSlice";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import React, { useEffect } from "react";
+import { useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 
-const SuccesfullPage = () => {
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { cleanCart } from "../../features/slices/cartSlice";
+
+const SuccesfullPage = ({ cartId }) => {
+  const { cart } = useSelector((state) => state.cart);
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(resetCart())
-  },[])
-  
-
+    console.log('cart', cart);
+    
+    if (cart) {
+      dispatch(cleanCart({ cartId: cart.id }));
+    }
+  }, [cart]);
 
   return (
     <div className="page-container">

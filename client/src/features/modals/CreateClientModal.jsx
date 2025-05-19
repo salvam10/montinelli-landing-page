@@ -12,7 +12,7 @@ import CustomFormButton from "../customFormButton/CustomFormButton";
 import CustomTextInput from "../customTextInput/CustomTextInput";
 import CloseIcon from "@mui/icons-material/Close";
 import FileUploader from "../fileUploader/FileUploader";
-import { createClient } from "../slices/clientsSlice";
+import { createClient, getSingleClient } from "../slices/clientsSlice";
 
 const CreateClientModal = ({ setOpenModal }) => {
   const [legalRepresentative, setLegalRepresentative] = useState("");
@@ -31,6 +31,7 @@ const CreateClientModal = ({ setOpenModal }) => {
   const [city, setCity] = useState(cities[0]?.value || "");
   const [rif, setRif] = useState("");
   const [isFormValid, setIsFormValid] = useState(false);
+  const [sicaCode, setSicaCode] = useState("");
 
   const dispatch = useDispatch();
 
@@ -54,17 +55,18 @@ const CreateClientModal = ({ setOpenModal }) => {
     const clientData = {
       rif: `${rifType}${rif.toLowerCase()}`,
       name: name.toLowerCase(),
-      mobile_phone: `${mobileCode}${mobilePhone}`,
-      local_phone: `${localCode}${localPhone}`,
+      phone: `${mobileCode}${mobilePhone}`,
       legal_representative: legalRepresentative.toLowerCase(),
       street_address: streetAddress.toLowerCase(),
       city: city.toLowerCase(),
       municipality: municipality.toLowerCase(),
       state: state.toLowerCase(),
+      sunagro_code: sicaCode.toLowerCase(),
       formData,
     };
 
-    dispatch(createClient(clientData));
+    await dispatch(createClient(clientData));
+    dispatch(getSingleClient({ rif: `${rifType}${rif.toLowerCase()}` }));
     setOpenModal(false);
   };
 
@@ -77,8 +79,9 @@ const CreateClientModal = ({ setOpenModal }) => {
       legalRepresentative.trim() &&
       city.trim() &&
       municipality.trim() &&
-      state.trim();
-      //selectedFile !== null;
+      state.trim() &&
+      sicaCode.trim() &&
+      selectedFile !== null;
 
     setIsFormValid(isValid);
   }, [
@@ -91,6 +94,7 @@ const CreateClientModal = ({ setOpenModal }) => {
     municipality,
     state,
     selectedFile,
+    sicaCode,
   ]);
 
   return (
@@ -114,13 +118,13 @@ const CreateClientModal = ({ setOpenModal }) => {
               <CustomSelect
                 options={rifTypes}
                 label="Tipo de rif *"
-                width='w-full'
+                width="w-full"
                 value={rifType}
                 setValue={setRifType}
               />
               <CustomTextInput
                 label="Rif *"
-                width='w-full'
+                width="w-full"
                 type="text"
                 value={rif}
                 setValue={setRif}
@@ -138,6 +142,12 @@ const CreateClientModal = ({ setOpenModal }) => {
             type="text"
             value={legalRepresentative}
             setValue={setLegalRepresentative}
+          />
+          <CustomTextInput
+            label="Código Sica *"
+            type="text"
+            value={sicaCode}
+            setValue={setSicaCode}
           />
           <CustomSelect
             options={states}
@@ -167,7 +177,7 @@ const CreateClientModal = ({ setOpenModal }) => {
             <CustomTextInput
               label="Telf móvil *"
               type="phone"
-              width='w-full'
+              width="w-full"
               value={mobilePhone}
               setValue={setMobilePhone}
             />

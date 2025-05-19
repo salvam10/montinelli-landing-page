@@ -8,7 +8,10 @@ import CustomButton from "../../features/customButton/customButton";
 import ProductsSummary from "../../features/productsSummary/ProductsSummary";
 import OrderSummary from "../../features/orderSummary/OrderSummary";
 import { useNavigate } from "react-router-dom";
-import { createOrder } from "../../features/slices/ordersSlice";
+import {
+  createOrder,
+  createSplitOrders,
+} from "../../features/slices/ordersSlice";
 import ExistingClientModal from "../../features/modals/ExistingClientModal";
 import CreateClientModal from "../../features/modals/CreateClientModal";
 import { AuthContext } from "../../App";
@@ -43,21 +46,31 @@ const CheckoutPage = () => {
   }, [createClient]);
  */
 
-  const handleOnClick = () => {
-    dispatch(
-      createOrder({
-        user_id: user.id,
-        payment_status: "pendiente",
-        shipping_cost: shippingCost,
-        shipping_status: "pendiente",
-        subtotal: cartSubtotal,
-        total:cartSubtotal + shippingCost,
-        payment_method: "credito",
-        client_id: client.rif,
-        productsInCart: productsInCart,
-      })
-    );
-    navigate("/order-confirmation");
+  const handleOnClick = async () => {
+    console.log("client", client);
+
+    if (Object.keys(client).length > 0) {
+      try {
+        await dispatch(
+          createSplitOrders({
+            user_id: user.id,
+            payment_status_id: 1,
+            shipping_cost: shippingCost,
+            shipping_status: "pendiente",
+            payment_method: "credito",
+            client_id: client.id,
+            productsInCart: productsInCart, // debe incluir category_id
+          })
+        ).unwrap();
+
+        navigate("/order-confirmation");
+      } catch (err) {
+        console.error("Error creando órdenes divididas:", err);
+        // Podrías mostrar un toast o mensaje al usuario aquí
+      }
+    } else {
+        alert("Debes seleccionar un cliente")
+    }
   };
 
   return (
@@ -80,7 +93,7 @@ const CheckoutPage = () => {
             title="Clientes"
           />
         )}
-       {/*  <RadioInputSection
+        {/*  <RadioInputSection
           setCheckedOption={setPaymentMethod}
           checkedOption={paymentMethod}
           options={paymentOptions}

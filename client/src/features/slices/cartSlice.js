@@ -4,9 +4,22 @@ import axios from "axios";
 
 const SERVER_URL = process.env.REACT_APP_SERVER_URL;
 
-/* retrieve cart  by user id*/
+/* Obtener carrito de un usuario */
 export const retrieveCart = createAsyncThunk(
   "cart/retrieveCart",
+  async ({userId}, thunkAPI) => {
+    try {
+      const response = await axios.get(`${SERVER_URL}/api/cart/${userId}`);
+      return response.data;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+);
+
+/* Obtener productos del carrito a partir del Id de usuario*/
+export const getProductsInCart = createAsyncThunk(
+  "cart/getProductsInCart",
   async ({ user_id }, thunkAPI) => {
     try {
       const response = await axios.get(
@@ -25,7 +38,6 @@ export const addProductToCart = createAsyncThunk(
   "cart/addProductToCart",
   async ({ user_id, product, quantity }, thunkAPI) => {
     try {
-      
       const response = await axios.post(
         `${SERVER_URL}/api/cart/${user_id}/items`,
         {
@@ -81,9 +93,23 @@ const calculateCartItemsCount = (products) => {
   return products.reduce((acc, product) => acc + product.quantity, 0);
 };
 
+/* Vaciar Carrito */
+export const cleanCart = createAsyncThunk(
+  "cart/cleanCart",
+  async ({ cartId }, thunkAPI) => {
+    try {
+      const response = await axios.delete(`${SERVER_URL}/api/cart/${cartId}`);
+      return response.data;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+);
+
 const cartSlice = createSlice({
   name: "cart",
   initialState: {
+    cart: null,
     cartItemsCount: 0,
     productsInCart: [],
     updatedProduct: {},
@@ -96,10 +122,7 @@ const cartSlice = createSlice({
     setCartSubtotal: (state, action) => {
       let acum = 0;
       current(state).productsInCart.forEach(
-        (product) =>
-          (acum +=
-            product.quantity *
-            (product.base_price ))
+        (product) => (acum += product.quantity * product.base_price)
       );
       state.cartSubtotal = acum.toFixed(2);
     },
@@ -119,13 +142,26 @@ const cartSlice = createSlice({
       .addCase(retrieveCart.fulfilled, (state, action) => {
         state.isLoading = false;
         state.hasError = false;
+        state.cart = action.payload;
+      })
+      .addCase(retrieveCart.rejected, (state) => {
+        state.isLoading = false;
+        state.hasError = true;
+      })
+      .addCase(getProductsInCart.pending, (state) => {
+        state.isLoading = true;
+        state.hasError = false;
+      })
+      .addCase(getProductsInCart.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.hasError = false;
         const products = action.payload;
         let acum = 0;
         products.forEach((product) => (acum += product.quantity));
         state.productsInCart = action.payload;
         state.cartItemsCount = acum;
       })
-      .addCase(retrieveCart.rejected, (state) => {
+      .addCase(getProductsInCart.rejected, (state) => {
         state.isLoading = false;
         state.hasError = true;
       })
@@ -184,6 +220,22 @@ const cartSlice = createSlice({
         state.cartItemsCount = calculateCartItemsCount(state.productsInCart);
       })
       .addCase(deleteProductInCart.rejected, (state) => {
+        state.isLoading = false;
+        state.hasError = true;
+      })
+      .addCase(cleanCart.pending, (state) => {
+        state.isLoading = true;
+        state.hasError = false;
+      })
+      .addCase(cleanCart.fulfilled, (state) => {
+        state.isLoading = false;
+        state.hasError = false;
+        state.cartItemsCount = 0;
+        state.productsInCart = [];
+        state.cartSubtotal = 0;
+        state.updatedProduct = {};
+      })
+      .addCase(cleanCart.rejected, (state) => {
         state.isLoading = false;
         state.hasError = true;
       });

@@ -214,7 +214,7 @@ body{
 /* LISTS */
 
 .admin-sidebar-li {
-  @apply w-full flex gap-1 list-none p-1 hover:bg-[#F8F8F8] cursor-pointer hover:border hover:rounded-md;
+  @apply w-full flex flex-col list-none p-2 hover:bg-[#F8F8F8] cursor-pointer rounded-md transition-all duration-150;
 }
 
 .custom-li {
@@ -265,8 +265,13 @@ body{
 }
 
 .client-detail-label {
-  @apply text-[14px] font-bold;
+  @apply text-[14px] font-bold mb-1;
 }
+
+.badge{
+  @apply responsive-text py-[1px] px-2 rounded-lg
+}
+
 
 /* 
 Trello Lochmara

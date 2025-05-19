@@ -20,7 +20,7 @@ export const getClients = createAsyncThunk(
 /* Obtener un solo cliente */
 export const getSingleClient = createAsyncThunk(
   "clients/getSingleClient",
-  async ({rif}, thunkAPI) => {
+  async ({ rif }, thunkAPI) => {
     try {
       const response = await axios.get(`${SERVER_URL}/api/clients/${rif}`);
       const client = response.data;
@@ -31,7 +31,6 @@ export const getSingleClient = createAsyncThunk(
   }
 );
 
-
 /* Crear un nuevo cliente */
 export const createClient = createAsyncThunk(
   "clients/createClient",
@@ -39,14 +38,14 @@ export const createClient = createAsyncThunk(
     {
       rif,
       name,
-      mobile_phone,
-      local_phone,
+      phone,
       legal_representative,
       street_address,
       city,
       municipality,
       state,
       formData,
+      sunagro_code
     },
     thunkAPI
   ) => {
@@ -54,13 +53,13 @@ export const createClient = createAsyncThunk(
       const clientData = {
         rif,
         name,
-        mobile_phone,
-        local_phone,
+        phone,
         legal_representative,
         street_address,
         city,
         municipality,
         state,
+        sunagro_code
       };
 
       // Enviar datos del cliente (primera solicitud)
@@ -98,7 +97,25 @@ export const createClient = createAsyncThunk(
   }
 );
 
-
+/* Actualizar un client */
+export const updateClient = createAsyncThunk(
+  "clients/updateClient",
+  async (client, thunkAPI) => {
+    try {
+      const { rif, ...clientData } = client;
+      const response = await axios.put(
+        `${SERVER_URL}/api/clients/${rif}`,
+        clientData
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error al actualizar el cliente:", error);
+      return thunkAPI.rejectWithValue(
+        error.response?.data || "Error desconocido"
+      );
+    }
+  }
+);
 
 const clientsSlice = createSlice({
   name: "clients",
@@ -111,8 +128,8 @@ const clientsSlice = createSlice({
   },
   reducers: {
     resetClient: (state, action) => {
-      state.client = {}      
-    }
+      state.client = {};
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -142,7 +159,7 @@ const clientsSlice = createSlice({
         state.isLoading = false;
         state.hasError = true;
       })
-    .addCase(getSingleClient.pending, (state) => {
+      .addCase(getSingleClient.pending, (state) => {
         state.isLoading = true;
         state.hasError = false;
       })
@@ -157,7 +174,6 @@ const clientsSlice = createSlice({
       });
   },
 });
-
 
 export const { resetClient } = clientsSlice.actions;
 

@@ -1,85 +1,128 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import dayjs from "dayjs";
 import { useSelector, useDispatch } from "react-redux";
 import DataTable from "../../features/dataTable/DataTable";
 import { deleteOrder, getOrders } from "../../features/slices/ordersSlice";
+import DeleteOrderModal from "../../features/modals/DeleteOrderModal";
+import { useNavigate } from "react-router-dom";
+import { orderTableFilters } from "../../dummy";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { useParams } from "react-router-dom";
 
 const columns = [
-  { field: "id", headerName: "ID", width: 90, type: "number" },
   {
-    field: "created_at",
-    headerName: "Fecha",
-    width: 150,
-    type: "string",
-    valueFormatter: (params) => {
-      const date = new Date(params);
-      if (!isNaN(date)) {
-        return format(date, "dd MMM yyyy", { locale: es });
-      }
-      return params;
-    },
-  },
-  { field: "client_name", headerName: "Cliente", width: 150, type: "string" },
-  {
-    field: "payment_status",
-    headerName: "Status",
-    width: 150,
-    type: "string",
+    header: "Pedido",
+    accessorKey: "id",
+    footer: "ID",
   },
   {
-    field: "payment_method",
-    headerName: "Método de pago",
-    width: 200,
-    type: "string",
+    header: "Fecha",
+    accessorKey: "created_at",
+    footer: "Fecha de Creación",
+    cell: (info) =>
+      format(info.getValue(), "dd 'de' MMMM 'de' yyyy", { locale: es }),
   },
   {
-    field: "total",
-    headerName: "Total $",
-    width: 90,
-    type: "number",
-    valueFormatter: (params) => `$${parseFloat(params).toFixed(2)}`,
+    header: "Cliente",
+    accessorKey: "client_name",
+    footer: "Cliente",
   },
   {
-    field: "user_fullname",
-    headerName: "Vendedor",
-    width: 200,
-    type: "string",
-    valueFormatter: (params) => {
-      return params;
-    },
+    header: "Vendedor",
+    accessorKey: "user_fullname",
+    footer: "Usuario",
+  },
+  {
+    header: "Total",
+    accessorKey: "total",
+    footer: "Total",
+    cell: (info) => `$${parseFloat(info.getValue()).toFixed(2)}`,
+  },
+  {
+    header: "Estatus de Aprobación",
+    accessorKey: "manager_approval_status",
+    footer: "Estatus de Aprobación",
   },
 ];
 
 const OrdersPage = () => {
-  const { orders } = useSelector((state) => state.orders);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { orders } = useSelector((state) => state.orders);
+
+  const [openModal, setOpenModal] = useState(false);
+  const [orderId, setOrderId] = useState(null);
+  const [isDeleteConfirmed, setIsDeleteConfirmed] = useState(false);
+  const [managerStatus, setManagerStatus] = useState("pendiente"); // nuevo estado
+  const { prodCategoryId } = useParams();
 
   useEffect(() => {
-    try {
-      dispatch(getOrders({}));
-    } catch (error) {
-      console.log(error);
-    }
-  }, [dispatch]);
+    dispatch(
+      getOrders({
+        manager_approval_status: managerStatus,
+        product_category_id: prodCategoryId,
+      })
+    );
+  }, [dispatch, managerStatus, prodCategoryId]);
 
-  const handleOnDelete = (orderId) => {
-    dispatch(deleteOrder({orderId}))
-  }
+  useEffect(() => {
+    if (isDeleteConfirmed && orderId) {
+      dispatch(deleteOrder({ orderId }));
+      setIsDeleteConfirmed(false);
+    }
+  }, [isDeleteConfirmed, orderId, dispatch]);
+
+  const handleOnDelete = (id) => {
+    setOrderId(id);
+    setOpenModal(true);
+  };
+
+  const handleOnEdit = (id) => {
+    navigate(`/admin/orders/${id}`);
+  };
+
+  const onRowClick = (id) => {
+    navigate(`/admin/orders/${id}`);
+  };
 
   return (
-    <div className="w-full overflow-x-hidden !px-6">
+    <div className="w-full overflow-x-hidden px-6">
       <div className="py-6">
-        <h3 className="text-[20px] font-bold">Pedidos</h3>
+        <h3 className="text-xl font-bold">Pedidos</h3>
       </div>
-      <div className="">
-        <DataTable
-          slug="orders"
-          columns={columns}
-          rows={orders}
-          deleteItem={handleOnDelete}
+
+      <div className="bg-white rounded-t-md p-2 border-t border-x">
+        <ul className="flex gap-2 text-sm">
+          {orderTableFilters.map(({ label, value }) => (
+            <li
+              key={value ?? "todos"}
+              onClick={() => setManagerStatus(value)}
+              className={`py-1 px-3 cursor-pointer rounded-md hover:bg-[#EBEBEB] ${
+                managerStatus === value ? "bg-[#EBEBEB] font-semibold" : ""
+              }`}
+            >
+              {label}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <DataTable
+        columns={columns}
+        data={orders}
+        rows={orders}
+        onEdit={handleOnEdit}
+        onDelete={handleOnDelete}
+        onRowClick={onRowClick}
+      />
+
+      {openModal && (
+        <DeleteOrderModal
+          setOpenModal={setOpenModal}
+          setIsDeleteConfirmed={setIsDeleteConfirmed}
         />
-      </div>
+      )}
     </div>
   );
 };

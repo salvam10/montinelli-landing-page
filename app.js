@@ -19,6 +19,7 @@ const productVariationAttsRouter = require("./routes/prodVariationAttributes");
 const productVariationsRouter = require("./routes/product_variations");
 const attributesValuesRouter = require("./routes/attributesValues");
 const categoriesRouter = require("./routes/product_categories");
+const paymentTermsRouter = require("./routes/paymentTerms");
 const attributesRouter = require("./routes/attributes");
 const brandsRouter = require("./routes/product_brands");
 const firebaseRouter = require("./routes/firebase");
@@ -88,6 +89,7 @@ app.use(
 app.use("/api/product-variation-attributes", productVariationAttsRouter);
 app.use("/api/product-variations", productVariationsRouter);
 app.use("/api/attributes-values", attributesValuesRouter);
+app.use("/api/payment-terms", paymentTermsRouter);
 app.use("/api/attributes", attributesRouter);
 app.use("/api/categories", categoriesRouter);
 app.use("/api/products", productsRouter);

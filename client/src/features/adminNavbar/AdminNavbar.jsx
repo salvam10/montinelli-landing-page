@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
 import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 /* redux state */
-import { retrieveCart } from "../slices/cartSlice";
+import { getProductsInCart } from "../slices/cartSlice";
 import MenuIcon from "@mui/icons-material/Menu";
 import { AuthContext } from "../../App";
 
@@ -20,7 +20,7 @@ const AdminNavbar = () => {
 
   useEffect(() => {
     try {
-      dispatch(retrieveCart({ user_id: user.id }));
+      dispatch(getProductsInCart({ user_id: user.id }));
     } catch (error) {
       console.log(error);
     }

@@ -33,14 +33,14 @@ router.post("/", async (req, res, next) => {
   const {
     rif,
     name,
-    mobile_phone,
-    local_phone,
+    phone,
     legal_representative,
     street_address,
     city,
     municipality,
     state,
     profit_code,
+    sunagro_code,
   } = req.body;
 
   let insertQuery = "INSERT INTO clients(";
@@ -49,6 +49,12 @@ router.post("/", async (req, res, next) => {
   let count = 1;
 
   // Construir la consulta de inserción dinámica
+  if (sunagro_code !== undefined) {
+    insertQuery += "sunagro_code, ";
+    valueQuery += `$${count}, `;
+    insertValues.push(sunagro_code);
+    count++;
+  }
   if (rif !== undefined) {
     insertQuery += "rif, ";
     valueQuery += `$${count}, `;
@@ -61,16 +67,10 @@ router.post("/", async (req, res, next) => {
     insertValues.push(name);
     count++;
   }
-  if (mobile_phone !== undefined) {
-    insertQuery += "mobile_phone, ";
+  if (phone !== undefined) {
+    insertQuery += "phone, ";
     valueQuery += `$${count}, `;
-    insertValues.push(mobile_phone);
-    count++;
-  }
-  if (local_phone !== undefined) {
-    insertQuery += "local_phone, ";
-    valueQuery += `$${count}, `;
-    insertValues.push(local_phone);
+    insertValues.push(phone);
     count++;
   }
   if (legal_representative !== undefined) {
@@ -153,6 +153,7 @@ router.put("/:rif", async (req, res, next) => {
     municipality,
     state,
     profit_code,
+    has_debt,
   } = req.body;
 
   let updateQuery = "UPDATE clients SET ";
@@ -160,6 +161,11 @@ router.put("/:rif", async (req, res, next) => {
   let count = 1;
 
   // Construir la consulta de actualización dinámica
+  if (has_debt !== undefined) {
+    updateQuery += `has_debt = $${count}, `;
+    updateValues.push(has_debt);
+    count++;
+  }
   if (name !== undefined) {
     updateQuery += `name = $${count}, `;
     updateValues.push(name);

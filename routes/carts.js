@@ -3,32 +3,31 @@ const router = express.Router();
 const postgresDB = require("../db/postgres");
 
 // Obtener el carrito de un usuario
-router.get('/:userId', async (req, res) => {
-    const { userId } = req.params;
-    try {
-        const result = await postgresDB.query(
-          "SELECT * FROM carts WHERE user_id = $1",
-          [userId]
-        );
-        if (result.rows.length === 0) {
-            return res.status(404).json({ message: 'Carrito no encontrado' });
-        }
-        res.status(200).json(result.rows[0]);
-    } catch (error) {
-        console.error('Error al obtener el carrito:', error);
-        res.status(500).json({
-            error: 'Hubo un error al obtener el carrito',
-        });
+router.get("/:userId", async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const result = await postgresDB.query(
+      "SELECT * FROM carts WHERE user_id = $1",
+      [userId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Carrito no encontrado" });
     }
+    res.status(200).json(result.rows[0]);
+  } catch (error) {
+    console.error("Error al obtener el carrito:", error);
+    res.status(500).json({
+      error: "Hubo un error al obtener el carrito",
+    });
+  }
 });
-
 
 // Obtener productos del carrito
 router.get("/:userId/items", async (req, res) => {
   const { userId } = req.params;
   try {
     const { rows } = await postgresDB.query(
-      "SELECT p.*, ci.quantity FROM products p JOIN cart_items ci ON p.id = ci.product_id JOIN carts c ON ci.cart_id = c.id WHERE c.user_id = $1",
+      "SELECT c.id, p.*, ci.quantity FROM products p JOIN cart_items ci ON p.id = ci.product_id JOIN carts c ON ci.cart_id = c.id WHERE c.user_id = $1",
       [userId]
     );
     const products = rows;
@@ -64,12 +63,11 @@ router.post("/:userId", async (req, res) => {
   }
 });
 
-
 /* agregar un producto al carrito */
 router.post("/:userId/items", async (req, res, next) => {
   const { userId } = req.params;
   const { productId, quantity } = req.body;
-  
+
   try {
     // Verificar si el carrito existe
     let checkCart = await postgresDB.query(
@@ -132,6 +130,23 @@ router.delete("/:userId/:productId", async (req, res) => {
     res.send(result.rows[0]);
   } catch (err) {
     res.status(400).json({ message: err.message });
+  }
+});
+
+//Vaciar Carrito
+router.delete("/:cartId", async (req, res) => {
+  const { cartId } = req.params;
+  const query = `DELETE FROM cart_items 
+             WHERE cart_id = $1 
+             RETURNING *`;
+  try {
+    const result = await postgresDB.query(query, [cartId]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: err.message });
+    }
+    res.send(result.rows[0]);
+  } catch (error) {
+    res.status(400).json({ message: "Error al vaciar productos del carrito" });
   }
 });
 

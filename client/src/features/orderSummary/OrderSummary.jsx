@@ -28,19 +28,24 @@ const OrderSummary = ({ windowWidth, buttonTitle, handleOnClick }) => {
           <li className="flex-between xs:p-[10px] border-2 border-l-0 border-r-0 border-[#F8F8F8]">
             <span className="title font-bold xs:text-[13px]">Subtotal</span>
             <div className="flex-end flex-col">
-              <span className="value font-bold xs:text-[13px]">
-                $ {cartSubtotal}
+              <span className="value font-bold xs:text-[13px] text-[#B3B3B3]">
+                ${cartSubtotal}
               </span>
-              <span className="text-[#B3B3B3] font-bold xs:text-[13px]">
-                Bs.{(cartSubtotal * bsExchangeRate).toFixed(2)}
+            </div>
+          </li>
+          <li className="flex-between xs:p-[10px] border-2 border-l-0 border-r-0 border-[#F8F8F8]">
+            <span className="title font-bold xs:text-[13px]">I.V.A</span>
+            <div className="flex-end flex-col">
+              <span className="value font-bold xs:text-[13px] text-[#B3B3B3]">
+                ${(parseFloat(cartSubtotal) * 0.16).toFixed(2)}
               </span>
             </div>
           </li>
           <li className="flex-between xs:p-[10px] border-1 border-l-0 border-r-0 border-[#F8F8F8] font-bold">
-            <span className="title xs:text-[12px] text-[#B3B3B3]">
+            <span className="title xs:text-[12px] font-bold">
               Costo de Envío
             </span>
-            <span className="value xs:text-[12px] text-[#B3B3B3]">
+            <span className="value xs:text-[12px] text-[#B3B3B3] font-bold">
               $ {shippingCost.toFixed(2)}
             </span>
           </li>
@@ -48,14 +53,7 @@ const OrderSummary = ({ windowWidth, buttonTitle, handleOnClick }) => {
             <span className="title font-bold xs:text-[15px]">Total</span>
             <div className="flex flex-col flex-end">
               <span className="font-bold xs:text-[15px] !text-right">
-                $ {parseFloat(cartSubtotal) + shippingCost}
-              </span>
-              <span className="value text-[#B3B3B3] font-bold xs:text-[13px]">
-                Bs.
-                {(
-                  (parseFloat(cartSubtotal) + shippingCost) *
-                  bsExchangeRate
-                ).toFixed(2)}
+                ${(parseFloat(cartSubtotal) + shippingCost).toFixed(2)}
               </span>
             </div>
           </li>

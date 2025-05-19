@@ -14,7 +14,7 @@ import CheckoutPage from "./pages/CheckoutPage/CheckoutPage";
 import OrdersPage from "./pages/ordersPage.jsx/OrdersPage";
 import CartPage from "./pages/CartPage.jsx/CartPage.jsx";
 import LoginPage from "./pages/LoginPage/LoginPage";
-import CedulaLoginPage from "./pages/LoginPage/CedulaLoginPage.jsx"
+import CedulaLoginPage from "./pages/LoginPage/CedulaLoginPage.jsx";
 import HomePage from "./pages/HomePage/HomePage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage/PrivacyPolicyPage.jsx";
 /* Layouts */
@@ -23,12 +23,13 @@ import AdminLayout from "./features/layouts/adminLayout/AdminLayout";
 import CategoriesPage from "./pages/CategoriesPage/CategoriesPage";
 import AuthLayout from "./features/layouts/authLayout/AuthLayout";
 import ProtectedLayout from "./features/layouts/protectedLayout/ProtectedLayout";
+import SellerOrdersPage from "./pages/SellerOrdersPage/SellerOrdersPage.jsx";
 /* Components */
 import Category from "./features/category/Category";
 import Order from "./features/order/Order";
 /* Css */
 import "./App.css";
-
+import SellerSingleOrder from "./features/sellerSingleOrder/SellerSingleOrder.jsx";
 
 export const AuthContext = React.createContext();
 
@@ -61,6 +62,8 @@ const App = () => {
           <Route element={<ProtectedLayout />}>
             <Route path="/" element={<HomePage />} />
             <Route element={<SellerLayout />}>
+              <Route path="mis-pedidos" element={<SellerOrdersPage />} />
+              <Route path="orders/:orderId" element={<SellerSingleOrder />} />
               <Route path="categorias" element={<CategoriesPage />} />
               <Route path="categorias/:name" element={<Category />} />
               <Route path="carrito" element={<CartPage />} />
@@ -70,6 +73,10 @@ const App = () => {
           </Route>
           <Route path="/admin" element={<AdminLayout />}>
             <Route path="orders" element={<OrdersPage />} />
+            <Route
+              path="orders/category/:prodCategoryId"
+              element={<OrdersPage />}
+            />
             <Route path="orders/:id" element={<Order />} />
           </Route>
         </Routes>
