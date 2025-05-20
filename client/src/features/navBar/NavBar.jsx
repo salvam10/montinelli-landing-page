@@ -8,6 +8,7 @@ import { getProductsInCart } from "../slices/cartSlice";
 import { AuthContext } from "../../App";
 import { userLogout } from "../slices/usersSlice";
 import MobileMenu from "../mobileMenu/MobileMenu";
+import InboxOutlinedIcon from "@mui/icons-material/InboxOutlined";
 
 const NavBar = () => {
   const { user, setUser } = useContext(AuthContext);
@@ -33,6 +34,7 @@ const NavBar = () => {
 
   const handleCartClick = () => navigate(`/carrito`);
   const handleLogoClick = () => navigate(`/`);
+  const handleOrdersClick = () => navigate(`/mis-pedidos`);
   const logout = () => {
     dispatch(userLogout());
     setUser(null);
@@ -48,16 +50,22 @@ const NavBar = () => {
               CORPORACION GSM
             </span>
           </div>
-          <div className="w-[15%] flex-start gap-1 cursor-pointer text-[#0079bf] hover:font-bold">
-            <PersonOutlineOutlinedIcon />
-            <span onClick={logout}>Cerrar sesión</span>
+          <div className="w-[30%] flex-start gap-5 text-[#0079bf] ">
+            <div className="flex gap-1 cursor-pointer hover:font-bold">
+              <InboxOutlinedIcon />
+              <span onClick={handleOrdersClick}>Mis pedidos</span>
+            </div>
+            <div className="flex gap-1 cursor-pointer hover:font-bold">
+              <PersonOutlineOutlinedIcon />
+              <span onClick={logout}>Cerrar sesión</span>
+            </div>
           </div>
           <div
             className="w-[5%] relative flex justify-between cursor-pointer text-[#0079bf] hover:font-bold"
             onClick={handleCartClick}
           >
             <ShoppingCartOutlinedIcon />
-            <span className="w-[20px] h-[20px] orange-bg flex-center absolute -top-3 right-8 border rounded-full text-xs">
+            <span className="w-[20px] h-[20px] orange-bg flex-center absolute -top-3 right-7 border rounded-full text-xs">
               {cartItemsCount}
             </span>
           </div>

@@ -23,7 +23,6 @@ passport.use(
           [cedula]
         );
         if (userFound.rows.length === 0) {
-          console.log('nada que verr');
           done(null, false);
         } else {
           bcrypt.compare(

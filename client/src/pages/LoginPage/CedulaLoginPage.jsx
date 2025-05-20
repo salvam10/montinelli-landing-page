@@ -9,6 +9,7 @@ import { AuthContext } from "../../App";
 import { Spinner } from "react-bootstrap";
 /* React Router */
 import { useNavigate } from "react-router-dom";
+import CustomSpinner from "../../features/customSpinner/CustomSpinner";
 
 const LoginPage = () => {
   const isValidUser = useSelector((state) => state.users.isValidUser);
@@ -126,8 +127,8 @@ const LoginPage = () => {
             type="submit"
             onClick={handleOnClick}
           >
-            {isLoading ? (
-              <Spinner animation="border" size="sm" />
+             {isLoading ? (
+              <CustomSpinner />
             ) : (
               "Iniciar Sesión"
             )}
@@ -138,7 +139,7 @@ const LoginPage = () => {
             </span>
           )}
           <div className="my-4 border-t border-gray-300"></div>
-         {/*  <p className="text-center">
+          {/*  <p className="text-center">
             ¿Aún no te has registrado?{" "}
             <a className="text-blue-500 hover:underline" href="/signup">
               Registrarte

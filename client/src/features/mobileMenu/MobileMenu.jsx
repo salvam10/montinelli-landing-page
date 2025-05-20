@@ -1,14 +1,23 @@
-import React from "react";
+import React, { useContext } from "react";
+import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { userLogout } from "../slices/usersSlice";
+import { AuthContext } from "../../App";
 
 const MobileMenu = ({ isOpen, setIsOpen }) => {
+  const { user, setUser } = useContext(AuthContext);
   const navigate = useNavigate();
-
+  const dispatch = useDispatch();
   const closeMenu = () => setIsOpen(false);
 
   const goToOrders = () => {
     closeMenu();
     navigate("/mis-pedidos");
+  };
+
+  const logout = () => {
+    dispatch(userLogout());
+    setUser(null);
   };
 
   return (
@@ -29,6 +38,12 @@ const MobileMenu = ({ isOpen, setIsOpen }) => {
             className="w-full text-left text-lg text-gray-800 hover:text-blue-600"
           >
             Pedidos
+          </button>
+          <button
+            onClick={logout}
+            className="w-full text-left text-lg text-gray-800 hover:text-blue-600"
+          >
+            Cerrar Sesión
           </button>
         </nav>
       </div>
