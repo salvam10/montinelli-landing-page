@@ -34,16 +34,16 @@ const OrderClientDetails = ({ orderClient, order }) => {
           <div className="w-full flex flex-col">
             <span className="client-detail-label">Representante legal</span>
             <span className="responsive-text">
-              {orderClient.legal_representative}
+              {orderClient.legal_representative || 'No disponible'}
             </span>
           </div>
           <div className="w-full flex flex-col ">
             <span className="client-detail-label">Teléfono</span>
-            <span className="responsive-text">{orderClient.mobile_phone}</span>
+            <span className="responsive-text">{orderClient.phone || 'No disponible'}</span>
           </div>
           <div className="w-full flex flex-col ">
             <span className="client-detail-label">Cod Sunagro</span>
-            <span className="responsive-text">1111111</span>
+            <span className="responsive-text">{orderClient.sunagro_code || 'No disponible'}</span>
           </div>
           <div className="w-full flex flex-col">
             <span className="client-detail-label">Rif</span>

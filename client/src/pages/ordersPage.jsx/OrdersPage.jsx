@@ -15,6 +15,7 @@ const columns = [
     header: "Pedido",
     accessorKey: "id",
     footer: "ID",
+    meta: { width: "w-[80px] min-w-[80px]" },
   },
   {
     header: "Fecha",
@@ -22,27 +23,32 @@ const columns = [
     footer: "Fecha de Creación",
     cell: (info) =>
       format(info.getValue(), "dd 'de' MMMM 'de' yyyy", { locale: es }),
+    meta: { width: "w-[160px] min-w-[160px]" },
   },
   {
     header: "Cliente",
     accessorKey: "client_name",
     footer: "Cliente",
+    meta: { width: "w-[250px] min-w-[250]" },
   },
   {
     header: "Vendedor",
     accessorKey: "user_fullname",
     footer: "Usuario",
+    meta: { width: "w-[180px] min-w-[180px]" },
   },
   {
     header: "Total",
     accessorKey: "total",
     footer: "Total",
     cell: (info) => `$${parseFloat(info.getValue()).toFixed(2)}`,
+    meta: { width: "w-[100px] min-w-[100px] pr-4" },
   },
   {
     header: "Estatus de Aprobación",
     accessorKey: "manager_approval_status",
     footer: "Estatus de Aprobación",
+    meta: { width: "w-[180px] min-w-[180px]" },
   },
 ];
 

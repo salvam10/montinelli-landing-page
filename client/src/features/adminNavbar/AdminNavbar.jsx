@@ -2,17 +2,18 @@ import React, { useState, useEffect, useContext } from "react";
 import { useSelector, useDispatch } from "react-redux";
 /* React Router */
 import { useNavigate } from "react-router-dom";
+/* Components */
+import AdminSidebar from "../adminSidebar/AdminSidebar";
 /* icons */
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
-import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 /* redux state */
 import { getProductsInCart } from "../slices/cartSlice";
 import MenuIcon from "@mui/icons-material/Menu";
 import { AuthContext } from "../../App";
 
-const AdminNavbar = () => {
+const AdminNavbar = ({ isOpen, setIsOpen }) => {
   const { user } = useContext(AuthContext);
-  const { cartItemsCount } = useSelector((state) => state.cart);
+  const [isMenuOpen, setIsMenuOpen] = useState(false); // 👈 estado del menú
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const navigate = useNavigate();
 
@@ -47,9 +48,9 @@ const AdminNavbar = () => {
 
   return windowWidth > 640 ? (
     /* DESKTOP NAVBAR */
-    <div className="w-full flex-end p-[15px] bg-[#c4c9cc]">
+    <div className="w-full relative flex-end p-[15px] bg-[#c4c9cc]">
       {/* logo */}
-      <div className="w-[85%] flex-start cursor-pointer hover:font-bold">
+      <div className="w-[85%] flex-start  cursor-pointer hover:font-bold">
         <span className="text-lg font-bold pl-4" onClick={handleLogoClick}>
           CORPORACION GSM
         </span>
@@ -63,19 +64,19 @@ const AdminNavbar = () => {
     /* MOBILE NAV */
     <div className="w-full relative flex-end p-[15px] bg-[#c4c9cc]">
       {/* burger sidebar menu */}
-      <div className="cursor-pointer hover:border hover:rounded hover:bg-[#B3B3B3]">
+      <div
+        className="cursor-pointer hover:border hover:rounded hover:bg-[#B3B3B3]"
+        onClick={() => setIsMenuOpen(true)}
+      >
         <MenuIcon />
       </div>
       {/* logo */}
-      <div className="w-[80%] flex-start cursor-pointer hover:font-bold">
+      <div className="w-[80%] flex justify-center items-center gap-2 cursor-pointer hover:font-bold">
         <span className="text-lg font-bold pl-4" onClick={handleLogoClick}>
           CORPORACION GSM
         </span>
       </div>
-      {/* user icon */}
-      <div className="w-[10%] flex-start gap-1 cursor-pointer text-[#0079bf] hover:font-bold">
-        <PersonOutlineOutlinedIcon />
-      </div>
+      <AdminSidebar isOpen={isMenuOpen} setIsOpen={setIsMenuOpen} />
     </div>
   );
 };
