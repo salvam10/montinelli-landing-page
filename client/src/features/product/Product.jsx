@@ -39,17 +39,27 @@ const Product = ({ product }) => {
         <span className="text-[16px] text-[#0079bf] font-bold">
           Precio Caja = {`$${product.base_price}`}
         </span>
-        <span className="responsive-text text-[#B3B3B3] font-bold">
-          Precio Caja + IVA = {`$${(product.base_price * 1.16).toFixed(2)}`}
-        </span>
+        {product.tax_percentage && (
+          <span className="responsive-text text-[#B3B3B3] font-bold">
+            Precio Caja + IVA ={" "}
+            {`$${((product.base_price * product.tax_percentage) / 100).toFixed(
+              2
+            )}`}
+          </span>
+        )}
         <span className="responsive-text text-[#B3B3B3] font-bold">
           Precio Unidad ={" "}
           {`$${(product.base_price / product.quantity).toFixed(2)}`}
         </span>
-        <span className="responsive-text text-[#B3B3B3] font-bold">
-          Precio Unidad + IVA ={" "}
-          {`$${((product.base_price / product.quantity) * 1.16).toFixed(2)}`}
-        </span>
+        {product.tax_percentage && (
+          <span className="responsive-text text-[#B3B3B3] font-bold">
+            Precio Unidad + IVA ={" "}
+            {`$${(
+              (product.base_price / product.quantity) *
+              (product.tax_percentage && product.tax_percentage / 100)
+            ).toFixed(2)}`}
+          </span>
+        )}
       </div>
       <div className="w-full">
         {itemCount === 0 ? (

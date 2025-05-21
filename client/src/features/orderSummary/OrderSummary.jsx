@@ -7,7 +7,6 @@ import { useNavigate } from "react-router-dom";
 
 const OrderSummary = ({ windowWidth, buttonTitle, handleOnClick }) => {
   const navigate = useNavigate();
-
   const { cartSubtotal, productsInCart, shippingCost } = useSelector(
     (state) => state.cart
   );
@@ -17,6 +16,14 @@ const OrderSummary = ({ windowWidth, buttonTitle, handleOnClick }) => {
   useEffect(() => {
     dispatch(setCartSubtotal());
   }, [productsInCart]);
+
+  const calculateIVA = () => {
+    let acumIVA = 0;
+    productsInCart?.map((product) => {
+      return acumIVA = product.base_price * product.tax_percentage / 100
+    }) 
+    return acumIVA.toFixed(2);
+  }
 
   return (
     <div className="flex flex-col gap-5 xs:py-[10px] xs:px-[20px]  bg-white">
@@ -37,7 +44,7 @@ const OrderSummary = ({ windowWidth, buttonTitle, handleOnClick }) => {
             <span className="title font-bold xs:text-[13px]">I.V.A</span>
             <div className="flex-end flex-col">
               <span className="value font-bold xs:text-[13px] text-[#B3B3B3]">
-                ${(parseFloat(cartSubtotal) * 0.16).toFixed(2)}
+                ${calculateIVA()}
               </span>
             </div>
           </li>
