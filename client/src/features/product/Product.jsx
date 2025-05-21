@@ -12,7 +12,6 @@ const Product = ({ product }) => {
   const [itemCount, setItemCount] = useState(0);
 
   const updateCart = (count, operator) => {
-    console.log("updating cart", count, operator);
     setItemCount(count);
     dispatch(
       addProductToCart({
