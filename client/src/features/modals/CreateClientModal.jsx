@@ -35,6 +35,16 @@ const CreateClientModal = ({ setOpenModal }) => {
 
   const dispatch = useDispatch();
 
+  useEffect(() => {
+    // Al montar: deshabilita el scroll de la página de fondo del modal
+    document.body.style.overflow = "hidden";
+
+    // Al desmontar: restaura el scroll
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, []);
+
   const handleCloseClick = () => {
     setOpenModal(false);
   };
@@ -80,9 +90,7 @@ const CreateClientModal = ({ setOpenModal }) => {
       city.trim() &&
       municipality.trim() &&
       state.trim() &&
-      sicaCode.trim() &&
       selectedFile !== null;
-
     setIsFormValid(isValid);
   }, [
     rif,
