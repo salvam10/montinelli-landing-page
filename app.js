@@ -25,7 +25,7 @@ const brandsRouter = require("./routes/product_brands");
 const firebaseRouter = require("./routes/firebase");
 const productsRouter = require("./routes/products");
 const clientsRouter = require("./routes/clients");
-const ordersRouter = require("./routes/orders")
+const ordersRouter = require("./routes/orders");
 const cartsRouter = require("./routes/carts");
 const usersRouter = require("./routes/users");
 const authRouter = require("./routes/auth");
@@ -37,24 +37,42 @@ app.use(express.static("client/build"));
 // Define las rutas que deseas que sean manejadas por React Router
 
 const reactRouterRoutes = [
-  "/",
-  "/signin",
-  "/privacy-policy",
+  "/", // Página principal
+  "/signin", // Inicio de sesión
+  "/privacy-policy", // Política de privacidad
+
+  // Categorías
   "/categorias",
+  "/categorias/:name",
+
+  // Carrito y proceso de compra
   "/carrito",
   "/checkout",
   "/order-confirmation",
+
+  // Pedidos del usuario
+  "/mis-pedidos",
+  "/orders",
+  "/orders/:orderId",
+  "/orders/category/:prodCategoryId",
+
+  // Panel de administración
   "/admin",
-  "/admin/orders"
+  "/admin/orders",
+  "/admin/orders/:orderId",
 ];
+
 
 // Middleware para las rutas manejadas por React Router
 const reactRouterMiddleware = (req, res, next) => {
-  if (reactRouterRoutes.includes(req.url)) {
-    // Si la ruta está en reactRouterRoutes, envía el archivo index.html
+  const url = req.url.replace(/\/$/, ""); // Elimina el slash final si existe
+  if (
+    reactRouterRoutes.some(
+      (route) => url === route || url.startsWith(route + "/")
+    )
+  ) {
     res.sendFile(path.join(__dirname, "client/build", "index.html"));
   } else {
-    // Si la ruta no está en reactRouterRoutes, continúa con el siguiente middleware
     next();
   }
 };
@@ -85,7 +103,6 @@ app.use(
   })
 );
 
-
 app.use("/api/product-variation-attributes", productVariationAttsRouter);
 app.use("/api/product-variations", productVariationsRouter);
 app.use("/api/attributes-values", attributesValuesRouter);
@@ -108,13 +125,11 @@ app.get("/", async (req, res, next) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).send('Something broke!');
+  res.status(500).send("Something broke!");
 });
-
 
 app.listen(PORT, async () => {
   console.log(`Servidor escuchando en el puerto ${PORT}`);
 });
-
 
 module.exports = app;
