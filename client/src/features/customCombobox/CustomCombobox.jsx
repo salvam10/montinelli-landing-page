@@ -12,10 +12,6 @@ const CustomCombobox = ({ options, selected, setSelected, label }) => {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false); // Estado para controlar la apertura del combobox
 
-  useEffect(() => {
-    console.log("Open state changed:", open);
-  }, [open]);
-
   // Filtra las opciones basadas en la búsqueda
   const filteredOptions =
     query === ""
