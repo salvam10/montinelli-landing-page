@@ -19,8 +19,9 @@ const ProductsSummary = ({ title }) => {
             <div className="xs:w-[20%] md:w-[10%]">
               <img src={product.media_url} alt={product.name} />
             </div>
-            <div className="xs:w-[50%] md:w-[60%] flex-center xs:text-[12px] md:text-[15px]">
-              <p>{product.name}</p>
+            <div className="xs:w-[50%] md:w-[60%] flex-center  flex-col xs:text-[12px] md:text-[15px]">
+              <p className="font-[600]">{product.name}</p>
+              <p className="responsive-text">{product.description}</p>
             </div>
             <div className="xs:w-[15%] flex-center text-[13px]">
               {product.quantity}

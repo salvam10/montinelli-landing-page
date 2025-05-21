@@ -45,9 +45,12 @@ const CartList = () => {
           {/* right */}
           <div className="w-full flex xs:flex-col md:flex-row xs:justify-between  md:items-center  gap-4 relative xs:px-4">
             {/* product name */}
-            <div className="w-[60%] flex-start items-baseline pt-[10px]">
+            <div className="w-[60%] flex flex-col items-baseline pt-[10px]">
               <p className="md:w-full xs:text-[15px] font-bold">
                 {product.name}
+              </p>
+              <p className="md:w-full xs:text-[13px]">
+                {product.description}
               </p>
               <button
                 className="md:hidden absolute right-8"
@@ -77,7 +80,9 @@ const CartList = () => {
                     handleDeleteClick(product.id);
                   }}
                 >
-                  <DeleteOutlineOutlinedIcon style={{ color: "#B3B3B3", fontSize:'30px' }} />
+                  <DeleteOutlineOutlinedIcon
+                    style={{ color: "#B3B3B3", fontSize: "30px" }}
+                  />
                 </span>
               </div>
             </div>

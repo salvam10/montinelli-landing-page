@@ -110,14 +110,15 @@ const OrderProductsDetails = ({ orderProducts, order }) => {
       <div className="border rounded-md py-2 px-5">
         {orderProducts?.map((product, index) => (
           /* product details container*/
-          <div className="flex justify-evenly" key={index}>
+          <div className="flex justify-evenly items-center" key={index}>
             {/* imagen */}
             <div className="xs:w-[15%] md:w-[10%]">
               <img src={product.media_url} alt={product.name} />
             </div>
             {/* nombre */}
-            <div className="xs:w-[50%] md:w-[60%] flex-center xs:text-[12px] md:text-[15px]">
+            <div className="xs:w-[50%] md:w-[60%] flex flex-col xs:text-[12px] md:text-[15px]">
               <p>{product.name}</p>
+              <p className="responsive-text">{product.description}</p>
             </div>
             {/* cantidad */}
             <div className="xs:w-[15%] flex-center text-[13px]">

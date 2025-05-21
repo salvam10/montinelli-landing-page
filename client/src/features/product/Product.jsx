@@ -33,6 +33,7 @@ const Product = ({ product }) => {
         <p className="xs:text-[13px] md:text-[18px] font-bold">
           {product.name}
         </p>
+        <p>{product.description}</p>
       </div>
       <div className="flex flex-col">
         <span className="text-[16px] text-[#0079bf] font-bold">
