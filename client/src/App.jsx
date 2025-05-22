@@ -50,6 +50,8 @@ const App = () => {
       localStorage.setItem("user", JSON.stringify(redux_user));
       setUser(JSON.parse(localStorage.getItem("user")));
     }
+    console.log('s');
+    
   }, [redux_user]);
 
   return (
