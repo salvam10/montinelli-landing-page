@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const CustomTextInput = ({ value, setValue, label, type, width }) => {
+const CustomTextInput = ({ value, setValue, label, type, width, placeholder }) => {
 
   const handleOnChange = (e) => {
     setValue(e.target.value);
@@ -14,6 +14,7 @@ const CustomTextInput = ({ value, setValue, label, type, width }) => {
         value={value}
         onChange={handleOnChange}
         className={`py-[5px] px-[15px]  border border-[#EBEBEB] rounded-md xs:text-[12px]`}
+        placeholder={placeholder}
       />
     </div>
   );

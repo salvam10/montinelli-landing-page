@@ -30,6 +30,7 @@ import Order from "./features/order/Order";
 /* Css */
 import "./App.css";
 import SellerSingleOrder from "./features/sellerSingleOrder/SellerSingleOrder.jsx";
+import CreateOrderPage from "./pages/CreateOrderPage/CreateOrderPage.jsx";
 
 export const AuthContext = React.createContext();
 
@@ -78,6 +79,7 @@ const App = () => {
               element={<OrdersPage />}
             />
             <Route path="orders/:id" element={<Order />} />
+            <Route path="orders/create" element={<CreateOrderPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

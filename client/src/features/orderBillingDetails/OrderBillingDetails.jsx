@@ -7,7 +7,7 @@ import PaymentTermsModal from "../modals/PaymentTermsModal";
 import { format, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 
-const OrderBillingDetails = ({ order }) => {
+const OrderBillingDetails = ({ orderProducts, order }) => {
   const [showPaymentTermsModal, setShowPaymentTermsModal] = useState(false);
   const [paymentTermMsg, setPaymentTermMsg] = useState("");
   const [editPaymentTerms, setEditPaymentTerms] = useState(false);
@@ -84,7 +84,9 @@ const OrderBillingDetails = ({ order }) => {
             <span className="responsive-text">Subtotal</span>
           </div>
           <div className="billing-li-details">
-            <span className="responsive-text ">3 articulos</span>
+            <span className="responsive-text ">
+              {orderProducts.length} articulos
+            </span>
             <span className="responsive-text ">
               $
               {isNaN(Number(order.subtotal))

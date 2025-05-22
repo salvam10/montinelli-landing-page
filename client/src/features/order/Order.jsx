@@ -18,6 +18,7 @@ import { getPaymentTerms } from "../../features/slices/paymentTermsSlice";
 const Order = () => {
   const [openManagerDrop, setOpenManagerDrop] = useState(false);
   const [openDebtDrop, setOpenDebtDrop] = useState(false);
+  const [openGroupedDrop, setOpenGroupedDrop] = useState(false);
   const { orderProducts, orderClient, order } = useSelector(
     (state) => state.orders
   );
@@ -34,7 +35,7 @@ const Order = () => {
 
   return (
     <div className="flex items-center flex-col p-5 bg-transparent gap-5">
-      <div className="w-[80%]">
+      <div className="xs:w-full md:w-[80%]">
         <OrderHeader
           order={order}
           client={orderClient}
@@ -42,14 +43,16 @@ const Order = () => {
           setOpenManagerDrop={setOpenManagerDrop}
           openDebtDrop={openDebtDrop}
           setOpenDebtDrop={setOpenDebtDrop}
+          openGroupedDrop={openGroupedDrop}
+          setOpenGroupedDrop={setOpenGroupedDrop}
         />
       </div>
-      <div className="xs:w-full md:w-[80%] flex gap-5">
-        <div className="md:w-[70%] flex flex-col gap-5">
+      <div className="xs:w-full md:w-[80%] flex flex-col md:flex-row gap-5">
+        <div className="w-full md:w-[70%] flex flex-col gap-5">
           <OrderProductsDetails orderProducts={orderProducts} order={order} />
-          <OrderBillingDetails order={order} />
+          <OrderBillingDetails orderProducts={orderProducts} order={order} />
         </div>
-        <div className="md:w-[30%] flex flex-col gap-5">
+        <div className="w-full md:w-[30%] flex flex-col gap-5">
           <OrderClientDetails orderClient={orderClient} order={order} />
         </div>
       </div>

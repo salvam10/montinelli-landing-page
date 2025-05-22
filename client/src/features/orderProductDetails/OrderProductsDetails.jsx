@@ -107,10 +107,10 @@ const OrderProductsDetails = ({ orderProducts, order }) => {
         </div>
       )}
 
-      <div className="border rounded-md py-2 px-5">
+      <div className="border rounded-md py-2 px-2">
         {orderProducts?.map((product, index) => (
           /* product details container*/
-          <div className="flex justify-evenly items-center" key={index}>
+          <div className="flex justify-evenly items-center gap-2 overflow-x-auto" key={index}>
             {/* imagen */}
             <div className="xs:w-[15%] md:w-[10%]">
               <img src={product.media_url} alt={product.name} />
@@ -121,7 +121,7 @@ const OrderProductsDetails = ({ orderProducts, order }) => {
               <p className="responsive-text">{product.description}</p>
             </div>
             {/* cantidad */}
-            <div className="xs:w-[15%] flex-center text-[13px]">
+            <div className="xs:w-[20%] flex-center text-[13px]">
               ${product.base_price} x {product.quantity}
             </div>
             {/* precio */}

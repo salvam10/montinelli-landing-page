@@ -7,7 +7,8 @@ const CustomFormButton = ({
   color,
   textColor,
   fontBold,
-  icon
+  icon,
+  width = "w-full",
 }) => {
   const { isLoading } = useSelector((state) => state.orders);
   const [showLoading, setShowLoading] = useState(false);
@@ -27,7 +28,7 @@ const CustomFormButton = ({
     <button
       onClick={handleClickFunction}
       disabled={isLoading || showLoading}
-      className={`w-full border rounded-lg ${color || "blue-bg"} ${
+      className={`${width} border rounded-lg ${color || "blue-bg"} ${
         textColor || "text-white"
       }  ${
         fontBold && "font-bold"

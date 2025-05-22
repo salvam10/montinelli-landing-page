@@ -9,6 +9,7 @@ import { orderTableFilters } from "../../dummy";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useParams } from "react-router-dom";
+import CustomFormButton from "../../features/customFormButton/CustomFormButton";
 
 const columns = [
   {
@@ -94,8 +95,18 @@ const OrdersPage = () => {
 
   return (
     <div className="w-full overflow-x-hidden px-6">
-      <div className="py-6">
-        <h3 className="text-xl font-bold">Pedidos</h3>
+      <div className="flex-between py-6">
+        <h3 className="text-xl font-bold">
+          Pedidos {prodCategoryId == 34 ? "Alimentos" : "Limpieza"}
+        </h3>
+        <CustomFormButton
+          handleClickFunction={() => navigate("/admin/orders/create")}
+          text="Crear pedido"
+          fontBold={true}
+          color="bg-[#0079bf]"
+          textColor="text-white"
+          width={"w-[150px]"}
+        />
       </div>
 
       <div className="bg-white rounded-t-md p-2 border-t border-x">

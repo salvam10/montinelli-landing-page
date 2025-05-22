@@ -155,6 +155,62 @@ export const managerApprovalStatuses = [
 export const debtStatuses = [
   { text: "Al dia", value: false },
   { text: "Con deuda", value: true },
+  { text: "Deuda no verificada", value: true },
+];
+
+export const combinedStatuses = [
+  {
+    title: "Estado de cuenta",
+    statuses: [
+      { text: "Al dia", value: false },
+      { text: "Con deuda", value: true },
+    ],
+    handleOnClick: (value) => {
+      return "";
+    },
+  },
+  {
+    title: "Aprobación de gerencia",
+    statuses: [
+      {
+        icon: (
+          <CheckCircleOutlinedIcon
+            style={{
+              fontSize: "large",
+              transform: "scaleX(-1)",
+              color: "mediun-gray-bg",
+            }}
+          />
+        ),
+        text: "Aprobado",
+        value: "aprobado",
+      },
+      {
+        icon: (
+          <CancelOutlinedIcon
+            style={{
+              fontSize: "large",
+              color: "mediun-gray-bg",
+            }}
+          />
+        ),
+        text: "Negado",
+        value: "negado",
+      },
+      {
+        icon: (
+          <HourglassEmptyOutlinedIcon
+            style={{
+              fontSize: "large",
+              color: "mediun-gray-bg",
+            }}
+          />
+        ),
+        text: "Pendiente",
+        value: "pendiente",
+      },
+    ],
+  },
 ];
 
 export const shippingCompanies = [

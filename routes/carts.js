@@ -33,7 +33,7 @@ router.get("/:userId/items", async (req, res) => {
     const products = rows;
     res.status(201).send(products);
   } catch (error) {
-    res.status(400).json({ message: err.message });
+    res.status(400).json({ message: error.message });
   }
 });
 

@@ -11,8 +11,14 @@ import {
 } from "../slices/ordersSlice";
 import { updateClient } from "../slices/clientsSlice";
 import DropdownButton from "../dropdownMenu/DropdownButton";
-import { managerApprovalStatuses, debtStatuses } from "../../dummy";
+import {
+  managerApprovalStatuses,
+  debtStatuses,
+  combinedStatuses,
+} from "../../dummy";
+import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import Pill from "../pill/Pill";
+import GroupedDropdown from "../groupedDropdown/GroupedDropdown";
 
 const OrderHeader = ({
   client,
@@ -21,13 +27,22 @@ const OrderHeader = ({
   setOpenManagerDrop,
   openDebtDrop,
   setOpenDebtDrop,
+  openGroupedDrop,
+  setOpenGroupedDrop,
 }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const [pillBg, setPillBg] = useState();
   const [managerStatus, setManagerStatus] = useState();
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [debtStatus, setDebtStatus] = useState();
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     setManagerStatus(order.manager_approval_status);
@@ -90,10 +105,18 @@ const OrderHeader = ({
     setOpenDebtDrop(false);
   };
 
+  const handleGroupedDropdownClick = async (value, title) => {
+    if (title === "Aprobación de gerencia") {
+      await updateManagerStatus(value);
+    } else if (title === "Estado de cuenta") {
+      await updateDebtStatus(value);
+    }
+  };
+
   return (
     <div className="w-full">
       <div className="flex justify-between">
-        <div className="flex gap-2 items-bottom">
+        <div className="flex xs:flex-col md:flex-row gap-2 items-bottom">
           {/* breadcrumbs */}
           <div className="flex gap-1 items-bottom">
             <span
@@ -122,25 +145,43 @@ const OrderHeader = ({
             />
           </div>
         </div>
-
-        <div className="flex-end gap-2">
-          <DropdownButton
-            btnLabel="Aprobación gerencia"
-            items={managerApprovalStatuses}
-            currentItem={managerStatus}
-            handleOnClick={updateManagerStatus}
-            openDropdown={openManagerDrop}
-            setOpenDropdown={setOpenManagerDrop}
-          />
-          <DropdownButton
-            btnLabel="Estado de cuenta"
-            items={debtStatuses}
-            currentItem={client?.has_debt ? "con deuda" : "al dia"}
-            handleOnClick={updateDebtStatus}
-            openDropdown={openDebtDrop}
-            setOpenDropdown={setOpenDebtDrop}
-          />
-        </div>
+        {windowWidth > 640 ? (
+          <div className="flex-end gap-2">
+            <DropdownButton
+              btnLabel="Aprobación gerencia"
+              items={managerApprovalStatuses}
+              currentItem={managerStatus}
+              handleOnClick={updateManagerStatus}
+              openDropdown={openManagerDrop}
+              setOpenDropdown={setOpenManagerDrop}
+            />
+            <DropdownButton
+              btnLabel="Estado de cuenta"
+              items={debtStatuses}
+              currentItem={client?.has_debt ? "con deuda" : "al dia"}
+              handleOnClick={updateDebtStatus}
+              openDropdown={openDebtDrop}
+              setOpenDropdown={setOpenDebtDrop}
+            />
+          </div>
+        ) : (
+          <div className="text-[10px] cursor-pointer">
+            <span
+              className="px-[6px] py-[8px] rounded-full medium-gray-bg"
+              onClick={() => {
+                setOpenGroupedDrop(!openGroupedDrop);
+              }}
+            >
+              <MoreHorizIcon style={{ color: "#000000" }} />
+            </span>
+            <GroupedDropdown
+              items={combinedStatuses}
+              openDropdown={openGroupedDrop}
+              setOpenDropdown={setOpenGroupedDrop}
+              handleOnClick={handleGroupedDropdownClick}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

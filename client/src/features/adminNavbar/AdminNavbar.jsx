@@ -62,13 +62,15 @@ const AdminNavbar = ({ isOpen, setIsOpen }) => {
     </div>
   ) : (
     /* MOBILE NAV */
-    <div className="w-full relative flex-end p-[15px] bg-[#c4c9cc]">
+    <div className="w-full relative flex-start p-[15px] bg-[#c4c9cc]">
       {/* burger sidebar menu */}
       <div
         className="cursor-pointer hover:border hover:rounded hover:bg-[#B3B3B3]"
         onClick={() => setIsMenuOpen(true)}
       >
-        <MenuIcon />
+        <span>
+          <MenuIcon />
+        </span>
       </div>
       {/* logo */}
       <div className="w-[80%] flex justify-center items-center gap-2 cursor-pointer hover:font-bold">
