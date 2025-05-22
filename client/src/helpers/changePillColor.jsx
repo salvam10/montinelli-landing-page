@@ -19,6 +19,6 @@ export const changePillBgColor = (setPillBg, currentStatus) => {
       setPillBg("bg-[rgba(235,90,70,0.5)]");
       break;
     default:
-      console.log("Estado desconocido:", currentStatus);
+      console.log("Estado desconocido", currentStatus);
   }
 };
