@@ -13,22 +13,34 @@ router.get("/orders-summary", async (req, res) => {
   }
 
   try {
-    const query = `
-      SELECT 
-        o.id AS order_id,
-        o.created_at::date AS order_date,
-        c.name AS client_name,
-        o.total,
-        o.payment_method,
-        ps.name AS payment_status,
-        o.invoice_number,
-        o.invoice_date
-      FROM orders o
-      LEFT JOIN clients c ON o.client_id = c.id
-      LEFT JOIN payment_statuses ps ON o.payment_status_id = ps.id
-      ORDER BY o.created_at DESC
-      LIMIT 500
-    `;
+    let query = `
+    SELECT 
+      orders.id, 
+      orders.payment_status_id,
+      orders.invoice_number,
+      orders.shipping_cost,
+      orders.shipping_status,
+      orders.subtotal, 
+      orders.total, 
+      orders.payment_method, 
+      orders.user_id, 
+      orders.client_id, 
+      orders.created_at, 
+      orders.updated_at,
+      orders.payment_term_id,
+      orders.due_date,
+      orders.manager_approval_status,
+      orders.actual_dispatch_date,
+      orders.scheduled_dispatch_date,
+      orders.shipping_company,
+      orders.product_category_id,
+      clients.name AS client_name,
+      orders.status,
+      users.firstname || ' ' || users.lastname AS user_fullname
+    FROM orders
+    JOIN clients ON orders.client_id = clients.id
+    JOIN users ON orders.user_id = users.id
+  `;
 
     const { rows } = await postgresDB.query(query);
     res.json(rows);

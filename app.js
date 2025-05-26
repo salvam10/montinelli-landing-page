@@ -114,7 +114,7 @@ app.use("/api/categories", categoriesRouter);
 app.use("/api/products", productsRouter);
 app.use("/api/firebase", firebaseRouter);
 app.use("/api/clients", clientsRouter);
-app.use("/analytics", analyticsRoutes);
+app.use("/api/analytics", analyticsRoutes);
 app.use("/api/brands", brandsRouter);
 app.use("/api/orders", ordersRouter);
 app.use("/api/users", usersRouter);
