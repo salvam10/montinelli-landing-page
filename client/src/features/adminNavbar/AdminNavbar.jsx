@@ -9,12 +9,15 @@ import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined
 /* redux state */
 import { getProductsInCart } from "../slices/cartSlice";
 import MenuIcon from "@mui/icons-material/Menu";
+import { userLogout } from "../slices/usersSlice";
+
 import { AuthContext } from "../../App";
 
-const AdminNavbar = ({ isOpen, setIsOpen }) => {
-  const { user } = useContext(AuthContext);
+const AdminNavbar = () => {
+  const { user, setUser } = useContext(AuthContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false); // 👈 estado del menú
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
   const navigate = useNavigate();
 
   const dispatch = useDispatch();
@@ -38,12 +41,13 @@ const AdminNavbar = ({ isOpen, setIsOpen }) => {
     };
   }, []);
 
-  const handleCartClick = () => {
-    navigate(`/carrito`);
+  const handleLogoClick = () => {
+    navigate(`/admin`);
   };
 
-  const handleLogoClick = () => {
-    navigate(`/`);
+  const logout = () => {
+    dispatch(userLogout());
+    setUser(null);
   };
 
   return windowWidth > 640 ? (
@@ -55,7 +59,10 @@ const AdminNavbar = ({ isOpen, setIsOpen }) => {
           CORPORACION GSM
         </span>
       </div>
-      <div className="w-[15%] flex-start gap-1 cursor-pointer text-[#0079bf] hover:font-bold">
+      <div
+        className="w-[15%] flex-start gap-1 cursor-pointer text-[16px] hover:font-bold"
+        onClick={logout}
+      >
         <PersonOutlineOutlinedIcon />
         <span>Cerrar sesión</span>
       </div>

@@ -60,17 +60,15 @@ const App = () => {
             <Route path="/signin" element={<CedulaLoginPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           </Route>
-          <Route element={<ProtectedLayout />}>
+          <Route element={<SellerLayout />}>
             <Route path="/" element={<HomePage />} />
-            <Route element={<SellerLayout />}>
-              <Route path="mis-pedidos" element={<SellerOrdersPage />} />
-              <Route path="orders/:orderId" element={<SellerSingleOrder />} />
-              <Route path="categorias" element={<CategoriesPage />} />
-              <Route path="categorias/:name" element={<Category />} />
-              <Route path="carrito" element={<CartPage />} />
-              <Route path="checkout" element={<CheckoutPage />} />
-              <Route path="order-confirmation" element={<SuccesfullPage />} />
-            </Route>
+            <Route path="mis-pedidos" element={<SellerOrdersPage />} />
+            <Route path="orders/:orderId" element={<SellerSingleOrder />} />
+            <Route path="categorias" element={<CategoriesPage />} />
+            <Route path="categorias/:name" element={<Category />} />
+            <Route path="carrito" element={<CartPage />} />
+            <Route path="checkout" element={<CheckoutPage />} />
+            <Route path="order-confirmation" element={<SuccesfullPage />} />
           </Route>
           <Route path="/admin" element={<AdminLayout />}>
             <Route

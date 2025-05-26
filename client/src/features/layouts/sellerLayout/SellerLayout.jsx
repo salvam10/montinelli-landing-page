@@ -1,19 +1,23 @@
 import React, { useEffect } from "react";
 import { AuthContext } from "../../../App";
 import { Outlet, Navigate } from "react-router-dom";
+import NavBar from "../../navBar/NavBar"; // Asegúrate de importar esto si no lo has hecho
 
 const SellerLayout = () => {
   const { user } = React.useContext(AuthContext);
 
-  useEffect(() => {
-  }, [user]);
+  if (!user) {
+    return <Navigate to="/signin" replace />;
+  }
+
+  if (user.role !== "seller" && user.role !== "superadmin") {
+    return <Navigate to="/admin" replace />;
+  }
+
   return (
     <div className="">
-      {user?.role === "admin" || user?.role === "seller" ? (
-        <Outlet />
-      ) : (
-        <Navigate to="/" />
-      )}
+      <NavBar />
+      <Outlet />
     </div>
   );
 };

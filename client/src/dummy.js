@@ -245,8 +245,7 @@ export const adminSidebarItems = [
       { label: "Alimentos", route: "/admin/orders/category/34" },
       { label: "Limpieza", route: "/admin/orders/category/35" },
     ],
-  },
-  // Puedes agregar más secciones aquí fácilmente
+  }
 ];
 
 export const orderTableFilters = [
