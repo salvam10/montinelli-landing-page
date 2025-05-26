@@ -32,14 +32,14 @@ const SellerPicker = ({ selectedSeller, setSelectedSeller }) => {
   useEffect(() => {
     if (sellers?.length) {
       const formattedSellers = sellers
-        .filter((seller) => typeof seller.firstname === "string")
+        .filter((seller) => typeof seller?.firstname === "string")
         .map((seller) => {
-          const name = `${seller.firstname} ${seller.lastname}`.toLowerCase();
+          const name = `${seller?.firstname} ${seller?.lastname}`.toLowerCase();
           const formattedFirstname =
             name.charAt(0).toUpperCase() + name.slice(1);
           return {
             label: formattedFirstname,
-            value: seller.id,
+            value: seller?.id,
           };
         });
 
@@ -68,7 +68,7 @@ const SellerPicker = ({ selectedSeller, setSelectedSeller }) => {
             <span className="responsive-text font-bold">Nombre:</span>
             <span className="responsive-text">
               {capitalizeFirstLetter(
-                `${single_user.firstname} ${single_user.lastname}` ||
+                `${single_user?.firstname} ${single_user?.lastname}` ||
                   "No disponible"
               )}
             </span>
@@ -76,13 +76,13 @@ const SellerPicker = ({ selectedSeller, setSelectedSeller }) => {
           <div className="w-full flex flex-col">
             <span className="responsive-text font-bold">Cédula:</span>
             <span className="responsive-text">
-              {capitalizeFirstLetter(single_user.id || "No disponible")}
+              {capitalizeFirstLetter(single_user?.id || "No disponible")}
             </span>
           </div>
           <div className="w-full flex flex-col">
             <span className="responsive-text font-bold">Teléfono:</span>
             <span className="responsive-text">
-              {capitalizeFirstLetter(single_user.phone || "No disponible")}
+              {capitalizeFirstLetter(single_user?.phone || "No disponible")}
             </span>
           </div>
         </div>
