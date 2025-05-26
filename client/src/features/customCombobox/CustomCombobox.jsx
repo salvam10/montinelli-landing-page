@@ -65,7 +65,7 @@ const CustomCombobox = ({ options, selected, setSelected, label }) => {
                 key={option.value} // Usa option.value para la clave única
                 value={option.value}
                 className={({ active }) =>
-                  `relative cursor-pointer select-none py-2 pl-10 pr-4 ${
+                  `relative cursor-pointer select-none py-2 pl-10 pr-4 responsive-text ${
                     active ? "bg-blue-100 text-blue-900" : "text-gray-900"
                   }`
                 }

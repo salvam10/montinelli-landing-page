@@ -1,57 +1,118 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import ProductPickerModal from "../../features/productPickerModal/ProductPickerModal";
 import { getAllProducts } from "../../features/slices/productsSlice";
-import CustomTextInput from "../../features/customTextInput/CustomTextInput";
+import ProductPicker from "../../features/productPicker/ProductPicker";
+import ClientPicker from "../../features/clientPicker/ClientPicker";
+import AddInvoice from "../../features/addInvoice/AddInvoice";
+import StatusesPicker from "../../features/statusesPicker/StatusesPicker";
+import SellerPicker from "../../features/sellerPicker/SellerPicker";
 import CustomFormButton from "../../features/customFormButton/CustomFormButton";
-import SelectedProductTable from "../../features/selectedProductTable/SelectedProductTable";
+import PaymentSummary from "../../features/paymentSummary/PaymentSummary";
+import { createSplitOrders } from "../../features/slices/ordersSlice";
+import {
+  managerApprovalStatuses,
+  combinedStatuses,
+  paymentStatuses,
+} from "../../dummy";
 
 const CreateOrderPage = () => {
-  const [productName, setProductName] = useState("");
+  const [selectedSeller, setSelectedSeller] = useState({});
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [openModal, setOpenModal] = useState(false);
-  const { products, isLoading } = useSelector((state) => state.products);
+  const [invoiceDate, setInvoiceDate] = useState(new Date());
+  const [selectedClientId, setSelectedClientId] = useState();
+  const [paymentStatus, setPaymentStatus] = useState(paymentStatuses[0]);
+  const [managerStatus, setManagerStatus] = useState();
+  const [openManagerDrop, setOpenManagerDrop] = useState(false);
+  const [openPaymentDrop, setOpenPaymentDrop] = useState(false);
+  const [openGroupedDrop, setOpenGroupedDrop] = useState(false);
+  const [invoiceNumber, setInvoiceNumber] = useState("");
+
   const dispatch = useDispatch();
 
   useEffect(() => {
     dispatch(getAllProducts());
   }, []);
 
-  useEffect(() => {
-    console.log("selectedProducts", selectedProducts);
-  }, [selectedProducts]);
+  // Cálculo del resumen de pago
+  const subtotal = selectedProducts.reduce(
+    (acc, product) => acc + (product.base_price || 0) * (product.quantity || 0),
+    0
+  );
 
-  const handleSubmitClick = () => {
-    console.log("selectedProducts", selectedProducts);
+  const shippingCost = 0;
+  const total = subtotal + shippingCost;
+
+  const order = {
+    subtotal,
+    shippingCost,
+    total,
+  };
+
+  const handleCreateOrder = () => {
+    dispatch(
+      createSplitOrders({
+        user_id: selectedSeller.id,
+        payment_status_id: paymentStatus.value,
+        manager_approval_status: managerStatus.value,
+        shipping_cost: 0,
+        shipping_status: "Despachado",
+        payment_method: "credito",
+        client_id: selectedClientId,
+        invoice_date: invoiceDate,
+        invoice_number: invoiceNumber,
+        productsInCart: selectedProducts, // debe incluir category_id
+      })
+    );
   };
 
   return (
-    <div className="w-[80%] flex flex-col gap-4 bg-white p-6 rounded-lg shadow max-h-[80vh] overflow-y-auto">
-      <div className="flex-start">
+    <div className="w-full flex items-center flex-col p-5 bg-transparent gap-5 overflow-auto max-h-[90vh]">
+      <div className="xs:w-full md:w-[80%]">
+        <StatusesPicker
+          openManagerDrop={openManagerDrop}
+          setOpenManagerDrop={setOpenManagerDrop}
+          openGroupedDrop={openGroupedDrop}
+          setOpenGroupedDrop={setOpenGroupedDrop}
+          openPaymentDrop={openPaymentDrop}
+          setOpenPaymentDrop={setOpenPaymentDrop}
+          paymentStatus={paymentStatus}
+          setPaymentStatus={setPaymentStatus}
+          managerStatus={managerStatus}
+          setManagerStatus={setManagerStatus}
+        />
         <CustomFormButton
-          text="Agregar productos"
+          text="Guardar"
           width="w-auto"
-          handleClickFunction={() => setOpenModal(true)}
+          handleClickFunction={handleCreateOrder}
         />
       </div>
-      {openModal && (
-        <ProductPickerModal
-          products={products}
-          productName={productName}
-          setProductName={setProductName}
-          setOpenModal={setOpenModal}
-          openModal={openModal}
-          selectedProducts={selectedProducts}
-          setSelectedProducts={setSelectedProducts}
-          handleSubmitClick={handleSubmitClick}
-        />
-      )}
-      {selectedProducts.length > 0 && (
-        <SelectedProductTable
-          selectedProducts={selectedProducts}
-          setSelectedProducts={setSelectedProducts}
-        />
-      )}
+
+      <div className="xs:w-full md:w-[80%] flex flex-col md:flex-row gap-5">
+        <div className="w-full md:w-[70%] flex flex-col gap-5">
+          <ProductPicker
+            selectedProducts={selectedProducts}
+            setSelectedProducts={setSelectedProducts}
+          />
+          <PaymentSummary orderProducts={selectedProducts} order={order} />
+        </div>
+
+        <div className="w-full md:w-[30%] flex flex-col gap-5">
+          <ClientPicker
+            selectedClientId={selectedClientId}
+            setSelectedClientId={setSelectedClientId}
+          />
+          <AddInvoice
+            invoiceNumber={invoiceNumber}
+            setInvoiceNumber={setInvoiceNumber}
+            invoiceDate={invoiceDate}
+            setInvoiceDate={setInvoiceDate}
+          />
+          <SellerPicker
+            selectedSeller={selectedSeller}
+            setSelectedSeller={setSelectedSeller}
+          />
+        </div>
+      </div>
     </div>
   );
 };

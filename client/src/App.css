@@ -212,7 +212,7 @@ body {
 /* checkout sections */
 
 .section-container {
-  @apply w-full py-5 px-5 flex-center flex-col gap-5 list-none bg-white;
+  @apply w-full py-5 px-5 flex-center flex-col gap-5 list-none bg-white border rounded-md shadow-sm;
 }
 
 /* LISTS */

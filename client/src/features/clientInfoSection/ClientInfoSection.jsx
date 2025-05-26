@@ -2,17 +2,13 @@ import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import CustomButton from "../customButton/customButton";
 import clientsSlice, { resetClient } from "../slices/clientsSlice";
+import { capitalizeFirstLetter } from "../../helpers/CapitalizeFirstLetter";
 
 const ClientInfoSection = ({ client }) => {
   const dispatch = useDispatch();
 
   const handleOnClick = () => {
     dispatch(resetClient());
-  };
-
-  const capitalizeFirstLetter = (text) => {
-    if (!text) return "";
-    return text.charAt(0).toUpperCase() + text.slice(1);
   };
 
   return (

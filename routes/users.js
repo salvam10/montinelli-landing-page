@@ -6,12 +6,32 @@ const postgresDB = require("../db/postgres");
 tipo de información sensible, para guardar la información de manera segura en una base de datos o almacenamiento externo. */
 const bcrypt = require("bcrypt");
 
-//Obtener todos los usuarios
+// Obtener todos los usuarios o filtrarlos por uno o varios roles (case-insensitive)
 router.get("/", async (req, res, next) => {
-  const { rows } = await postgresDB.query("SELECT * FROM users");
-  const users = rows;
-  res.send(users);
+  try {
+    let { roles } = req.query;
+
+    let query = "SELECT * FROM users";
+    let values = [];
+
+    if (roles) {
+      // Asegurar que roles sea un array
+      if (typeof roles === "string") {
+        roles = roles.split(",");
+      }
+
+      const placeholders = roles.map((_, idx) => `$${idx + 1}`).join(", ");
+      query += ` WHERE role ILIKE ANY (ARRAY[${placeholders}])`;
+      values = roles;
+    }
+
+    const { rows } = await postgresDB.query(query, values);
+    res.send(rows);
+  } catch (error) {
+    next(error);
+  }
 });
+
 
 /* Revisar si un usuario ya existe en la base de datos */
 router.get("/exists", async (req, res) => {
@@ -32,15 +52,6 @@ router.get("/exists", async (req, res) => {
 });
 
 // Crear un nuevo cliente
-/*bcrypt.hash(secret_password, 10) es una función que se utiliza para encriptar una contraseña.
-  - secret_password es la contraseña que se va a encriptar.
-  - 10 es el número de "rounds" utilizados durante el proceso de encriptación. 
-  Un round es un ciclo de cifrado, y el número de rounds aumenta la dificultad para descifrar la contraseña.
-
-  Es importante destacar que el proceso de encriptación es irreversible, lo que significa que no se puede recuperar
-  la contraseña original a partir de su versión encriptada. Por lo tanto, es importante guardar la contraseña encriptada en 
-  lugar de la contraseña original.
-  */
 router.post("/signup", async (req, res, next) => {
   try {
     const { id, username, firstname, lastname, phone, role, secret_password } =
@@ -56,14 +67,14 @@ router.post("/signup", async (req, res, next) => {
   }
 });
 
-//obtener un cliente por id
+//obtener un usuario por id
 router.get("/:id", async (req, res) => {
   const id = req.params.id;
   const query = "SELECT * FROM users WHERE id = $1";
   try {
     const result = await postgresDB.query(query, [id]);
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Cliente no encontrado" });
+      return res.status(404).json({ message: "Usuario no encontrado" });
     }
     res.status(200).json(result.rows[0]);
   } catch (err) {
@@ -71,7 +82,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-//actualizar a un cliente
+//actualizar a un usuario
 router.put("/:id", async (req, res) => {
   const id = req.params.id;
   const { firstname, lastname, phone, email, role } = req.body;

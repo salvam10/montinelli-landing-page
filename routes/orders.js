@@ -126,7 +126,7 @@ router.get("/:orderId", async (req, res) => {
 router.get("/seller/:userId", async (req, res) => {
   const { userId } = req.params;
   let { product_category_id } = req.query;
-  
+
   let query = `
     SELECT 
       orders.id, 
@@ -190,13 +190,12 @@ router.get("/seller/:userId", async (req, res) => {
   }
 });
 
-
 // Obtener productos de una orden
 router.get("/:orderId/items", async (req, res) => {
   const { userId, orderId } = req.params;
   try {
     const { rows } = await postgresDB.query(
-      "SELECT p.*, oi.quantity, oi.price FROM products p JOIN order_items oi ON p.id = oi.product_id JOIN orders o ON oi.order_id = o.id WHERE o.id = $1",
+      "SELECT p.*, oi.quantity, oi.price AS order_price FROM products p JOIN order_items oi ON p.id = oi.product_id JOIN orders o ON oi.order_id = o.id WHERE o.id = $1",
       [orderId]
     );
     if (rows.length === 0) {
@@ -306,16 +305,17 @@ router.post("/split-by-category", async (req, res) => {
     client_id,
     payment_method,
     payment_status_id,
+    manager_approval_status,
     shipping_status,
     shipping_cost,
+    invoice_date,
+    invoice_number,
     products = [],
   } = req.body;
 
   try {
-    // Obtener todas las categorías únicas presentes en el carrito
     const uniqueCategoryIds = [...new Set(products.map((p) => p.category_id))];
 
-    // Consulta en una sola query los nombres de esas categorías
     const categoryQuery = `
       SELECT id, name
       FROM product_categories
@@ -325,13 +325,11 @@ router.post("/split-by-category", async (req, res) => {
       uniqueCategoryIds,
     ]);
 
-    // Crear un mapa de category_id => category_name
     const categoryMap = {};
     categoryRows.forEach((cat) => {
       categoryMap[cat.id] = cat.name;
     });
 
-    // Agrupar productos por nombre de categoría
     const productsByCategory = products.reduce((acc, product) => {
       const categoryName = categoryMap[product.category_id] || "otros";
       if (!acc[categoryName]) acc[categoryName] = [];
@@ -350,7 +348,6 @@ router.post("/split-by-category", async (req, res) => {
       );
       const total = subtotal + shipping_cost;
 
-      // Obtener la categoría desde el primer producto del grupo
       const product_category_id = categoryProducts[0].category_id;
 
       const createOrderQuery = `
@@ -363,9 +360,12 @@ router.post("/split-by-category", async (req, res) => {
           payment_method,
           user_id,
           product_category_id,
-          client_id
+          client_id,
+          manager_approval_status,
+          invoice_date,
+          invoice_number
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING *
       `;
 
@@ -381,6 +381,9 @@ router.post("/split-by-category", async (req, res) => {
         user_id,
         product_category_id,
         client_id,
+        manager_approval_status,
+        invoice_date,
+        invoice_number,
       ]);
 
       for (const product of categoryProducts) {

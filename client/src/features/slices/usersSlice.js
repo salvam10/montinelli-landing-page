@@ -57,6 +57,27 @@ export const checkUserExistence = createAsyncThunk(
   }
 );
 
+/* Obtener vendedores */
+export const getSellers = createAsyncThunk(
+  "users/getSellers",
+  async (arg, thunkAPI) => {
+    console.log('entre');
+    
+    try {
+      const response = await axios.get(`${SERVER_URL}/api/users/`, {
+        params: {
+          roles: "seller", // también puedes usar ["seller", "admin"] si deseas varios
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error al obtener los vendedores:", error);
+      return thunkAPI.rejectWithValue(
+        error.response?.data || "Error desconocido"
+      );
+    }
+  }
+);
 
 export const localAuthenticateUser = createAsyncThunk(
   "users/localAuthenticateUser",
@@ -64,7 +85,7 @@ export const localAuthenticateUser = createAsyncThunk(
     try {
       console.log("local Authenticate User");
       const status = await fetchAuthLocalUser(cedula, password);
-      if (status.message === "Succesfully Authenticated"){
+      if (status.message === "Succesfully Authenticated") {
         thunkAPI.dispatch(getLocalUser());
         return true;
       } else {
@@ -75,8 +96,6 @@ export const localAuthenticateUser = createAsyncThunk(
     }
   }
 );
-
-
 
 export const getLocalUser = createAsyncThunk(
   "users/getLocalUser",
@@ -176,6 +195,7 @@ const usersSlice = createSlice({
   initialState: {
     user: null,
     users: [],
+    sellers: [],
     hasError: false,
     isLoading: false,
     isValidUser: true,
@@ -351,9 +371,21 @@ const usersSlice = createSlice({
       .addCase(getUserById.rejected, (state) => {
         state.isLoading = false;
         state.hasError = true;
+      })
+      .addCase(getSellers.pending, (state) => {
+        state.isLoading = true;
+        state.hasError = false;
+      })
+      .addCase(getSellers.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.hasError = false;
+        state.sellers = action.payload;
+      })
+      .addCase(getSellers.rejected, (state) => {
+        state.isLoading = false;
+        state.hasError = true;
       });
   },
 });
-
 
 export default usersSlice.reducer;

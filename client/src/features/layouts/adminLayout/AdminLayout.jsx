@@ -16,7 +16,7 @@ const AdminLayout = () => {
            bg-[#f1f1f1] */}
           <div className="flex">
             <AdminSidebar />
-            <Outlet />
+            <Outlet/>
           </div>
         </div>
       ) : (

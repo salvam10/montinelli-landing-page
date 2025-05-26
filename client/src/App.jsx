@@ -50,8 +50,6 @@ const App = () => {
       localStorage.setItem("user", JSON.stringify(redux_user));
       setUser(JSON.parse(localStorage.getItem("user")));
     }
-    console.log('s');
-    
   }, [redux_user]);
 
   return (
@@ -75,6 +73,10 @@ const App = () => {
             </Route>
           </Route>
           <Route path="/admin" element={<AdminLayout />}>
+            <Route
+              index
+              element={<Navigate to="orders/category/34" replace />}
+            />
             <Route path="orders" element={<OrdersPage />} />
             <Route
               path="orders/category/:prodCategoryId"

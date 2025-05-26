@@ -1,7 +1,16 @@
 import React, { useState } from "react";
 
-const CustomTextInput = ({ value, setValue, label, type, width, placeholder }) => {
-
+const CustomTextInput = ({
+  value,
+  setValue,
+  label,
+  type,
+  width,
+  placeholder,
+  inputRef,
+  onKeyDown,
+  onBlur,
+}) => {
   const handleOnChange = (e) => {
     setValue(e.target.value);
   };
@@ -10,6 +19,9 @@ const CustomTextInput = ({ value, setValue, label, type, width, placeholder }) =
     <div className={`${width} flex flex-col gap-2`}>
       {label && <label className="xs:text-[10px]">{label}:</label>}
       <input
+        ref={inputRef}
+        onKeyDown={onKeyDown}
+        onBlur={onBlur}
         type={type}
         value={value}
         onChange={handleOnChange}

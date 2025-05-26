@@ -112,6 +112,8 @@ export const paymentTerms = [
   { label: "Contado", value: 0 },
 ];
 
+/* STATUSES */
+
 export const managerApprovalStatuses = [
   {
     icon: (
@@ -152,11 +154,25 @@ export const managerApprovalStatuses = [
   },
 ];
 
+export const paymentStatuses = [
+  { text: "Pagado", value: 2 },
+  { text: "Pendiente de pago", value: 1 },
+  { text: "Vencido", value: 3 },
+  { text: "En reclamo", value: 4 },
+];
+
 export const debtStatuses = [
   { text: "Al dia", value: false },
   { text: "Con deuda", value: true },
   { text: "Deuda no verificada", value: true },
 ];
+
+export const dispatchStatuses = [
+  { text: "Sin despacho asignado" },
+  { text: "Rechazado por cliente" },
+  { text: "Despachado" },
+];
+
 
 export const combinedStatuses = [
   {
@@ -213,15 +229,11 @@ export const combinedStatuses = [
   },
 ];
 
+
+
 export const shippingCompanies = [
   { label: "GSM 747", value: "GSM 747" },
   { label: "Sr Tereso", value: "Sr Tereso" },
-];
-
-export const dispatchStatuses = [
-  { text: "Sin despacho asignado" },
-  { text: "Rechazado por cliente" },
-  { text: "Despachado" },
 ];
 
 export const adminSidebarItems = [

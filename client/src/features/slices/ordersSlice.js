@@ -141,6 +141,9 @@ export const createSplitOrders = createAsyncThunk(
       shipping_status,
       shipping_cost,
       productsInCart,
+      invoice_date,
+      invoice_number,
+      manager_approval_status
     },
     thunkAPI
   ) => {
@@ -154,6 +157,9 @@ export const createSplitOrders = createAsyncThunk(
           payment_status_id,
           shipping_status,
           shipping_cost,
+          invoice_date,
+          invoice_number,
+          manager_approval_status,
           products: productsInCart,
         }
       );
@@ -187,8 +193,8 @@ export const updateOrder = createAsyncThunk(
     {
       orderId,
       status,
-      invoice_number,
       payment_status_id,
+      invoice_number,
       payment_term_id,
       due_date,
       manager_approval_status,
