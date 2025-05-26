@@ -11,6 +11,8 @@ const SellerLayout = () => {
   }
 
   if (user.role !== "seller" && user.role !== "superadmin") {
+    console.log('no soy superadmin');
+    
     return <Navigate to="/admin" replace />;
   }
 

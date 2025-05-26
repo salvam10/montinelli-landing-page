@@ -57,6 +57,7 @@ const CheckoutPage = () => {
             payment_status_id: 1,
             shipping_cost: shippingCost,
             shipping_status: "pendiente",
+            manager_approval_status: "pendiente",
             payment_method: "credito",
             client_id: client.id,
             productsInCart: productsInCart, // debe incluir category_id
@@ -69,7 +70,7 @@ const CheckoutPage = () => {
         // Podrías mostrar un toast o mensaje al usuario aquí
       }
     } else {
-        alert("Debes seleccionar un cliente")
+      alert("Debes seleccionar un cliente");
     }
   };
 

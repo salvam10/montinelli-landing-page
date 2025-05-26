@@ -20,7 +20,8 @@ const OrderSummary = ({ windowWidth, buttonTitle, handleOnClick }) => {
   const calculateIVA = () => {
     let acumIVA = 0;
     productsInCart?.map((product) => {
-      return acumIVA = product.base_price * product.tax_percentage / 100
+      console.log('product', product);
+      return acumIVA += product.base_price * product.tax_percentage / 100
     }) 
     return acumIVA.toFixed(2);
   }
