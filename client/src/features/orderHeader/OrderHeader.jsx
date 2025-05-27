@@ -36,7 +36,10 @@ const OrderHeader = ({
   const [pillBg, setPillBg] = useState();
   const [managerStatus, setManagerStatus] = useState();
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-  const [debtStatus, setDebtStatus] = useState();
+  const [debtStatus, setDebtStatus] = useState({
+    value: "Deuda no verificada",
+    prefix: null,
+  });
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -55,10 +58,15 @@ const OrderHeader = ({
   }, [managerStatus]);
 
   useEffect(() => {
-    if (client?.has_debt) {
-      setDebtStatus("con deuda");
+    if (client?.has_debt == null) {
+      setDebtStatus({
+        value: "Deuda no verificada",
+        prefix: null,
+      });
+    } else if (client.has_debt === true) {
+      setDebtStatus({ value: "con deuda", prefix: "Cliente" });
     } else {
-      setDebtStatus("al dia");
+      setDebtStatus({ value: "al día", prefix: "Cliente" });
     }
   }, [client]);
 
@@ -71,7 +79,7 @@ const OrderHeader = ({
 
     switch (status) {
       case "aprobado":
-      case "al dia":
+      case "al día":
         setStatus("bg-[rgba(112,181,0,0.5)]");
         break;
       case "pendiente":
@@ -82,6 +90,7 @@ const OrderHeader = ({
         setStatus("bg-[rgba(235,90,70,0.5)]");
         break;
       default:
+        setStatus("bg-[rgba(200,200,200,0.5)]"); // Default color for unknown status
         console.log("Estado desconocido:", currentStatus);
     }
   };
@@ -140,8 +149,8 @@ const OrderHeader = ({
             />
             <Pill
               setBgColor={changePillBgColor}
-              prefix="Cliente"
-              status={debtStatus}
+              prefix={debtStatus ? debtStatus.prefix : null}
+              status={debtStatus.value}
             />
           </div>
         </div>
@@ -158,7 +167,13 @@ const OrderHeader = ({
             <DropdownButton
               btnLabel="Estado de cuenta"
               items={debtStatuses}
-              currentItem={client?.has_debt ? "con deuda" : "al dia"}
+              currentItem={
+                client?.has_debt == null
+                  ? "Deuda no verificada"
+                  : client.has_debt === true
+                  ? "con deuda"
+                  : "al día"
+              }
               handleOnClick={updateDebtStatus}
               openDropdown={openDebtDrop}
               setOpenDropdown={setOpenDebtDrop}

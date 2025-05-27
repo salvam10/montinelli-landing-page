@@ -46,7 +46,31 @@ const columns = [
     meta: { width: "w-[100px] min-w-[100px] pr-4" },
   },
   {
-    header: "Estatus de Aprobación",
+    header: "Estado de Facturación",
+    accessorKey: "billing_status",
+    footer: "Estado de Facturación",
+    cell: (info) => {
+      const invoiceDate = info.row.original.invoice_date;
+      const isInvoiced = !!invoiceDate;
+      console.log('invoiceDate', invoiceDate);
+      
+      console.log('is invoiced', isInvoiced);
+      
+      const text = isInvoiced ? "facturado" : "sin facturar";
+      const bg = isInvoiced
+        ? "bg-[rgba(112,181,0,0.5)]"
+        : "bg-[rgba(242,214,0,0.5)]";
+
+      return (
+        <span className={`responsive-text py-[1px] px-2 rounded-lg ${bg}`}>
+          {text}
+        </span>
+      );
+    },
+    meta: { width: "w-[180px] min-w-[180px]" },
+  },
+  {
+    header: "Estado de Aprobación",
     accessorKey: "manager_approval_status",
     footer: "Estatus de Aprobación",
     meta: { width: "w-[180px] min-w-[180px]" },

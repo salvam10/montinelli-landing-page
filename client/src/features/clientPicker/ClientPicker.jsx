@@ -22,7 +22,7 @@ const ClientPicker = ({ selectedClientId, setSelectedClientId }) => {
     if (Object.keys(client).length > 0) {
       setSelectedClientId(client.id);
     }
-  },[client])
+  }, [client]);
 
   useEffect(() => {
     dispatch(getClients());
@@ -72,6 +72,17 @@ const ClientPicker = ({ selectedClientId, setSelectedClientId }) => {
           <span className="responsive-text">
             {capitalizeFirstLetter(client.name || "No disponible")}
           </span>
+        </div>
+        <div className="w-full flex flex-col">
+          <span className="responsive-text font-bold">Rif:</span>
+          <a
+            className="text-[#0079bf] hover:text-[#ff9f1a] client-detail-label cursor-pointer"
+            href={client.rif_url}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {client.rif}
+          </a>
         </div>
         <div className="w-full flex flex-col">
           <span className="responsive-text font-bold">

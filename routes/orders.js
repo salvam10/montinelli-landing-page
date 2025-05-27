@@ -11,6 +11,7 @@ router.get("/", async (req, res) => {
       orders.id, 
       orders.payment_status_id,
       orders.invoice_number,
+      orders.invoice_date,
       orders.shipping_cost,
       orders.shipping_status,
       orders.subtotal, 
@@ -22,6 +23,7 @@ router.get("/", async (req, res) => {
       orders.updated_at,
       orders.payment_term_id,
       orders.due_date,
+      orders.billing_status,
       orders.manager_approval_status,
       orders.actual_dispatch_date,
       orders.scheduled_dispatch_date,
@@ -58,7 +60,7 @@ router.get("/", async (req, res) => {
   }
 
   // Orden final
-  query += ` ORDER BY orders.id DESC`;
+  query += ` ORDER BY orders.created_at DESC`;
 
   try {
     const result = await postgresDB.query(query, values);
@@ -301,16 +303,8 @@ router.post("/:orderId/items", async (req, res) => {
 //Crear ordenes para cada categoria de producto y además agregar los productos a la orden.
 router.post("/split-by-category", async (req, res) => {
   const {
-    user_id,
-    client_id,
-    payment_method,
-    payment_status_id,
-    manager_approval_status,
-    shipping_status,
-    shipping_cost,
-    invoice_date,
-    invoice_number,
     products = [],
+    ...bodyFields // Esto contiene el resto de los campos (user_id, client_id, etc.)
   } = req.body;
 
   try {
@@ -346,46 +340,34 @@ router.post("/split-by-category", async (req, res) => {
         (sum, product) => sum + product.base_price * product.quantity,
         0
       );
-      const total = subtotal + shipping_cost;
+      const total = subtotal + (bodyFields.shipping_cost || 0);
 
       const product_category_id = categoryProducts[0].category_id;
 
+      // Clona los campos que vienen en req.body
+      const orderFields = {
+        ...bodyFields,
+        subtotal,
+        total,
+        product_category_id,
+      };
+
+      // Extrae los campos dinámicos
+      const columns = Object.keys(orderFields);
+      const values = Object.values(orderFields);
+      const placeholders = columns.map((_, idx) => `$${idx + 1}`).join(", ");
+
       const createOrderQuery = `
-        INSERT INTO orders (
-          payment_status_id,
-          subtotal,
-          shipping_cost,
-          shipping_status,
-          total,
-          payment_method,
-          user_id,
-          product_category_id,
-          client_id,
-          manager_approval_status,
-          invoice_date,
-          invoice_number
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        INSERT INTO orders (${columns.join(", ")})
+        VALUES (${placeholders})
         RETURNING *
       `;
 
       const {
         rows: [order],
-      } = await postgresDB.query(createOrderQuery, [
-        payment_status_id,
-        subtotal,
-        shipping_cost,
-        shipping_status,
-        total,
-        payment_method,
-        user_id,
-        product_category_id,
-        client_id,
-        manager_approval_status,
-        invoice_date,
-        invoice_number,
-      ]);
+      } = await postgresDB.query(createOrderQuery, values);
 
+      // Crear productos de la orden
       for (const product of categoryProducts) {
         const createOrderItemQuery = `
           INSERT INTO order_items (
@@ -418,7 +400,6 @@ router.post("/split-by-category", async (req, res) => {
     });
   }
 });
-
 
 // Eliminar una orden
 router.delete("/:orderId", async (req, res) => {
@@ -458,6 +439,7 @@ router.put("/:orderId", async (req, res, next) => {
     manager_approval_status,
     due_date,
     invoice_number,
+    invoice_date,
   } = req.body;
 
   let updateQuery = "UPDATE orders SET ";
@@ -465,6 +447,11 @@ router.put("/:orderId", async (req, res, next) => {
   let count = 1;
 
   // Construir la consulta de actualización dinámica
+  if (invoice_date !== undefined) {
+    updateQuery += `invoice_date = $${count}, `;
+    updateValues.push(invoice_date);
+    count++;
+  }
   if (invoice_number !== undefined) {
     updateQuery += `invoice_number = $${count}, `;
     updateValues.push(invoice_number);

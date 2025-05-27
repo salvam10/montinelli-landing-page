@@ -58,6 +58,7 @@ const CreateOrderPage = () => {
         shipping_status: "Despachado",
         payment_method: "credito",
         client_id: selectedClientId,
+        created_at: invoiceDate,
         invoice_date: invoiceDate,
         invoice_number: invoiceNumber,
         productsInCart: selectedProducts, // debe incluir category_id

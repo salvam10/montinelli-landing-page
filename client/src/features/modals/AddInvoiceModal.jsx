@@ -23,7 +23,11 @@ const AddInvoiceModal = ({
 
   const updateInvoiceNumber = async () => {
     await dispatch(
-      updateOrder({ orderId: order.id, invoice_number: invoiceNumber })
+      updateOrder({
+        orderId: order.id,
+        invoice_number: invoiceNumber,
+        invoice_date: new Date(),
+      })
     );
     dispatch(getOrderById({ orderId: order.id }));
     setOpenModal(false);

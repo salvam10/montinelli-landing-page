@@ -143,7 +143,8 @@ export const createSplitOrders = createAsyncThunk(
       productsInCart,
       invoice_date,
       invoice_number,
-      manager_approval_status
+      manager_approval_status,
+      created_at,
     },
     thunkAPI
   ) => {
@@ -161,6 +162,7 @@ export const createSplitOrders = createAsyncThunk(
           invoice_number,
           manager_approval_status,
           products: productsInCart,
+          created_at,
         }
       );
 
@@ -195,6 +197,7 @@ export const updateOrder = createAsyncThunk(
       status,
       payment_status_id,
       invoice_number,
+      invoice_date,
       payment_term_id,
       due_date,
       manager_approval_status,
@@ -209,6 +212,7 @@ export const updateOrder = createAsyncThunk(
       const response = await axios.put(`${SERVER_URL}/api/orders/${orderId}`, {
         status,
         invoice_number,
+        invoice_date,
         payment_status_id,
         payment_term_id,
         due_date,

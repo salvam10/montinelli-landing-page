@@ -162,9 +162,9 @@ export const paymentStatuses = [
 ];
 
 export const debtStatuses = [
-  { text: "Al dia", value: false },
+  { text: "Al día", value: false },
   { text: "Con deuda", value: true },
-  { text: "Deuda no verificada", value: true },
+  { text: "Deuda no verificada", value: null },
 ];
 
 export const dispatchStatuses = [

@@ -5,6 +5,15 @@ const PaymentSummary = ({ order, orderProducts }) => {
     console.log("orderProducts", orderProducts);
   }, [orderProducts]);
 
+  const calculateIVA = () => {
+    let acumIVA = 0;
+    orderProducts?.map((product) => {
+      console.log("product", product);
+      return (acumIVA += (product.base_price * product.tax_percentage) / 100);
+    });
+    return acumIVA.toFixed(2);
+  };
+
   return (
     <div className="section-container">
       <div className="w-full flex">
@@ -25,7 +34,14 @@ const PaymentSummary = ({ order, orderProducts }) => {
             </span>
           </div>
         </li>
-
+        <li className="flex">
+          <div className="billing-li-label">
+            <span className="responsive-text">IVA</span>
+          </div>
+          <div className="billing-li-details justify-end">
+            <span className="responsive-text">${calculateIVA()}</span>
+          </div>
+        </li>
         <li className="flex">
           <div className="billing-li-label">
             <span className="responsive-text">Envío</span>
@@ -44,7 +60,13 @@ const PaymentSummary = ({ order, orderProducts }) => {
           </div>
           <div className="billing-li-details justify-end">
             <span className="responsive-text font-bold">
-              ${Number(order.total).toFixed(2)}
+              $
+              {(
+                Number(order.total || 0) +
+                Number(order.shippingCost || 0) +
+                Number(calculateIVA(order.total || 0))
+              ) // ajusta según tu lógica
+                .toFixed(2)}
             </span>
           </div>
         </li>
