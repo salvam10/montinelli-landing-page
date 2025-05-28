@@ -9,7 +9,7 @@ const PaymentSummary = ({ order, orderProducts }) => {
     let acumIVA = 0;
     orderProducts?.map((product) => {
       console.log("product", product);
-      return (acumIVA += (product.base_price * product.tax_percentage) / 100);
+      return (acumIVA += product.quantity * (product.base_price * product.tax_percentage) / 100);
     });
     return acumIVA.toFixed(2);
   };
@@ -21,20 +21,24 @@ const PaymentSummary = ({ order, orderProducts }) => {
       </div>
 
       <div className="w-full flex flex-col gap-5 border rounded-md py-2 px-5">
-        <li className="flex">
+        <li className="flex items-baseline">
           <div className="billing-li-label">
             <span className="responsive-text">Subtotal</span>
           </div>
           <div className="billing-li-details">
             <span className="responsive-text ">
-              {orderProducts?.length} artículos
+              {orderProducts?.reduce(
+                (acc, product) => acc + (product.quantity || 0),
+                0
+              )}{" "}
+              artículos
             </span>
             <span className="responsive-text">
               ${Number(order.subtotal).toFixed(2)}
             </span>
           </div>
         </li>
-        <li className="flex">
+        <li className="flex items-baseline">
           <div className="billing-li-label">
             <span className="responsive-text">IVA</span>
           </div>
@@ -42,7 +46,7 @@ const PaymentSummary = ({ order, orderProducts }) => {
             <span className="responsive-text">${calculateIVA()}</span>
           </div>
         </li>
-        <li className="flex">
+        <li className="flex items-baseline">
           <div className="billing-li-label">
             <span className="responsive-text">Envío</span>
           </div>
@@ -54,7 +58,7 @@ const PaymentSummary = ({ order, orderProducts }) => {
           </div>
         </li>
 
-        <li className="flex ">
+        <li className="flex items-baseline">
           <div className="billing-li-label">
             <span className="responsive-text font-bold">Total</span>
           </div>
@@ -64,7 +68,7 @@ const PaymentSummary = ({ order, orderProducts }) => {
               {(
                 Number(order.total || 0) +
                 Number(order.shippingCost || 0) +
-                Number(calculateIVA(order.total || 0))
+                Number(calculateIVA())
               ) // ajusta según tu lógica
                 .toFixed(2)}
             </span>

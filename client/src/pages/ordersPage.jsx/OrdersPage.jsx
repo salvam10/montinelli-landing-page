@@ -52,10 +52,6 @@ const columns = [
     cell: (info) => {
       const invoiceDate = info.row.original.invoice_date;
       const isInvoiced = !!invoiceDate;
-      console.log('invoiceDate', invoiceDate);
-      
-      console.log('is invoiced', isInvoiced);
-      
       const text = isInvoiced ? "facturado" : "sin facturar";
       const bg = isInvoiced
         ? "bg-[rgba(112,181,0,0.5)]"
@@ -70,9 +66,19 @@ const columns = [
     meta: { width: "w-[180px] min-w-[180px]" },
   },
   {
-    header: "Estado de Aprobación",
-    accessorKey: "manager_approval_status",
-    footer: "Estatus de Aprobación",
+    header: "# Factura",
+    accessorKey: "invoice_number",
+    footer: "Factura",
+    cell: (info) => {
+      const invoiceNumber = info.row.original.invoice_number;
+      return (
+        <span
+          className={`responsive-text py-[1px] px-2 rounded-lg bg-[rgba(0,121,191,0.5)]`}
+        >
+          {invoiceNumber}
+        </span>
+      );
+    },
     meta: { width: "w-[180px] min-w-[180px]" },
   },
 ];
@@ -80,13 +86,17 @@ const columns = [
 const OrdersPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { orders } = useSelector((state) => state.orders);
+  const { allOrders, orders } = useSelector((state) => state.orders);
 
   const [openModal, setOpenModal] = useState(false);
   const [orderId, setOrderId] = useState(null);
   const [isDeleteConfirmed, setIsDeleteConfirmed] = useState(false);
   const [managerStatus, setManagerStatus] = useState("pendiente"); // nuevo estado
   const { prodCategoryId } = useParams();
+
+  useEffect(() => {
+    dispatch(getOrders({ product_category_id: prodCategoryId }));
+  }, [prodCategoryId]);
 
   useEffect(() => {
     dispatch(
@@ -117,6 +127,12 @@ const OrdersPage = () => {
     navigate(`/admin/orders/${id}`);
   };
 
+ const orderCountsByStatus = allOrders.reduce((acc, order) => {
+   const status = order.manager_approval_status || "sin_status";
+   acc[status] = (acc[status] || 0) + 1;
+   return acc;
+ }, {});
+
   return (
     <div className="w-full overflow-x-hidden px-6">
       <div className="flex-between py-6">
@@ -139,11 +155,14 @@ const OrdersPage = () => {
             <li
               key={value ?? "todos"}
               onClick={() => setManagerStatus(value)}
-              className={`py-1 px-3 cursor-pointer rounded-md hover:bg-[#EBEBEB] ${
+              className={`flex gap-1 items-center py-1 px-3 cursor-pointer rounded-md hover:bg-[#EBEBEB] ${
                 managerStatus === value ? "bg-[#EBEBEB] font-semibold" : ""
               }`}
             >
-              {label}
+              <span>{label}</span>
+              <span className="w-5 h-5 flex items-center justify-center rounded-full bg-[#E5E5E5] text text-[10px] font-bold shadow-inner">
+                {orderCountsByStatus[value] || 0}
+              </span>
             </li>
           ))}
         </ul>

@@ -20,11 +20,13 @@ const OrderSummary = ({ windowWidth, buttonTitle, handleOnClick }) => {
   const calculateIVA = () => {
     let acumIVA = 0;
     productsInCart?.map((product) => {
-      console.log('product', product);
-      return acumIVA += product.base_price * product.tax_percentage / 100
-    }) 
+      console.log("product", product);
+      return (acumIVA +=
+        product.quantity *
+        ((product.base_price * product.tax_percentage) / 100));
+    });
     return acumIVA.toFixed(2);
-  }
+  };
 
   return (
     <div className="flex flex-col gap-5 xs:py-[10px] xs:px-[20px]  bg-white">

@@ -165,7 +165,6 @@ export const createSplitOrders = createAsyncThunk(
           created_at,
         }
       );
-
       // Devuelve un array de órdenes
       return response.data;
     } catch (error) {
@@ -234,6 +233,7 @@ const ordersSlice = createSlice({
   name: "orders",
   initialState: {
     orders: [],
+    allOrders: [],
     order: {},
     sellerOrders: null,
     newOrder: {},
@@ -254,6 +254,13 @@ const ordersSlice = createSlice({
         state.isLoading = false;
         state.hasError = false;
         state.orders = action.payload;
+        const { manager_approval_status, product_category_id } =
+          action.meta.arg || {};
+        const onlyCategory = !manager_approval_status && product_category_id;
+
+        if (onlyCategory) {
+          state.allOrders = action.payload; // se usa solo para contar
+        }
       })
       .addCase(getOrders.rejected, (state) => {
         state.isLoading = false;

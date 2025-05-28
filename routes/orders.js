@@ -308,6 +308,7 @@ router.post("/split-by-category", async (req, res) => {
   } = req.body;
 
   try {
+    // Obtener categorías únicas del carrito
     const uniqueCategoryIds = [...new Set(products.map((p) => p.category_id))];
 
     const categoryQuery = `
@@ -319,11 +320,13 @@ router.post("/split-by-category", async (req, res) => {
       uniqueCategoryIds,
     ]);
 
+    // Mapear ID a nombre de categoría
     const categoryMap = {};
     categoryRows.forEach((cat) => {
       categoryMap[cat.id] = cat.name;
     });
 
+    // Agrupar productos por nombre de categoría
     const productsByCategory = products.reduce((acc, product) => {
       const categoryName = categoryMap[product.category_id] || "otros";
       if (!acc[categoryName]) acc[categoryName] = [];
@@ -336,15 +339,29 @@ router.post("/split-by-category", async (req, res) => {
     for (const [category, categoryProducts] of Object.entries(
       productsByCategory
     )) {
+      // Calcular subtotal
       const subtotal = categoryProducts.reduce(
         (sum, product) => sum + product.base_price * product.quantity,
         0
       );
-      const total = subtotal + (bodyFields.shipping_cost || 0);
+
+      // Calcular IVA total
+      const iva = categoryProducts.reduce((sum, product) => {
+        return (
+          sum +
+          (product.quantity * (product.base_price * product.tax_percentage)) /
+            100
+        );
+      }, 0);
+
+      // Calcular total
+      const total = parseFloat(
+        (subtotal + iva + (bodyFields.shipping_cost || 0)).toFixed(2)
+      );
 
       const product_category_id = categoryProducts[0].category_id;
 
-      // Clona los campos que vienen en req.body
+      // Crear campos para la orden
       const orderFields = {
         ...bodyFields,
         subtotal,
@@ -352,7 +369,6 @@ router.post("/split-by-category", async (req, res) => {
         product_category_id,
       };
 
-      // Extrae los campos dinámicos
       const columns = Object.keys(orderFields);
       const values = Object.values(orderFields);
       const placeholders = columns.map((_, idx) => `$${idx + 1}`).join(", ");
@@ -367,7 +383,7 @@ router.post("/split-by-category", async (req, res) => {
         rows: [order],
       } = await postgresDB.query(createOrderQuery, values);
 
-      // Crear productos de la orden
+      // Insertar productos de la orden
       for (const product of categoryProducts) {
         const createOrderItemQuery = `
           INSERT INTO order_items (

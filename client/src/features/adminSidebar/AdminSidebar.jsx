@@ -1,23 +1,27 @@
-import React, { useContext } from "react";
-import { useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import React, { useContext, useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useLocation } from "react-router-dom";
 import { adminSidebarItems } from "../../dummy";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { userLogout } from "../slices/usersSlice";
 import CloseIcon from "@mui/icons-material/Close";
 import { AuthContext } from "../../App";
+import { getOrders } from "../slices/ordersSlice";
 
 const AdminSidebar = ({ isOpen = false, setIsOpen = () => {} }) => {
   const { setUser } = useContext(AuthContext);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { orders } = useSelector((state) => state.orders);
+  const location = useLocation();
+
   const closeMenu = () => setIsOpen(false);
 
   const logout = () => {
     dispatch(userLogout());
     setUser(null);
   };
-
+  
   return (
     <div
       className={`
@@ -36,37 +40,59 @@ const AdminSidebar = ({ isOpen = false, setIsOpen = () => {} }) => {
       </div>
 
       <ul className="space-y-4">
-        {adminSidebarItems.map((item, index) => (
-          <li
-            key={index}
-            className="admin-sidebar-li cursor-pointer"
-            onClick={() => navigate(item.route)}
-          >
-            <div className="flex items-center gap-2">
-              {item.icon}
-              <span className="text-[13px] font-bold">{item.label}</span>
-            </div>
+        {adminSidebarItems.map((item, index) => {
+          const isActive = location.pathname === item.route;
 
-            {item.subItems && (
-              <div className="mt-2 pl-6 flex flex-col gap-1">
-                {item.subItems.map((sub, subIndex) => (
-                  <button
-                    key={subIndex}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(sub.route);
-                      closeMenu();
-                    }}
-                    className="text-[13px] ml-1 text-left hover:underline"
-                  >
-                    {sub.label}
-                  </button>
-                ))}
+          return (
+            <li
+              key={index}
+              className={`admin-sidebar-li cursor-pointer ${
+                isActive ? "bg-[rgba(241,241,241,1)]  rounded-md px-2 py-1" : ""
+              }`}
+              onClick={() => {
+                navigate(item.route);
+                closeMenu();
+              }}
+            >
+              <div className="flex items-center gap-2">
+                {item.icon}
+                <span className="text-[13px] font-bold">{item.label}</span>
               </div>
-            )}
-          </li>
-        ))}
+
+              {item.subItems && (
+                <div className="mt-2 pl-6 flex flex-col gap-1">
+                  {item.subItems.map((sub, subIndex) => {
+                    const isSubActive = location.pathname === sub.route;
+
+                    return (
+                      <div
+                        key={subIndex}
+                        className={`${
+                          isSubActive
+                            ? "bg-[rgba(250,250,250,1)] text rounded py-1 px-1"
+                            : ""
+                        }`}
+                      >
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(sub.route);
+                            closeMenu();
+                          }}
+                          className="text-[13px] ml-1 text-left hover:underline"
+                        >
+                          {sub.label}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </li>
+          );
+        })}
       </ul>
+
       <div className="md:hidden absolute bottom-2">
         <div
           className="flex gap-2 items-center cursor-pointer"
