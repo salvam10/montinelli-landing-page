@@ -79,6 +79,39 @@ const columns = [
         </span>
       );
     },
+    meta: { width: "w-[100px] min-w-[180px]" },
+  },
+  {
+    header: "Estado de la entrega",
+    accessorKey: "shipping_status",
+    cell: (info) => {
+      const shippingStatus = info.row.original.shipping_status;
+      const scheduledShippingDate = info.row.original.scheduled_dispatch_date;
+      let bg;
+      switch (shippingStatus) {
+        case "Despachado":
+          bg = "bg-[rgba(112,181,0,0.5)]";
+          break;
+        case "Despacho agendado":
+          bg = "bg-[rgba(242,214,0,0.5)]";
+          break;
+        case "Rechazado por cliente":
+        case "Sin despacho asignado":
+          bg = "bg-[rgba(235,90,70,0.5)]";
+          break;
+        default:
+          bg = "bg-gray-100";
+      }
+      return (
+        <span className={`responsive-text py-[1px] px-2 rounded-lg ${bg}`}>
+          {scheduledShippingDate && shippingStatus === "Despacho agendado"
+            ? `Programado: ${format(scheduledShippingDate, "dd' 'MMMM", {
+                locale: es,
+              })}`
+            : shippingStatus}
+        </span>
+      );
+    },
     meta: { width: "w-[180px] min-w-[180px]" },
   },
 ];
@@ -127,11 +160,11 @@ const OrdersPage = () => {
     navigate(`/admin/orders/${id}`);
   };
 
- const orderCountsByStatus = allOrders.reduce((acc, order) => {
-   const status = order.manager_approval_status || "sin_status";
-   acc[status] = (acc[status] || 0) + 1;
-   return acc;
- }, {});
+  const orderCountsByStatus = allOrders.reduce((acc, order) => {
+    const status = order.manager_approval_status || "sin_status";
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {});
 
   return (
     <div className="w-full overflow-x-hidden px-6">

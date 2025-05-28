@@ -85,7 +85,11 @@ const OrderBillingDetails = ({ orderProducts, order }) => {
           </div>
           <div className="billing-li-details">
             <span className="responsive-text ">
-              {orderProducts.length} articulos
+              {orderProducts?.reduce(
+                (acc, product) => acc + (product.quantity || 0),
+                0
+              )}{" "}
+              articulos
             </span>
             <span className="responsive-text ">
               $
