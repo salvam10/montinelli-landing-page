@@ -31,8 +31,7 @@ const ClientPicker = ({ selectedClientId, setSelectedClientId }) => {
       const formattedClients = clients
         .filter((client) => typeof client.name === "string")
         .map((client) => {
-          const formattedName =
-            capitalizeFirstLetter(client.name);
+          const formattedName = capitalizeFirstLetter(client.name);
           return {
             label: formattedName,
             value: client.id, // <-- ahora usamos client.id como value
@@ -116,6 +115,12 @@ const ClientPicker = ({ selectedClientId, setSelectedClientId }) => {
           <span className="responsive-text font-bold">Municipio:</span>
           <span className="responsive-text">
             {capitalizeFirstLetter(client.municipality || "No disponible")}
+          </span>
+        </div>
+        <div className="w-full flex flex-col">
+          <span className="responsive-text font-bold">Dirección:</span>
+          <span className="responsive-text">
+            {capitalizeFirstLetter(client.street_address || "No disponible")}
           </span>
         </div>
       </div>

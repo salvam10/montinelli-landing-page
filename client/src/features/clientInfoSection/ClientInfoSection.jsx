@@ -43,6 +43,12 @@ const ClientInfoSection = ({ client }) => {
               {client.sunagro_code || "No disponible"}
             </span>
           </div>
+          <div className="w-full flex flex-col">
+            <span className="responsive-text font-bold">Dirección:</span>
+            <span className="responsive-text">
+              {client.street_address || "No disponible"}
+            </span>
+          </div>
           <div className="flex gap-2">
             <div className="flex gap-1">
               <span className="responsive-text font-bold">Ciudad:</span>
