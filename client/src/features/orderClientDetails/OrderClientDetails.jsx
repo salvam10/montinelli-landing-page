@@ -34,16 +34,20 @@ const OrderClientDetails = ({ orderClient, order }) => {
           <div className="w-full flex flex-col">
             <span className="client-detail-label">Representante legal</span>
             <span className="responsive-text">
-              {orderClient.legal_representative || 'No disponible'}
+              {orderClient.legal_representative || "No disponible"}
             </span>
           </div>
           <div className="w-full flex flex-col ">
             <span className="client-detail-label">Teléfono</span>
-            <span className="responsive-text">{orderClient.phone || 'No disponible'}</span>
+            <span className="responsive-text">
+              {orderClient.phone || "No disponible"}
+            </span>
           </div>
           <div className="w-full flex flex-col ">
             <span className="client-detail-label">Cod Sunagro</span>
-            <span className="responsive-text">{orderClient.sunagro_code || 'No disponible'}</span>
+            <span className="responsive-text">
+              {orderClient.sunagro_code || "No disponible"}
+            </span>
           </div>
           <div className="w-full flex flex-col">
             <span className="client-detail-label">Rif</span>
@@ -65,6 +69,9 @@ const OrderClientDetails = ({ orderClient, order }) => {
         <div className="w-full flex flex-col">
           <span className="client-detail-label">Dirección</span>
           <div className="flex flex-col gap-1">
+            <span className="responsive-text gap-1">
+              {orderClient.street_address}
+            </span>
             <span className="responsive-text">Estado: {orderClient.state}</span>
             <span className="responsive-text">Ciudad: {orderClient.city}</span>
             <span className="responsive-text gap-1">
@@ -75,12 +82,12 @@ const OrderClientDetails = ({ orderClient, order }) => {
         {/* Invoice Number*/}
         <div className="flex flex-col">
           <span className="client-detail-label">Factura</span>
-          <div className="flex flex-between items-baseline gap-2">
+          <div className="flex flex-between items-baseline gap-1">
             <span className="responsive-text">
               {invoiceNumber || "Sin factura creada"}
             </span>
             <span
-              className="p-1 text-[#B3B3B3] cursor-pointer hover:bg-[#EBEBEB] hover:text-[#000000] hover:rounded-lg"
+              className="text-[#B3B3B3] cursor-pointer hover:bg-[#EBEBEB] hover:text-[#000000] hover:rounded-lg"
               onClick={() => {
                 if (managerStatus.toLowerCase() === "aprobado") {
                   setOpenInvoiceModal(!openInvoiceModal);
