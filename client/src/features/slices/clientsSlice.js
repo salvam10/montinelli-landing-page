@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk, current } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
 const SERVER_URL = process.env.REACT_APP_SERVER_URL;
@@ -6,27 +6,31 @@ const SERVER_URL = process.env.REACT_APP_SERVER_URL;
 /* Obtener todos los clientes */
 export const getClients = createAsyncThunk(
   "clients/getClients",
-  async (arg, thunkAPI) => {
+  async (_, thunkAPI) => {
     try {
       const response = await axios.get(`${SERVER_URL}/api/clients/`);
-      const clients = response.data;
-      return clients;
+      return response.data;
     } catch (error) {
-      console.log(error);
+      console.error("Error al obtener clientes:", error);
+      return thunkAPI.rejectWithValue(
+        error.response?.data || "Error desconocido"
+      );
     }
   }
 );
 
-/* Obtener un solo cliente */
+/* Obtener un cliente por ID */
 export const getSingleClient = createAsyncThunk(
   "clients/getSingleClient",
-  async ({ rif }, thunkAPI) => {
+  async ({ id }, thunkAPI) => {
     try {
-      const response = await axios.get(`${SERVER_URL}/api/clients/${rif}`);
-      const client = response.data;
-      return client;
+      const response = await axios.get(`${SERVER_URL}/api/clients/${id}`);
+      return response.data;
     } catch (error) {
-      console.log(error);
+      console.error("Error al obtener cliente:", error);
+      return thunkAPI.rejectWithValue(
+        error.response?.data || "Error desconocido"
+      );
     }
   }
 );
@@ -45,7 +49,7 @@ export const createClient = createAsyncThunk(
       municipality,
       state,
       formData,
-      sunagro_code
+      sunagro_code,
     },
     thunkAPI
   ) => {
@@ -59,10 +63,9 @@ export const createClient = createAsyncThunk(
         city,
         municipality,
         state,
-        sunagro_code
+        sunagro_code,
       };
 
-      // Enviar datos del cliente (primera solicitud)
       const clientResponse = await axios.post(
         `${SERVER_URL}/api/clients/`,
         clientData
@@ -70,14 +73,11 @@ export const createClient = createAsyncThunk(
       const clientId = clientResponse.data.id;
 
       if (formData && formData.get("file")) {
-        // Adjuntar el archivo y subirlo (segunda solicitud)
         const uploadResponse = await axios.post(
           `${SERVER_URL}/api/firebase/upload/${clientId}`,
           formData,
           {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
+            headers: { "Content-Type": "multipart/form-data" },
           }
         );
 
@@ -97,14 +97,14 @@ export const createClient = createAsyncThunk(
   }
 );
 
-/* Actualizar un client */
+/* Actualizar un cliente */
 export const updateClient = createAsyncThunk(
   "clients/updateClient",
   async (client, thunkAPI) => {
     try {
-      const { rif, ...clientData } = client;
+      const { id, ...clientData } = client;
       const response = await axios.put(
-        `${SERVER_URL}/api/clients/${rif}`,
+        `${SERVER_URL}/api/clients/${id}`,
         clientData
       );
       return response.data;
@@ -117,6 +117,7 @@ export const updateClient = createAsyncThunk(
   }
 );
 
+/* Slice */
 const clientsSlice = createSlice({
   name: "clients",
   initialState: {
@@ -127,32 +128,18 @@ const clientsSlice = createSlice({
     isLoading: false,
   },
   reducers: {
-    resetClient: (state, action) => {
+    resetClient: (state) => {
       state.client = {};
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(createClient.pending, (state) => {
-        state.isLoading = true;
-        state.hasError = false;
-      })
-      .addCase(createClient.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.hasError = false;
-        state.newClient = action.payload;
-      })
-      .addCase(createClient.rejected, (state) => {
-        state.isLoading = false;
-        state.hasError = true;
-      })
       .addCase(getClients.pending, (state) => {
         state.isLoading = true;
         state.hasError = false;
       })
       .addCase(getClients.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.hasError = false;
         state.clients = action.payload;
       })
       .addCase(getClients.rejected, (state) => {
@@ -165,10 +152,33 @@ const clientsSlice = createSlice({
       })
       .addCase(getSingleClient.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.hasError = false;
         state.client = action.payload;
       })
       .addCase(getSingleClient.rejected, (state) => {
+        state.isLoading = false;
+        state.hasError = true;
+      })
+      .addCase(createClient.pending, (state) => {
+        state.isLoading = true;
+        state.hasError = false;
+      })
+      .addCase(createClient.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.newClient = action.payload;
+      })
+      .addCase(createClient.rejected, (state) => {
+        state.isLoading = false;
+        state.hasError = true;
+      })
+      .addCase(updateClient.pending, (state) => {
+        state.isLoading = true;
+        state.hasError = false;
+      })
+      .addCase(updateClient.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.client = action.payload;
+      })
+      .addCase(updateClient.rejected, (state) => {
         state.isLoading = false;
         state.hasError = true;
       });

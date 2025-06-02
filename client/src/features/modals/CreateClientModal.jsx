@@ -36,10 +36,7 @@ const CreateClientModal = ({ setOpenModal }) => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    // Al montar: deshabilita el scroll de la página de fondo del modal
     document.body.style.overflow = "hidden";
-
-    // Al desmontar: restaura el scroll
     return () => {
       document.body.style.overflow = "auto";
     };
@@ -75,13 +72,17 @@ const CreateClientModal = ({ setOpenModal }) => {
       formData,
     };
 
-    await dispatch(createClient(clientData));
-    dispatch(getSingleClient({ rif: `${rifType}${rif.toLowerCase()}` }));
+    const action = await dispatch(createClient(clientData));
+
+    // Obtener el nuevo cliente por ID
+    if (action.payload?.id) {
+      await dispatch(getSingleClient({ id: action.payload.id }));
+    }
+
     setOpenModal(false);
   };
 
   useEffect(() => {
-    // Validar si todos los campos están completos
     const isValid =
       rif.trim() &&
       name.trim() &&

@@ -1,55 +1,49 @@
 import React, { useState, useEffect } from "react";
-
 import { useSelector, useDispatch } from "react-redux";
-import { getClients } from "../slices/clientsSlice";
+import { getClients, getSingleClient } from "../slices/clientsSlice";
 import CustomCombobox from "../customCombobox/CustomCombobox";
-import ClientInfoSection from "../clientInfoSection/ClientInfoSection";
 import { capitalizeFirstLetter } from "../../helpers/CapitalizeFirstLetter";
-import { getSingleClient } from "../slices/clientsSlice";
 
 const ClientPicker = ({ selectedClientId, setSelectedClientId }) => {
   const [options, setOptions] = useState([]);
-  const [selectedRif, setSelectedRif] = useState("");
   const { clients, client } = useSelector((state) => state.clients);
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    setSelectedClientId(selectedRif);
-    dispatch(getSingleClient({ rif: selectedRif }));
-  }, [selectedRif]);
-
-  useEffect(() => {
-    if (Object.keys(client).length > 0) {
-      setSelectedClientId(client.id);
-    }
-  }, [client]);
-
+  // Cargar todos los clientes al montar
   useEffect(() => {
     dispatch(getClients());
-    // Al montar: deshabilita el scroll de la página de fondo del modal
     document.body.style.overflow = "hidden";
-    // Al desmontar: restaura el scroll
     return () => {
       document.body.style.overflow = "auto";
     };
   }, []);
 
+  // Cargar detalles del cliente seleccionado (por id)
+  useEffect(() => {
+    if (selectedClientId) {
+      dispatch(getSingleClient({ id: selectedClientId }));
+    }
+  }, [selectedClientId]);
+
+  // Formatear las opciones del combo
   useEffect(() => {
     if (clients?.length) {
       const formattedClients = clients
         .filter((client) => typeof client.name === "string")
         .map((client) => {
-          const name = client.name.toLowerCase();
-          const formattedName = name.charAt(0).toUpperCase() + name.slice(1);
+          const formattedName =
+            capitalizeFirstLetter(client.name);
           return {
             label: formattedName,
-            value: client.rif,
+            value: client.id, // <-- ahora usamos client.id como value
           };
         });
 
       setOptions(formattedClients);
-      if (!selectedRif && formattedClients[0]) {
-        setSelectedRif(formattedClients[0].value); // solo si no está ya seteado
+
+      // Si no hay cliente seleccionado, usa el primero como predeterminado
+      if (!selectedClientId && formattedClients[0]) {
+        setSelectedClientId(formattedClients[0].value);
       }
     }
   }, [clients]);
@@ -62,8 +56,8 @@ const ClientPicker = ({ selectedClientId, setSelectedClientId }) => {
       <div className="w-full relative">
         <CustomCombobox
           options={options}
-          selected={selectedRif}
-          setSelected={setSelectedRif}
+          selected={selectedClientId}
+          setSelected={setSelectedClientId}
         />
       </div>
       <div className="w-full">
@@ -81,7 +75,7 @@ const ClientPicker = ({ selectedClientId, setSelectedClientId }) => {
             target="_blank"
             rel="noopener noreferrer"
           >
-            {client.rif}
+            {client.rif || "No disponible"}
           </a>
         </div>
         <div className="w-full flex flex-col">

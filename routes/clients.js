@@ -13,18 +13,21 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-//Obtener un cliente por su rif
-router.get("/:rif", async (req, res) => {
-  const rif = req.params.rif;
+// Obtener un cliente por su ID
+router.get("/:id", async (req, res) => {
+  const { id } = req.params;
   try {
     const { rows } = await postgresDB.query(
-      "SELECT * FROM clients WHERE rif = $1",
-      [rif]
+      "SELECT * FROM clients WHERE id = $1",
+      [id]
     );
-    const client = rows[0];
-    res.status(201).send(client);
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Cliente no encontrado" });
+    }
+    res.status(200).send(rows[0]);
   } catch (error) {
-    console.log(error);
+    console.error("Error al obtener cliente por ID:", error);
+    res.status(500).json({ message: "Error interno del servidor" });
   }
 });
 
@@ -125,24 +128,26 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-//Eliminar a un cliente
-router.delete("/:rif", async (req, res) => {
-  const rif = req.params.rif;
-  const query = "DELETE FROM clients WHERE rif = $1 RETURNING *";
+// Eliminar un cliente por su ID
+router.delete("/:id", async (req, res) => {
+  const { id } = req.params;
+  const query = "DELETE FROM clients WHERE id = $1 RETURNING *";
+
   try {
-    const result = await postgresDB.query(query, [rif]);
+    const result = await postgresDB.query(query, [id]);
     if (result.rowCount === 0) {
       return res.status(404).json({ message: "Cliente no encontrado" });
     }
-    res.send(result.rows[0]);
+    res.status(200).send(result.rows[0]);
   } catch (err) {
+    console.error("Error al eliminar cliente por ID:", err);
     res.status(400).json({ message: err.message });
   }
 });
 
-//actualizar a un cliente
-router.put("/:rif", async (req, res, next) => {
-  const { rif } = req.params;
+// Actualizar un cliente por su id
+router.put("/:id", async (req, res) => {
+  const { id } = req.params;
   const {
     name,
     mobile_phone,
@@ -157,10 +162,10 @@ router.put("/:rif", async (req, res, next) => {
   } = req.body;
 
   let updateQuery = "UPDATE clients SET ";
-  let updateValues = [];
+  const updateValues = [];
   let count = 1;
 
-  // Construir la consulta de actualización dinámica
+  // Construir el query dinámico
   if (has_debt !== undefined) {
     updateQuery += `has_debt = $${count}, `;
     updateValues.push(has_debt);
@@ -212,23 +217,22 @@ router.put("/:rif", async (req, res, next) => {
     count++;
   }
 
-  // Eliminar la coma adicional al final y agregar la condición WHERE
-  updateQuery = updateQuery.slice(0, -2); // Eliminar la coma y el espacio al final
-  updateQuery += ` WHERE rif = $${count} RETURNING *`;
-  updateValues.push(rif);
+  // Finalizar consulta
+  updateQuery = updateQuery.slice(0, -2); // Eliminar coma final
+  updateQuery += ` WHERE id = $${count} RETURNING *`;
+  updateValues.push(id);
 
   try {
-    // Ejecutar la consulta de actualización
     const result = await postgresDB.query(updateQuery, updateValues);
     if (result.rowCount === 0) {
       return res.status(404).json({ message: "Cliente no encontrado" });
     }
     res.status(200).json(result.rows[0]);
   } catch (error) {
-    console.error("Error al actualizar:", error);
-    res.status(500).json({
-      error: "Hubo un error al actualizar al cliente en el backend",
-    });
+    console.error("Error al actualizar cliente por ID:", error);
+    res.status(500).json({ message: "Error interno del servidor" });
   }
 });
+
+
 module.exports = router;
