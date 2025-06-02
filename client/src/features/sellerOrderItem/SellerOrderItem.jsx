@@ -16,10 +16,17 @@ const SellerOrderItem = ({ order }) => {
     changePillBgColor(setShippingPillbg, order.shipping_status);
   }, [order]);
 
+  const goToOrderDetail = () => {
+    navigate(`/orders/${order.id}`);
+  };
+
   return (
     <li key={order.id} className="mb-2">
-      <div className="flex-between border-y p-4 rounded cursor-pointer hover:bg-[#EBEBEB]">
-        <div className="flex flex-col gap-4 ">
+      <div
+        onClick={goToOrderDetail}
+        className="flex-between border-y p-4 rounded cursor-pointer hover:bg-[#EBEBEB]"
+      >
+        <div className="flex flex-col gap-4">
           <div className="order-metadata">
             <h2 className="responsive-text font-bold">{order.client_name}</h2>
             <p className="responsive-text">
@@ -45,20 +52,13 @@ const SellerOrderItem = ({ order }) => {
                 {order.shipping_status}
               </span>
             )}
-            <span></span>
           </div>
         </div>
         <div className="">
-          <span
-            className="text-[10px] cursor-pointer"
-            onClick={() => {
-              navigate(`/orders/${order.id}`);
-            }}
-          >
+          <span className="text-[10px]">
             <MoreHorizIcon style={{ color: "#000000" }} />
           </span>
         </div>
-        {/* Aquí puedes agregar más detalles de la orden */}
       </div>
     </li>
   );

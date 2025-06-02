@@ -5,13 +5,13 @@ import { useDispatch } from "react-redux";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { cleanCart } from "../../features/slices/cartSlice";
 
-const SuccesfullPage = ({ cartId }) => {
+const SuccesfullPage = () => {
   const { cart } = useSelector((state) => state.cart);
   const dispatch = useDispatch();
 
   useEffect(() => {
-    console.log('cart', cart);
-    
+    console.log("cart", cart);
+
     if (cart) {
       dispatch(cleanCart({ cartId: cart.id }));
     }

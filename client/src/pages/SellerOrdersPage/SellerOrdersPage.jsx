@@ -9,42 +9,53 @@ const SellerOrdersPage = () => {
   const { user } = useContext(AuthContext);
   const dispatch = useDispatch();
 
+  const [selectedCategory, setSelectedCategory] = useState(34); // Alimentos por defecto
+
   useEffect(() => {
-    Object.keys(user).length > 0 &&
-      dispatch(getSellerOrders({ userId: user.id }));
+    if (user && Object.keys(user).length > 0) {
+      dispatch(
+        getSellerOrders({
+          userId: user.id,
+          product_category_id: 34,
+        })
+      );
+    }
   }, [user]);
 
   const handleCategoryClick = (product_category_id) => {
+    setSelectedCategory(product_category_id);
     dispatch(
       getSellerOrders({
         userId: user.id,
-        product_category_id: product_category_id,
+        product_category_id,
       })
     );
   };
 
+  const getCategoryButtonClass = (categoryId) =>
+    `badge border shadow cursor-pointer hover:bg-[#0079bf] hover:text-white ${
+      selectedCategory === categoryId ? "bg-[#0079bf] text-white" : ""
+    }`;
+
   return (
     <div className="flex flex-col gap-4 p-6">
       <h1 className="text-2xl font-bold mb-4">Mis Órdenes</h1>
-      <div className="flex-center gap-4">
+
+      <div className="flex justify-center gap-4">
         <span
-          className="badge border shadow hover:bg-[#0079bf] hover:text-white cursor-pointer"
-          onClick={() => {
-            handleCategoryClick(34);
-          }}
+          className={getCategoryButtonClass(34)}
+          onClick={() => handleCategoryClick(34)}
         >
           Alimentos
         </span>
         <span
-          className="badge border shadow hover:bg-[#0079bf] hover:text-white cursor-pointer"
-          onClick={() => {
-            handleCategoryClick(35);
-          }}
+          className={getCategoryButtonClass(35)}
+          onClick={() => handleCategoryClick(35)}
         >
           Limpieza
         </span>
       </div>
-      {/* Aquí iría la lógica para listar las órdenes del vendedor */}
+
       {sellerOrders?.length > 0 ? (
         <ul>
           {sellerOrders.map((order, key) => (
@@ -52,7 +63,9 @@ const SellerOrdersPage = () => {
           ))}
         </ul>
       ) : (
-        <p>No hay órdenes disponibles.</p>
+        <p className="text-center text-gray-500 mt-4">
+          No hay órdenes disponibles.
+        </p>
       )}
     </div>
   );

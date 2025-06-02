@@ -1,18 +1,24 @@
-import React, { useEffect } from "react";
-import { AuthContext } from "../../../App";
+import React, { useEffect, useContext } from "react";
 import { Outlet, Navigate } from "react-router-dom";
-import NavBar from "../../navBar/NavBar"; // Asegúrate de importar esto si no lo has hecho
-
+import { useDispatch } from "react-redux";
+import { AuthContext } from "../../../App";
+import NavBar from "../../navBar/NavBar";
+import { retrieveCart } from "../../slices/cartSlice";
 const SellerLayout = () => {
-  const { user } = React.useContext(AuthContext);
+  const { user } = useContext(AuthContext);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (user?.id) {
+      dispatch(retrieveCart({ userId: user.id }));
+    }
+  }, [user, dispatch]);
 
   if (!user) {
     return <Navigate to="/signin" replace />;
   }
 
-  if (user.role !== "seller" && user.role !== "superadmin") {
-    console.log('no soy superadmin');
-    
+  if (!["seller", "superadmin"].includes(user.role)) {
     return <Navigate to="/admin" replace />;
   }
 

@@ -12,23 +12,28 @@ import ArrowDropDownOutlinedIcon from "@mui/icons-material/ArrowDropDownOutlined
 import ArrowForwardIosOutlinedIcon from "@mui/icons-material/ArrowForwardIosOutlined";
 import ArrowBackIosOutlinedIcon from "@mui/icons-material/ArrowBackIosOutlined";
 
-const DataTable = ({ data, columns, onEdit, onDelete, onRowClick }) => {
+const DataTable = ({
+  data,
+  columns,
+  onEdit,
+  onDelete,
+  onRowClick,
+  globalFilter,
+}) => {
   const [sorting, setSorting] = useState([]);
-  const [filtering, setFiltering] = useState("");
 
   const table = useReactTable({
     data,
     columns,
+    state: {
+      sorting,
+      globalFilter: globalFilter || "",
+    },
+    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    state: {
-      sorting,
-      globalFilter: filtering,
-    },
-    onSortingChange: setSorting,
-    onGlobalFilterChange: setFiltering,
   });
 
   return (
@@ -48,7 +53,7 @@ const DataTable = ({ data, columns, onEdit, onDelete, onRowClick }) => {
                         }`}
                         onClick={header.column.getToggleSortingHandler()}
                       >
-                        {header.isPlaceholder ? null : (
+                        {!header.isPlaceholder && (
                           <div className="flex items-center gap-1">
                             <span>
                               {flexRender(
@@ -74,7 +79,6 @@ const DataTable = ({ data, columns, onEdit, onDelete, onRowClick }) => {
                   </tr>
                 ))}
               </thead>
-
               <tbody>
                 {table.getRowModel().rows.map((row) => (
                   <tr
@@ -109,34 +113,21 @@ const DataTable = ({ data, columns, onEdit, onDelete, onRowClick }) => {
             </table>
           </div>
 
-          {/* Paginación */}
           <div className="flex gap-2 mt-2 ml-2">
             <button
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
             >
-              <span className="w-[28px] h-[28px] py-1 pl-2 pr-1 bg-[rgba(235,235,235,1)] rounded-tl-full rounded-bl-full cursor-pointer">
-                <ArrowBackIosOutlinedIcon
-                  style={{
-                    fontSize: "small",
-                    color: "#B3B3B3",
-                    fontWeight: "600",
-                  }}
-                />
+              <span className="w-[28px] h-[28px] py-1 pl-2 pr-1 bg-[#EBEBEB] rounded-tl-full rounded-bl-full cursor-pointer">
+                <ArrowBackIosOutlinedIcon fontSize="small" />
               </span>
             </button>
             <button
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
             >
-              <span className="w-[28px] h-[28px] py-1 pl-1 pr-2 bg-[rgba(235,235,235,1)] rounded-tr-full rounded-br-full cursor-pointer">
-                <ArrowForwardIosOutlinedIcon
-                  style={{
-                    fontSize: "small",
-                    color: "#B3B3B3",
-                    fontWeight: "600",
-                  }}
-                />
+              <span className="w-[28px] h-[28px] py-1 pl-1 pr-2 bg-[#EBEBEB] rounded-tr-full rounded-br-full cursor-pointer">
+                <ArrowForwardIosOutlinedIcon fontSize="small" />
               </span>
             </button>
           </div>

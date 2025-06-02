@@ -10,8 +10,21 @@ export const getOrders = createAsyncThunk(
       const response = await axios.get(`${SERVER_URL}/api/orders/`, {
         params: { manager_approval_status, product_category_id },
       });
-      const orders = response.data;
-      return orders;
+      return response.data;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+);
+
+export const getAllOrders = createAsyncThunk(
+  "orders/getAllOrders",
+  async ({ product_category_id }, thunkAPI) => {
+    try {
+      const response = await axios.get(`${SERVER_URL}/api/orders/`, {
+        params: { product_category_id },
+      });
+      return response.data;
     } catch (error) {
       console.log(error);
     }
@@ -23,8 +36,7 @@ export const getOrderById = createAsyncThunk(
   async ({ orderId }, thunkAPI) => {
     try {
       const response = await axios.get(`${SERVER_URL}/api/orders/${orderId}`);
-      const order = response.data;
-      return order;
+      return response.data;
     } catch (error) {
       console.log(error);
     }
@@ -39,8 +51,7 @@ export const getSellerOrders = createAsyncThunk(
         `${SERVER_URL}/api/orders/seller/${userId}`,
         { params: { product_category_id } }
       );
-      const sellerOrders = response.data;
-      return sellerOrders;
+      return response.data;
     } catch (error) {
       console.log(error);
     }
@@ -54,8 +65,7 @@ export const getProductsByOrderId = createAsyncThunk(
       const response = await axios.get(
         `${SERVER_URL}/api/orders/${orderId}/items`
       );
-      const orderProducts = response.data;
-      return orderProducts;
+      return response.data;
     } catch (error) {
       console.log(error);
     }
@@ -69,8 +79,7 @@ export const getClientByOrderId = createAsyncThunk(
       const response = await axios.get(
         `${SERVER_URL}/api/orders/${orderId}/client`
       );
-      const orderClient = response.data;
-      return orderClient;
+      return response.data;
     } catch (error) {
       console.log(error);
     }
@@ -165,7 +174,6 @@ export const createSplitOrders = createAsyncThunk(
           created_at,
         }
       );
-      // Devuelve un array de órdenes
       return response.data;
     } catch (error) {
       return thunkAPI.rejectWithValue(error.response?.data || error.message);
@@ -180,8 +188,7 @@ export const deleteOrder = createAsyncThunk(
       const response = await axios.put(`${SERVER_URL}/api/orders/${orderId}`, {
         status: "eliminada",
       });
-      const deletedOrder = response.data;
-      return deletedOrder;
+      return response.data;
     } catch (error) {
       console.log(error);
     }
@@ -221,8 +228,7 @@ export const updateOrder = createAsyncThunk(
         actual_dispatch_date,
         shipping_status,
       });
-      const updatedOrder = response.data;
-      return updatedOrder;
+      return response.data;
     } catch (error) {
       console.log(error);
     }
@@ -254,136 +260,62 @@ const ordersSlice = createSlice({
         state.isLoading = false;
         state.hasError = false;
         state.orders = action.payload;
-        const { manager_approval_status, product_category_id } =
-          action.meta.arg || {};
-        const onlyCategory = !manager_approval_status && product_category_id;
-
-        if (onlyCategory) {
-          state.allOrders = action.payload; // se usa solo para contar
-        }
       })
       .addCase(getOrders.rejected, (state) => {
         state.isLoading = false;
         state.hasError = true;
       })
 
-      .addCase(getOrderById.pending, (state) => {
+      .addCase(getAllOrders.pending, (state) => {
         state.isLoading = true;
         state.hasError = false;
       })
-      .addCase(getOrderById.fulfilled, (state, action) => {
+      .addCase(getAllOrders.fulfilled, (state, action) => {
         state.isLoading = false;
         state.hasError = false;
+        state.allOrders = action.payload;
+      })
+      .addCase(getAllOrders.rejected, (state) => {
+        state.isLoading = false;
+        state.hasError = true;
+      })
+
+      .addCase(getOrderById.fulfilled, (state, action) => {
         state.order = action.payload;
       })
-      .addCase(getOrderById.rejected, (state) => {
-        state.isLoading = false;
-        state.hasError = true;
-      })
-
-      .addCase(getProductsByOrderId.pending, (state) => {
-        state.isLoading = true;
-        state.hasError = false;
-      })
       .addCase(getProductsByOrderId.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.hasError = false;
         state.orderProducts = action.payload;
       })
-      .addCase(getProductsByOrderId.rejected, (state) => {
-        state.isLoading = false;
-        state.hasError = true;
-      })
-
-      .addCase(getClientByOrderId.pending, (state) => {
-        state.isLoading = true;
-        state.hasError = false;
-      })
       .addCase(getClientByOrderId.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.hasError = false;
         state.orderClient = action.payload;
       })
-      .addCase(getClientByOrderId.rejected, (state) => {
-        state.isLoading = false;
-        state.hasError = true;
-      })
 
-      .addCase(createOrder.pending, (state) => {
-        state.isLoading = true;
-        state.hasError = false;
-      })
       .addCase(createOrder.fulfilled, (state, { payload }) => {
-        state.isLoading = false;
-        state.hasError = false;
         state.newOrder = payload.newOrder;
         state.orderProducts = payload.addedProducts;
       })
-      .addCase(createOrder.rejected, (state) => {
-        state.isLoading = false;
-        state.hasError = true;
-      })
-      .addCase(createSplitOrders.pending, (state) => {
-        state.isLoading = true;
-        state.hasError = false;
-      })
       .addCase(createSplitOrders.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.hasError = false;
-        state.orders.push(...action.payload); // múltiples órdenes agregadas
-        state.orderProducts = []; // limpiar productos previos por claridad
-        state.newOrder = {}; // opcional: limpieza
-      })
-      .addCase(createSplitOrders.rejected, (state) => {
-        state.isLoading = false;
-        state.hasError = true;
+        state.orders.push(...action.payload);
+        state.orderProducts = [];
+        state.newOrder = {};
       })
 
-      .addCase(deleteOrder.pending, (state) => {
-        state.isLoading = true;
-        state.hasError = false;
-      })
       .addCase(deleteOrder.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.hasError = false;
         const deletedOrder = action.payload;
         state.orders = current(state).orders.filter(
           (order) => order.id !== deletedOrder.id
         );
       })
-      .addCase(deleteOrder.rejected, (state) => {
-        state.isLoading = false;
-        state.hasError = true;
-      })
 
-      .addCase(updateOrder.pending, (state) => {
-        state.isLoading = true;
-        state.hasError = false;
-      })
       .addCase(updateOrder.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.hasError = false;
         const updatedOrder = action.payload;
         state.orders = current(state).orders.map((order) =>
           order.id === updatedOrder.id ? updatedOrder : order
         );
       })
-      .addCase(updateOrder.rejected, (state) => {
-        state.isLoading = false;
-        state.hasError = true;
-      })
-      .addCase(getSellerOrders.pending, (state) => {
-        state.isLoading = true;
-        state.hasError = false;
-      })
+
       .addCase(getSellerOrders.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.hasError = false;
         state.sellerOrders = action.payload;
-      })
-      .addCase(getSellerOrders.rejected, (state) => {
-        state.isLoading = false;
-        state.hasError = true;
       });
   },
 });

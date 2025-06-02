@@ -1,15 +1,13 @@
 import React, { useEffect, useState } from "react";
-import dayjs from "dayjs";
 import { useSelector, useDispatch } from "react-redux";
-import DataTable from "../../features/dataTable/DataTable";
-import { deleteOrder, getOrders } from "../../features/slices/ordersSlice";
+import { useNavigate, useParams } from "react-router-dom";
+import { deleteOrder, getOrders, getAllOrders } from "../../features/slices/ordersSlice";
 import DeleteOrderModal from "../../features/modals/DeleteOrderModal";
-import { useNavigate } from "react-router-dom";
+import CustomFormButton from "../../features/customFormButton/CustomFormButton";
+import DataTable from "../../features/dataTable/DataTable";
 import { orderTableFilters } from "../../dummy";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { useParams } from "react-router-dom";
-import CustomFormButton from "../../features/customFormButton/CustomFormButton";
 
 const columns = [
   {
@@ -30,7 +28,7 @@ const columns = [
     header: "Cliente",
     accessorKey: "client_name",
     footer: "Cliente",
-    meta: { width: "w-[250px] min-w-[250]" },
+    meta: { width: "w-[250px] min-w-[250px]" },
   },
   {
     header: "Vendedor",
@@ -50,13 +48,11 @@ const columns = [
     accessorKey: "billing_status",
     footer: "Estado de Facturación",
     cell: (info) => {
-      const invoiceDate = info.row.original.invoice_date;
-      const isInvoiced = !!invoiceDate;
+      const isInvoiced = !!info.row.original.invoice_date;
       const text = isInvoiced ? "facturado" : "sin facturar";
       const bg = isInvoiced
         ? "bg-[rgba(112,181,0,0.5)]"
         : "bg-[rgba(242,214,0,0.5)]";
-
       return (
         <span className={`responsive-text py-[1px] px-2 rounded-lg ${bg}`}>
           {text}
@@ -67,48 +63,40 @@ const columns = [
   },
   {
     header: "# Factura",
-    accessorKey: "invoice_number",
+    accessorFn: (row) => row.invoice_number || "",
     footer: "Factura",
-    cell: (info) => {
-      const invoiceNumber = info.row.original.invoice_number;
-      return (
-        <span
-          className={`responsive-text py-[1px] px-2 rounded-lg bg-[rgba(0,121,191,0.5)]`}
-        >
-          {invoiceNumber}
-        </span>
-      );
-    },
+    cell: (info) => (
+      <span className="responsive-text py-[1px] px-2 rounded-lg bg-[rgba(0,121,191,0.5)]">
+        {info.row.original.invoice_number}
+      </span>
+    ),
     meta: { width: "w-[100px] min-w-[180px]" },
   },
   {
     header: "Estado de la entrega",
     accessorKey: "shipping_status",
     cell: (info) => {
-      const shippingStatus = info.row.original.shipping_status;
-      const scheduledShippingDate = info.row.original.scheduled_dispatch_date;
-      let bg;
-      switch (shippingStatus) {
-        case "Despachado":
-          bg = "bg-[rgba(112,181,0,0.5)]";
-          break;
-        case "Despacho agendado":
-          bg = "bg-[rgba(242,214,0,0.5)]";
-          break;
-        case "Rechazado por cliente":
-        case "Sin despacho asignado":
-          bg = "bg-[rgba(235,90,70,0.5)]";
-          break;
-        default:
-          bg = "bg-gray-100";
-      }
+      const { shipping_status, scheduled_dispatch_date } = info.row.original;
+      let bg = "bg-gray-100";
+      if (shipping_status === "Despachado") bg = "bg-[rgba(112,181,0,0.5)]";
+      else if (shipping_status === "Despacho agendado")
+        bg = "bg-[rgba(242,214,0,0.5)]";
+      else if (
+        shipping_status === "Rechazado por cliente" ||
+        shipping_status === "Sin despacho asignado"
+      )
+        bg = "bg-[rgba(235,90,70,0.5)]";
+
+      const text =
+        shipping_status === "Despacho agendado" && scheduled_dispatch_date
+          ? `Programado: ${format(scheduled_dispatch_date, "dd MMMM", {
+              locale: es,
+            })}`
+          : shipping_status;
+
       return (
         <span className={`responsive-text py-[1px] px-2 rounded-lg ${bg}`}>
-          {scheduledShippingDate && shippingStatus === "Despacho agendado"
-            ? `Programado: ${format(scheduledShippingDate, "dd' 'MMMM", {
-                locale: es,
-              })}`
-            : shippingStatus}
+          {text}
         </span>
       );
     },
@@ -119,16 +107,17 @@ const columns = [
 const OrdersPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { prodCategoryId } = useParams();
   const { allOrders, orders } = useSelector((state) => state.orders);
 
   const [openModal, setOpenModal] = useState(false);
   const [orderId, setOrderId] = useState(null);
   const [isDeleteConfirmed, setIsDeleteConfirmed] = useState(false);
-  const [managerStatus, setManagerStatus] = useState("pendiente"); // nuevo estado
-  const { prodCategoryId } = useParams();
+  const [managerStatus, setManagerStatus] = useState("pendiente");
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    dispatch(getOrders({ product_category_id: prodCategoryId }));
+    dispatch(getAllOrders({ product_category_id: prodCategoryId }));
   }, [prodCategoryId]);
 
   useEffect(() => {
@@ -147,18 +136,13 @@ const OrdersPage = () => {
     }
   }, [isDeleteConfirmed, orderId, dispatch]);
 
+  const onRowClick = (id) => navigate(`/admin/orders/${id}`);
   const handleOnDelete = (id) => {
     setOrderId(id);
     setOpenModal(true);
   };
 
-  const handleOnEdit = (id) => {
-    navigate(`/admin/orders/${id}`);
-  };
-
-  const onRowClick = (id) => {
-    navigate(`/admin/orders/${id}`);
-  };
+  const handleOnEdit = (id) => navigate(`/admin/orders/${id}`);
 
   const orderCountsByStatus = allOrders.reduce((acc, order) => {
     const status = order.manager_approval_status || "sin_status";
@@ -178,7 +162,7 @@ const OrdersPage = () => {
           fontBold={true}
           color="bg-[#0079bf]"
           textColor="text-white"
-          width={"w-[150px]"}
+          width="w-[150px]"
         />
       </div>
 
@@ -193,7 +177,7 @@ const OrdersPage = () => {
               }`}
             >
               <span>{label}</span>
-              <span className="w-5 h-5 flex items-center justify-center rounded-full bg-[#E5E5E5] text text-[10px] font-bold shadow-inner">
+              <span className="w-5 h-5 flex items-center justify-center rounded-full bg-[#E5E5E5] text-[10px] font-bold shadow-inner">
                 {orderCountsByStatus[value] || 0}
               </span>
             </li>
@@ -201,10 +185,20 @@ const OrdersPage = () => {
         </ul>
       </div>
 
+      <div className="bg-white border-x border-b p-4">
+        <input
+          type="text"
+          placeholder="Buscar pedido, cliente, vendedor..."
+          onChange={(e) => setSearchTerm(e.target.value)}
+          value={searchTerm}
+          className="w-full md:w-1/3 px-3 py-2 border rounded-md text-sm"
+        />
+      </div>
+
       <DataTable
         columns={columns}
         data={orders}
-        rows={orders}
+        globalFilter={searchTerm}
         onEdit={handleOnEdit}
         onDelete={handleOnDelete}
         onRowClick={onRowClick}

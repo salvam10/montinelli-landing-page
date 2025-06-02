@@ -7,7 +7,7 @@ const SERVER_URL = process.env.REACT_APP_SERVER_URL;
 /* Obtener carrito de un usuario */
 export const retrieveCart = createAsyncThunk(
   "cart/retrieveCart",
-  async ({userId}, thunkAPI) => {
+  async ({ userId }, thunkAPI) => {
     try {
       const response = await axios.get(`${SERVER_URL}/api/cart/${userId}`);
       return response.data;
@@ -142,6 +142,8 @@ const cartSlice = createSlice({
       .addCase(retrieveCart.fulfilled, (state, action) => {
         state.isLoading = false;
         state.hasError = false;
+        console.log("action payload", action.payload);
+
         state.cart = action.payload;
       })
       .addCase(retrieveCart.rejected, (state) => {

@@ -15,6 +15,7 @@ import {
 import ExistingClientModal from "../../features/modals/ExistingClientModal";
 import CreateClientModal from "../../features/modals/CreateClientModal";
 import { AuthContext } from "../../App";
+import { resetCart } from "../../features/slices/cartSlice";
 
 const CheckoutPage = () => {
   const { user } = useContext(AuthContext);
@@ -47,7 +48,6 @@ const CheckoutPage = () => {
  */
 
   const handleOnClick = async () => {
-    console.log("client", client);
 
     if (Object.keys(client).length > 0) {
       try {
@@ -63,6 +63,7 @@ const CheckoutPage = () => {
             productsInCart: productsInCart, // debe incluir category_id
           })
         ).unwrap();
+        dispatch(resetCart());
 
         navigate("/order-confirmation");
       } catch (err) {
