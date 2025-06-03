@@ -28,7 +28,7 @@ const columns = [
     header: "Cliente",
     accessorKey: "client_name",
     footer: "Cliente",
-    meta: { width: "w-[250px] min-w-[250px]" },
+    meta: { width: "w-[300px] min-w-[250px]" },
   },
   {
     header: "Vendedor",
