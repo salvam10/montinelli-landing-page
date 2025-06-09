@@ -9,13 +9,10 @@ import SellerPicker from "../../features/sellerPicker/SellerPicker";
 import CustomFormButton from "../../features/customFormButton/CustomFormButton";
 import PaymentSummary from "../../features/paymentSummary/PaymentSummary";
 import { createSplitOrders } from "../../features/slices/ordersSlice";
-import {
-  managerApprovalStatuses,
-  combinedStatuses,
-  paymentStatuses,
-} from "../../dummy";
+import { paymentStatuses } from "../../dummy";
 
 const CreateOrderPage = () => {
+  const { isLoading } = useSelector((state) => state.orders);
   const [selectedSeller, setSelectedSeller] = useState({});
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [invoiceDate, setInvoiceDate] = useState(new Date());
@@ -49,7 +46,6 @@ const CreateOrderPage = () => {
   };
 
   const handleCreateOrder = () => {
-     
     dispatch(
       createSplitOrders({
         user_id: selectedSeller.id,
@@ -83,6 +79,7 @@ const CreateOrderPage = () => {
           setManagerStatus={setManagerStatus}
         />
         <CustomFormButton
+          isLoading={isLoading}
           text="Guardar"
           width="w-auto"
           handleClickFunction={handleCreateOrder}

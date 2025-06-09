@@ -16,6 +16,7 @@ router.get("/", async (req, res, next) => {
 // Obtener un cliente por su ID
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
+  
   try {
     const { rows } = await postgresDB.query(
       "SELECT * FROM clients WHERE id = $1",
@@ -24,6 +25,7 @@ router.get("/:id", async (req, res) => {
     if (rows.length === 0) {
       return res.status(404).json({ message: "Cliente no encontrado" });
     }
+    
     res.status(200).send(rows[0]);
   } catch (error) {
     console.error("Error al obtener cliente por ID:", error);
@@ -44,6 +46,8 @@ router.post("/", async (req, res, next) => {
     state,
     profit_code,
     sunagro_code,
+    created_at,
+    user_id,
   } = req.body;
 
   let insertQuery = "INSERT INTO clients(";
@@ -52,6 +56,18 @@ router.post("/", async (req, res, next) => {
   let count = 1;
 
   // Construir la consulta de inserción dinámica
+  if (user_id !== undefined) {
+    insertQuery += "user_id, ";
+    valueQuery += `$${count}, `;
+    insertValues.push(user_id);
+    count++;
+  }
+  if (created_at !== undefined) {
+    insertQuery += "created_at, ";
+    valueQuery += `$${count}, `;
+    insertValues.push(created_at);
+    count++;
+  }
   if (sunagro_code !== undefined) {
     insertQuery += "sunagro_code, ";
     valueQuery += `$${count}, `;
@@ -158,7 +174,10 @@ router.put("/:id", async (req, res) => {
     municipality,
     state,
     profit_code,
+    sunagro_code,
     has_debt,
+    created_at,
+    user_id,
   } = req.body;
 
   let updateQuery = "UPDATE clients SET ";
@@ -166,6 +185,21 @@ router.put("/:id", async (req, res) => {
   let count = 1;
 
   // Construir el query dinámico
+   if (sunagro_code !== undefined) {
+     updateQuery += `sunagro_code = $${count}, `;
+     updateValues.push(sunagro_code);
+     count++;
+   }
+  if (user_id !== undefined) {
+    updateQuery += `user_id = $${count}, `;
+    updateValues.push(user_id);
+    count++;
+  }
+  if (created_at !== undefined) {
+    updateQuery += `created_at = $${count}, `;
+    updateValues.push(created_at);
+    count++;
+  }
   if (has_debt !== undefined) {
     updateQuery += `has_debt = $${count}, `;
     updateValues.push(has_debt);
@@ -233,6 +267,5 @@ router.put("/:id", async (req, res) => {
     res.status(500).json({ message: "Error interno del servidor" });
   }
 });
-
 
 module.exports = router;

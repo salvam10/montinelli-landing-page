@@ -1,52 +1,58 @@
 import React, { useState, useEffect } from "react";
-
 import { useSelector, useDispatch } from "react-redux";
-import { getSellers, getUserById } from "../slices/usersSlice";
+import { getSellers } from "../slices/usersSlice";
 import CustomCombobox from "../customCombobox/CustomCombobox";
 import { capitalizeFirstLetter } from "../../helpers/CapitalizeFirstLetter";
 
-const SellerPicker = ({ selectedSeller, setSelectedSeller }) => {
+const SellerPicker = ({
+  client,
+  selectedSeller,
+  setSelectedSeller,
+  customButton,
+}) => {
   const [options, setOptions] = useState([]);
-  const [selectedSellerId, setSelectedSellerId] = useState("");
-  const { sellers, single_user } = useSelector((state) => state.users);
+  const [selectedSellerId, setSelectedSellerId] = useState(null);
+  const { sellers } = useSelector((state) => state.users);
   const dispatch = useDispatch();
 
+  // Sync selectedSellerId con el selectedSeller recibido
   useEffect(() => {
-    dispatch(getUserById({ id: selectedSellerId }));
+    if (selectedSeller?.id) {
+      setSelectedSellerId(selectedSeller.id);
+    } else {
+      setSelectedSellerId(null); // importante para resetear visualmente el combobox
+    }
+  }, [selectedSeller?.id]);
+
+  // 🧠 Cuando el usuario elige un vendedor nuevo en el combobox
+  useEffect(() => {
+    const newSeller = sellers.find((s) => s.id === selectedSellerId);
+    if (newSeller && newSeller.id !== selectedSeller?.id) {
+      setSelectedSeller(newSeller);
+    }
   }, [selectedSellerId]);
 
-  useEffect(() => {
-    setSelectedSeller(single_user);
-  }, [single_user]);
-
+  // 🧠 Al montar, cargar los vendedores
   useEffect(() => {
     dispatch(getSellers());
-    // Al montar: deshabilita el scroll de la página de fondo del modal
     document.body.style.overflow = "hidden";
-    // Al desmontar: restaura el scroll
     return () => {
       document.body.style.overflow = "auto";
     };
   }, []);
 
+  // Formatear los vendedores para el combo
   useEffect(() => {
     if (sellers?.length) {
       const formattedSellers = sellers
         .filter((seller) => typeof seller?.firstname === "string")
-        .map((seller) => {
-          const name = `${seller?.firstname} ${seller?.lastname}`.toLowerCase();
-          const formattedFirstname =
-            name.charAt(0).toUpperCase() + name.slice(1);
-          return {
-            label: formattedFirstname,
-            value: seller?.id,
-          };
-        });
-
+        .map((seller) => ({
+          label: `${capitalizeFirstLetter(seller.firstname)} ${
+            seller.lastname?.toLowerCase() || ""
+          }`,
+          value: seller.id,
+        }));
       setOptions(formattedSellers);
-      if (!selectedSellerId && formattedSellers[0]) {
-        setSelectedSellerId(formattedSellers[0].value); // solo si no está ya seteado
-      }
     }
   }, [sellers]);
 
@@ -56,6 +62,7 @@ const SellerPicker = ({ selectedSeller, setSelectedSeller }) => {
         <div className="w-full flex">
           <h2 className="font-bold text-[14px]">Vendedor</h2>
         </div>
+
         <div className="w-full relative">
           <CustomCombobox
             options={options}
@@ -63,29 +70,32 @@ const SellerPicker = ({ selectedSeller, setSelectedSeller }) => {
             setSelected={setSelectedSellerId}
           />
         </div>
-        <div className="w-full">
-          <div className="w-full flex flex-col">
-            <span className="responsive-text font-bold">Nombre:</span>
-            <span className="responsive-text">
-              {capitalizeFirstLetter(
-                `${single_user?.firstname} ${single_user?.lastname}` ||
-                  "No disponible"
-              )}
-            </span>
+
+        {selectedSeller && Object.keys(selectedSeller).length > 0 && (
+          <div className="w-full mt-4">
+            <div className="w-full flex flex-col">
+              <span className="responsive-text font-bold">Nombre:</span>
+              <span className="responsive-text">
+                {selectedSeller.firstname
+                  ? `${selectedSeller.firstname} ${selectedSeller.lastname}`
+                  : "No disponible"}
+              </span>
+            </div>
+            <div className="w-full flex flex-col">
+              <span className="responsive-text font-bold">Cédula:</span>
+              <span className="responsive-text">
+                {capitalizeFirstLetter(selectedSeller.id || "No disponible")}
+              </span>
+            </div>
+            <div className="w-full flex flex-col">
+              <span className="responsive-text font-bold">Teléfono:</span>
+              <span className="responsive-text">
+                {capitalizeFirstLetter(selectedSeller.phone || "No disponible")}
+              </span>
+            </div>
+            {customButton && <div className="mt-4">{customButton}</div>}
           </div>
-          <div className="w-full flex flex-col">
-            <span className="responsive-text font-bold">Cédula:</span>
-            <span className="responsive-text">
-              {capitalizeFirstLetter(single_user?.id || "No disponible")}
-            </span>
-          </div>
-          <div className="w-full flex flex-col">
-            <span className="responsive-text font-bold">Teléfono:</span>
-            <span className="responsive-text">
-              {capitalizeFirstLetter(single_user?.phone || "No disponible")}
-            </span>
-          </div>
-        </div>
+        )}
       </div>
     )
   );

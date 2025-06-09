@@ -73,9 +73,6 @@ const DataTable = ({
                         )}
                       </th>
                     ))}
-                    <th className="text-left py-2 pl-2 whitespace-nowrap text-sm font-semibold w-[80px] min-w-[80px]">
-                      Acciones
-                    </th>
                   </tr>
                 ))}
               </thead>
@@ -99,14 +96,6 @@ const DataTable = ({
                         )}
                       </td>
                     ))}
-                    <td
-                      className="py-2 pl-4 whitespace-nowrap"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <button onClick={() => onDelete(row.original.id)}>
-                        🗑
-                      </button>
-                    </td>
                   </tr>
                 ))}
               </tbody>

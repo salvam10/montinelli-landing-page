@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import CustomFormButton from "../customFormButton/CustomFormButton";
 import CustomDatePicker from "../customDatePicker/CustomDatePicker";
 import CustomSelect from "../customSelect/CustomSelect";
@@ -10,6 +10,7 @@ import { shippingCompanies } from "../../dummy";
 import { updateOrder, getOrderById } from "../slices/ordersSlice";
 
 const ScheduleDispatchModal = ({ order, setOpenModal }) => {
+  const { isLoading } = useSelector((state) => state.orders);
   const [shippingCompany, setShippingCompany] = useState(shippingCompanies[0]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const dispatch = useDispatch();
@@ -69,6 +70,7 @@ const ScheduleDispatchModal = ({ order, setOpenModal }) => {
               fontBold={true}
             />
             <CustomFormButton
+              isLoading={isLoading}
               handleClickFunction={handleSubmitClick}
               text="Guardar"
               color="bg-blue-500"

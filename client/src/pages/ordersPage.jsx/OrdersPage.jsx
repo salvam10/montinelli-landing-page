@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import { deleteOrder, getOrders, getAllOrders } from "../../features/slices/ordersSlice";
+import {
+  deleteOrder,
+  getOrders,
+  getAllOrders,
+} from "../../features/slices/ordersSlice";
 import DeleteOrderModal from "../../features/modals/DeleteOrderModal";
 import CustomFormButton from "../../features/customFormButton/CustomFormButton";
 import DataTable from "../../features/dataTable/DataTable";
@@ -107,6 +111,7 @@ const columns = [
 const OrdersPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { isLoading } = useSelector((state) => state.orders);
   const { prodCategoryId } = useParams();
   const { allOrders, orders } = useSelector((state) => state.orders);
 
@@ -163,9 +168,10 @@ const OrdersPage = () => {
           color="bg-[#0079bf]"
           textColor="text-white"
           width="w-[150px]"
+          isLoading={isLoading}
         />
       </div>
-
+      {/* Filtros de la tabla */}
       <div className="bg-white rounded-t-md p-2 border-t border-x">
         <ul className="flex gap-2 text-sm">
           {orderTableFilters.map(({ label, value }) => (
@@ -184,7 +190,7 @@ const OrdersPage = () => {
           ))}
         </ul>
       </div>
-
+      {/* Barra de Busqueda */}
       <div className="bg-white border-x border-b p-4">
         <input
           type="text"

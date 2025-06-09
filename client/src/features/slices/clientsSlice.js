@@ -50,6 +50,9 @@ export const createClient = createAsyncThunk(
       state,
       formData,
       sunagro_code,
+      profit_code,
+      created_at,
+      user_id,
     },
     thunkAPI
   ) => {
@@ -64,6 +67,9 @@ export const createClient = createAsyncThunk(
         municipality,
         state,
         sunagro_code,
+        profit_code,
+        created_at,
+        user_id,
       };
 
       const clientResponse = await axios.post(
@@ -103,11 +109,26 @@ export const updateClient = createAsyncThunk(
   async (client, thunkAPI) => {
     try {
       const { id, ...clientData } = client;
-      const response = await axios.put(
+      const clientResponse = await axios.put(
         `${SERVER_URL}/api/clients/${id}`,
         clientData
       );
-      return response.data;
+      if (clientData.formData && clientData.formData.get("file")) {
+        const uploadResponse = await axios.post(
+          `${SERVER_URL}/api/firebase/upload/${id}`,
+          clientData.formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+          }
+        );
+
+        return {
+          ...clientResponse.data,
+          rif_url: uploadResponse.data.url,
+        };
+      }
+
+      return clientResponse.data;
     } catch (error) {
       console.error("Error al actualizar el cliente:", error);
       return thunkAPI.rejectWithValue(

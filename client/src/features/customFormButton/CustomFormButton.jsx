@@ -7,10 +7,10 @@ const CustomFormButton = ({
   color,
   textColor,
   fontBold,
+  isLoading,
   icon,
   width = "w-full",
 }) => {
-  const { isLoading } = useSelector((state) => state.orders);
   const [showLoading, setShowLoading] = useState(false);
 
   useEffect(() => {

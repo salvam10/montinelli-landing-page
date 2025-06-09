@@ -12,9 +12,14 @@ import CustomFormButton from "../customFormButton/CustomFormButton";
 import CustomTextInput from "../customTextInput/CustomTextInput";
 import CloseIcon from "@mui/icons-material/Close";
 import FileUploader from "../fileUploader/FileUploader";
-import { createClient, getSingleClient } from "../slices/clientsSlice";
+import {
+  createClient,
+  getSingleClient,
+  updateClient,
+} from "../slices/clientsSlice";
+import { capitalizeFirstLetter } from "../../helpers/CapitalizeFirstLetter";
 
-const CreateClientModal = ({ setOpenModal }) => {
+const EditClientModal = ({ setShowModal, client }) => {
   const { isLoading } = useSelector((state) => state.clients);
   const [legalRepresentative, setLegalRepresentative] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
@@ -25,16 +30,28 @@ const CreateClientModal = ({ setOpenModal }) => {
   const [mobilePhone, setMobilePhone] = useState("");
   const [mobileCode, setMobileCode] = useState(phoneAreaCodes[0]?.value || "");
   const [rifType, setRifType] = useState(rifTypes[0]?.value || "");
-  const [localPhone, setLocalPhone] = useState("");
-  const [localCode, setLocalCode] = useState("212");
   const [state, setState] = useState(states[0]?.value || "");
   const [name, setName] = useState("");
   const [city, setCity] = useState(cities[0]?.value || "");
   const [rif, setRif] = useState("");
-  const [isFormValid, setIsFormValid] = useState(false);
   const [sicaCode, setSicaCode] = useState("");
+  const [profitCode, setProfitCode] = useState("");
 
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (client && Object.keys(client).length > 0) {
+      setName(client?.name || "");
+      setLegalRepresentative(client?.legal_representative || "");
+      setRif(client?.rif || "");
+      setCity(client?.city || "");
+      setState(client?.state || "");
+      setMunicipality(client?.municipality || "");
+      setStreetAddress(client?.street_address || "");
+      setSicaCode(client?.sunagro_code || "");
+      setProfitCode(client?.profit_code || "");
+    }
+  }, [client]);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -44,16 +61,11 @@ const CreateClientModal = ({ setOpenModal }) => {
   }, []);
 
   const handleCloseClick = () => {
-    setOpenModal(false);
+    setShowModal(false);
   };
 
   const handleSubmitClick = async (e) => {
     e.preventDefault();
-
-    if (!isFormValid) {
-      alert("Por favor, completa todos los campos obligatorios.");
-      return;
-    }
 
     const formData = new FormData();
     if (selectedFile) {
@@ -61,51 +73,29 @@ const CreateClientModal = ({ setOpenModal }) => {
     }
 
     const clientData = {
-      rif: `${rifType}${rif.toLowerCase()}`,
-      name: name.toLowerCase(),
+      id: client.id,
+      rif: `${rifType}${rif?.toLowerCase()}`,
+      name: capitalizeFirstLetter(name),
       phone: `${mobileCode}${mobilePhone}`,
-      legal_representative: legalRepresentative.toLowerCase(),
-      street_address: streetAddress.toLowerCase(),
-      city: city.toLowerCase(),
-      municipality: municipality.toLowerCase(),
-      state: state.toLowerCase(),
-      sunagro_code: sicaCode.toLowerCase(),
+      legal_representative: legalRepresentative?.toLowerCase(),
+      street_address: streetAddress?.toLowerCase(),
+      city: city?.toLowerCase(),
+      municipality: municipality?.toLowerCase(),
+      state: state?.toLowerCase(),
+      sunagro_code: sicaCode?.toLowerCase(),
+      profit_code: profitCode?.toLowerCase(),
       formData,
     };
 
-    const action = await dispatch(createClient(clientData));
+    await dispatch(updateClient(clientData));
+    await dispatch(getSingleClient({ id: client.id }));
 
-    // Obtener el nuevo cliente por ID
-    if (action.payload?.id) {
-      await dispatch(getSingleClient({ id: action.payload.id }));
-    }
-
-    setOpenModal(false);
+    setShowModal(false);
   };
 
   useEffect(() => {
-    const isValid =
-      rif.trim() &&
-      name.trim() &&
-      mobilePhone.trim() &&
-      legalRepresentative.trim() &&
-      city.trim() &&
-      municipality.trim() &&
-      state.trim() &&
-      selectedFile !== null;
-    setIsFormValid(isValid);
-  }, [
-    rif,
-    name,
-    mobilePhone,
-    legalRepresentative,
-    streetAddress,
-    city,
-    municipality,
-    state,
-    selectedFile,
-    sicaCode,
-  ]);
+    console.log("file", selectedFile);
+  }, [selectedFile]);
 
   return (
     <div className="modal-overlay">
@@ -153,12 +143,22 @@ const CreateClientModal = ({ setOpenModal }) => {
             value={legalRepresentative}
             setValue={setLegalRepresentative}
           />
-          <CustomTextInput
-            label="Código Sica *"
-            type="text"
-            value={sicaCode}
-            setValue={setSicaCode}
-          />
+          <div className="flex gap-5">
+            <CustomTextInput
+              label="Código Profit *"
+              type="text"
+              value={profitCode}
+              width={`w-[48%]`}
+              setValue={setProfitCode}
+            />
+            <CustomTextInput
+              label="Código Sica *"
+              type="text"
+              value={sicaCode}
+              width={`w-[48%]`}
+              setValue={setSicaCode}
+            />
+          </div>
           <CustomSelect
             options={states}
             label="Estado *"
@@ -177,6 +177,12 @@ const CreateClientModal = ({ setOpenModal }) => {
             value={municipality}
             setValue={setMunicipality}
           />
+          <CustomTextInput
+            label="Dirección *"
+            type="text"
+            value={streetAddress}
+            setValue={setStreetAddress}
+          />
           <div className="flex gap-2">
             <CustomSelect
               options={phoneAreaCodes}
@@ -193,11 +199,7 @@ const CreateClientModal = ({ setOpenModal }) => {
             />
           </div>
           <div className="w-full flex-center">
-            <CustomFormButton
-              type="submit"
-              disabled={!isFormValid}
-              isLoading={isLoading}
-            />
+            <CustomFormButton type="submit" isLoading={isLoading} />
           </div>
         </form>
       </div>
@@ -205,4 +207,4 @@ const CreateClientModal = ({ setOpenModal }) => {
   );
 };
 
-export default CreateClientModal;
+export default EditClientModal;

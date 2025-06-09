@@ -1,5 +1,4 @@
-import ThumbUpAltOutlinedIcon from "@mui/icons-material/ThumbUpAltOutlined";
-import ThumbDownOffAltOutlinedIcon from "@mui/icons-material/ThumbDownOffAltOutlined";
+import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
 import HourglassEmptyOutlinedIcon from "@mui/icons-material/HourglassEmptyOutlined";
 import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
@@ -43,6 +42,8 @@ export const states = [
   { label: "Distrito Capital", value: "Distrito Capital" },
   { label: "Miranda", value: "Miranda" },
   { label: "La Guaira", value: "La Guaira" },
+  { label: "Carabobo", value: "Carabobo" },
+  { label: "Aragua", value: "Aragua" },
 ];
 
 export const cities = [
@@ -52,14 +53,13 @@ export const cities = [
   { label: "Maracay", value: "Maracay" },
   { label: "La Victoria", value: "La Victoria" },
   { label: "Carrizal", value: "Carrizal" },
-  {
-    label: "Catia La Mar",
-    value: "Catia La Mar",
-  },
+  { label: "Valencia", value: "Valencia" },
+  { label: "Catia La Mar", value: "Catia La Mar" },
   { label: "Guarenas", value: "Guarenas" },
   { label: "Guatire", value: "Guatire" },
   { label: "Higuerote", value: "Higuerote" },
   { label: "Caucagua", value: "Caucagua" },
+  { label: "Charallave", value: "Charallave" },
 ].sort((a, b) => a.label.localeCompare(b.label));
 
 export const phoneAreaCodes = [
@@ -92,6 +92,9 @@ export const municipalities = [
   { label: "Plaza", value: "Plaza" },
   { label: "Zamora", value: "Zamora" },
   { label: "Brión", value: "Brión" },
+  { label: "Naguanagua", value: "Naguangua" },
+  { label: "Valencia", value: "Valencia" },
+  { label: "Cristóbal Rojas", value: "Cristóbal Rojas"},
 ].sort((a, b) => a.label.localeCompare(b.label));
 
 export const orderStatuses = [
@@ -173,7 +176,6 @@ export const dispatchStatuses = [
   { text: "Despachado" },
 ];
 
-
 export const combinedStatuses = [
   {
     title: "Estado de cuenta",
@@ -229,8 +231,6 @@ export const combinedStatuses = [
   },
 ];
 
-
-
 export const shippingCompanies = [
   { label: "GSM 747", value: "GSM 747" },
   { label: "Sr Tereso", value: "Sr Tereso" },
@@ -245,7 +245,12 @@ export const adminSidebarItems = [
       { label: "Alimentos", route: "/admin/orders/category/34" },
       { label: "Limpieza", route: "/admin/orders/category/35" },
     ],
-  }
+  },
+  {
+    label: "Clientes",
+    icon: <PersonOutlineOutlinedIcon style={{ fontSize: "20px" }} />,
+    route: "/admin/clients",
+  },
 ];
 
 export const orderTableFilters = [

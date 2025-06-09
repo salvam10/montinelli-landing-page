@@ -61,7 +61,6 @@ export const checkUserExistence = createAsyncThunk(
 export const getSellers = createAsyncThunk(
   "users/getSellers",
   async (arg, thunkAPI) => {
-    console.log('entre');
     
     try {
       const response = await axios.get(`${SERVER_URL}/api/users/`, {
@@ -200,7 +199,7 @@ const usersSlice = createSlice({
     isLoading: false,
     isValidUser: true,
     userExists: null,
-    single_user: null,
+    single_user: {},
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -364,7 +363,7 @@ const usersSlice = createSlice({
       })
       .addCase(getUserById.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.hasError = false;
+        state.hasError = false;        
         const single_user = action.payload;
         state.single_user = single_user;
       })

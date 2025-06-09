@@ -8,7 +8,7 @@ import CustomCombobox from "../customCombobox/CustomCombobox";
 const ExistingClientModal = ({ setOpenModal }) => {
   const [options, setOptions] = useState([]);
   const [selectedClientId, setSelectedClientId] = useState("");
-  const { clients } = useSelector((state) => state.clients);
+  const { clients, isLoading } = useSelector((state) => state.clients);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -63,7 +63,10 @@ const ExistingClientModal = ({ setOpenModal }) => {
             label="Clientes"
           />
           <div className="w-full flex-center">
-            <CustomFormButton handleClickFunction={handleSubmitClick} />
+            <CustomFormButton
+              isLoading={isLoading}
+              handleClickFunction={handleSubmitClick}
+            />
           </div>
           <button className="modal-close-button" onClick={handleCloseClick}>
             <CloseIcon />

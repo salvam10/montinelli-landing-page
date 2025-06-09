@@ -104,11 +104,9 @@ const OrderHeader = ({
   };
 
   const updateDebtStatus = async (status) => {
-
     await dispatch(
       updateClient({
         id: client.id,
-        rif: client.rif,
         has_debt: status,
       })
     );

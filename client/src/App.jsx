@@ -1,19 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Outlet,
-  Navigate,
-  useLocation,
-} from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 /* Pages */
 import SuccesfullPage from "./pages/SuccesfullPage/SuccesfullPage";
 import CheckoutPage from "./pages/CheckoutPage/CheckoutPage";
 import OrdersPage from "./pages/ordersPage.jsx/OrdersPage";
 import CartPage from "./pages/CartPage.jsx/CartPage.jsx";
-import LoginPage from "./pages/LoginPage/LoginPage";
 import CedulaLoginPage from "./pages/LoginPage/CedulaLoginPage.jsx";
 import HomePage from "./pages/HomePage/HomePage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage/PrivacyPolicyPage.jsx";
@@ -22,7 +14,6 @@ import SellerLayout from "./features/layouts/sellerLayout/SellerLayout";
 import AdminLayout from "./features/layouts/adminLayout/AdminLayout";
 import CategoriesPage from "./pages/CategoriesPage/CategoriesPage";
 import AuthLayout from "./features/layouts/authLayout/AuthLayout";
-import ProtectedLayout from "./features/layouts/protectedLayout/ProtectedLayout";
 import SellerOrdersPage from "./pages/SellerOrdersPage/SellerOrdersPage.jsx";
 /* Components */
 import Category from "./features/category/Category";
@@ -31,6 +22,9 @@ import Order from "./features/order/Order";
 import "./App.css";
 import SellerSingleOrder from "./features/sellerSingleOrder/SellerSingleOrder.jsx";
 import CreateOrderPage from "./pages/CreateOrderPage/CreateOrderPage.jsx";
+import ClientsPage from "./pages/ClientsPage/ClientsPage.jsx";
+import CreateClientPage from "./pages/CreateClientPage/CreateClientPage.jsx";
+import ClientDetailPage from "./pages/ClientDetailPage/ClientDetailPage.jsx";
 
 export const AuthContext = React.createContext();
 
@@ -82,6 +76,9 @@ const App = () => {
             />
             <Route path="orders/:id" element={<Order />} />
             <Route path="orders/create" element={<CreateOrderPage />} />
+            <Route path="clients" element={<ClientsPage />} />
+            <Route path="clients/:id" element={<ClientDetailPage />} />
+            <Route path="clients/create" element={<CreateClientPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

@@ -15,6 +15,7 @@ const AddInvoiceModal = ({
   invoiceNumber,
   setInvoiceNumber,
 }) => {
+  const { isLoading } = useSelector((state) => state.orders);
   const dispatch = useDispatch();
 
   const handleCloseClick = () => {
@@ -58,6 +59,7 @@ const AddInvoiceModal = ({
               color="bg-white-500"
               textColor="text-[#000000]"
               fontBold={true}
+              isLoading={isLoading}
             />
             <CustomFormButton
               handleClickFunction={updateInvoiceNumber}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import CustomFormButton from "../customFormButton/CustomFormButton";
 import { updateOrder, getOrderById } from "../slices/ordersSlice";
@@ -8,6 +8,7 @@ import { format, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 
 const OrderBillingDetails = ({ orderProducts, order }) => {
+  const { isLoading } = useSelector((state) => state.orders);
   const [showPaymentTermsModal, setShowPaymentTermsModal] = useState(false);
   const [paymentTermMsg, setPaymentTermMsg] = useState("");
   const [editPaymentTerms, setEditPaymentTerms] = useState(false);
@@ -158,6 +159,7 @@ const OrderBillingDetails = ({ orderProducts, order }) => {
         <div className="w-full flex justify-end">
           <div className="flex">
             <CustomFormButton
+              isLoading={isLoading}
               text={
                 paymentStatus === "Pagado"
                   ? "Marcar como pendiente"

@@ -192,6 +192,78 @@ router.get("/seller/:userId", async (req, res) => {
   }
 });
 
+// Obtener todas las órdenes de un cliente
+router.get("/client/:clientId", async (req, res) => {
+  const { clientId } = req.params;
+  let { product_category_id } = req.query;
+
+  let query = `
+    SELECT 
+      orders.id, 
+      orders.payment_status_id,
+      payment_statuses.status AS payment_status,
+      orders.invoice_number,
+      orders.invoice_date,
+      orders.shipping_cost,
+      orders.shipping_status,
+      orders.subtotal, 
+      orders.total, 
+      orders.payment_method, 
+      orders.user_id, 
+      orders.client_id, 
+      orders.created_at, 
+      orders.updated_at,
+      orders.payment_term_id,
+      orders.due_date,
+      orders.billing_status,
+      orders.manager_approval_status,
+      orders.actual_dispatch_date,
+      orders.scheduled_dispatch_date,
+      orders.shipping_company,
+      orders.product_category_id,
+      clients.name AS client_name,
+      orders.status,
+      users.firstname || ' ' || users.lastname AS user_fullname
+    FROM orders
+    JOIN clients ON orders.client_id = clients.id
+    JOIN users ON orders.user_id = users.id
+    JOIN payment_statuses ON orders.payment_status_id = payment_statuses.id
+  `;
+
+  const conditions = [];
+  const values = [];
+
+  // Condición por product_category_id
+  if (product_category_id) {
+    conditions.push(`orders.product_category_id = $${values.length + 1}`);
+    values.push(product_category_id);
+  }
+
+  // Condición por client_id
+  if (clientId) {
+    conditions.push(`orders.client_id = $${values.length + 1}`);
+    values.push(clientId);
+  }
+
+  // Agregar condiciones dinámicas si existen
+  if (conditions.length > 0) {
+    query += ` WHERE ` + conditions.join(" AND ");
+  }
+
+  // Orden final
+  query += ` ORDER BY orders.id DESC`;
+
+  try {
+    const result = await postgresDB.query(query, values);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error("Error al obtener las órdenes:", error);
+    res.status(500).json({
+      error: "Hubo un error al obtener las órdenes",
+    });
+  }
+});
+
 // Obtener productos de una orden
 router.get("/:orderId/items", async (req, res) => {
   const { userId, orderId } = req.params;
