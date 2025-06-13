@@ -57,4 +57,44 @@ router.get("/orders-summary", async (req, res) => {
   }
 });
 
+router.get("/orders-summary", async (req, res) => {
+  const tokenFromQuery = req.query.token;
+  const tokenFromHeader = req.headers.authorization?.split(" ")[1];
+  const token = tokenFromQuery || tokenFromHeader;
+
+  if (token !== AUTH_TOKEN) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    const query = `
+      SELECT
+      clients.id AS client_id,
+      clients.name AS client_name,
+      clients.rif AS client_rif,
+      clients.phone AS client_phone,
+      clients.city AS client_city,
+      clients.municipality AS client_municipality,
+      clients.state AS client_state,
+      clients.created_at AS client_created_at,
+      COUNT(orders.id) AS total_orders,
+      MIN(orders.invoice_date) AS first_purchase_date,
+      MAX(orders.invoice_date) AS last_purchase_date,
+      CASE 
+        WHEN COUNT(orders.id) > 1 THEN true 
+        ELSE false 
+      END AS has_repeat_purchase
+    FROM clients
+    LEFT JOIN orders ON orders.client_id = clients.id
+    GROUP BY clients.id, clients.name, clients.rif, clients.phone,    clients.city, clients.municipality, clients.state, clients.created_at
+    ORDER BY last_purchase_date DESC NULLS LAST;
+    `;
+    const { rows } = await postgresDB.query(query);
+    res.json(rows);
+  } catch (error) {
+    console.error("Error en /analytics/clients-summary:", error);
+    res.status(500).json({ error: "Error al obtener resumen de clientes" });
+  }
+});
+
 module.exports = router;
