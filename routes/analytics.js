@@ -68,36 +68,41 @@ router.get("/clients-summary", async (req, res) => {
 
   try {
     const query = `
-      SELECT
-    clients.id AS client_id,
-    clients.name AS client_name,
-    clients.rif AS client_rif,
-    clients.phone AS client_phone,
-    clients.city AS client_city,
-    clients.municipality AS client_municipality,
-    clients.state AS client_state,
-    clients.created_at AS client_created_at,
-    COUNT(orders.id) AS total_orders,
-    MIN(orders.invoice_date) AS first_purchase_date,
-    MAX(orders.invoice_date) AS last_purchase_date,
-    CASE 
-      WHEN COUNT(orders.id) > 1 THEN 'Yes' 
-      ELSE 'No' 
-    END AS has_repeat_purchase,
-    CASE 
-      WHEN MAX(orders.invoice_date) IS NOT NULL THEN 
-        ROUND(DATE_PART('day', CURRENT_DATE - MAX(orders.invoice_date)))
-      ELSE NULL
-    END AS days_since_last_purchase,
-    CASE
-      WHEN COUNT(orders.id) > 1 THEN 
-        ROUND(DATE_PART('day', MAX(orders.invoice_date) - MIN(orders.invoice_date)) / NULLIF(COUNT(orders.id) - 1, 0))
-      ELSE NULL
-    END AS avg_days_between_purchases
-  FROM clients
-  LEFT JOIN orders ON orders.client_id = clients.id
-  GROUP BY clients.id, clients.name, clients.rif, clients.phone, clients.city, clients.municipality, clients.state, clients.created_at
-  ORDER BY last_purchase_date DESC NULLS LAST;
+     SELECT
+  clients.id AS client_id,
+  clients.name AS client_name,
+  clients.rif AS client_rif,
+  clients.phone AS client_phone,
+  clients.city AS client_city,
+  clients.municipality AS client_municipality,
+  clients.state AS client_state,
+  clients.created_at AS client_created_at,
+  orders.product_category_id,
+  COUNT(orders.id) AS total_orders,
+  MIN(orders.invoice_date) AS first_purchase_date,
+  MAX(orders.invoice_date) AS last_purchase_date,
+  CASE 
+    WHEN COUNT(orders.id) > 1 THEN 'Yes' 
+    ELSE 'No' 
+  END AS has_repeat_purchase,
+  CASE 
+    WHEN MAX(orders.invoice_date) IS NOT NULL THEN 
+      ROUND(DATE_PART('day', CURRENT_DATE - MAX(orders.invoice_date)))
+    ELSE NULL
+  END AS days_since_last_purchase,
+  CASE
+    WHEN COUNT(orders.id) > 1 THEN 
+      ROUND(DATE_PART('day', MAX(orders.invoice_date) - MIN(orders.invoice_date)) / NULLIF(COUNT(orders.id) - 1, 0))
+    ELSE NULL
+  END AS avg_days_between_purchases
+FROM clients
+LEFT JOIN orders ON orders.client_id = clients.id
+GROUP BY 
+  clients.id, clients.name, clients.rif, clients.phone,
+  clients.city, clients.municipality, clients.state, clients.created_at,
+  orders.product_category_id
+ORDER BY avg_days_between_purchases DESC NULLS LAST;
+
     `;
     const { rows } = await postgresDB.query(query);
     res.json(rows);
