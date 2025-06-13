@@ -44,10 +44,11 @@ router.get("/orders-summary", async (req, res) => {
       FROM orders
       JOIN clients ON orders.client_id = clients.id
       JOIN users ON orders.user_id = users.id
+      WHERE orders.invoice_date IS NOT NULL 
+        AND orders.invoice_number IS NOT NULL
       ORDER BY orders.created_at DESC
       LIMIT 500
     `;
-
     const { rows } = await postgresDB.query(query);
     res.json(rows);
   } catch (error) {
