@@ -81,8 +81,8 @@ router.get("/clients-summary", async (req, res) => {
     MIN(orders.invoice_date) AS first_purchase_date,
     MAX(orders.invoice_date) AS last_purchase_date,
     CASE 
-      WHEN COUNT(orders.id) > 1 THEN "Yes" 
-      ELSE "No" 
+      WHEN COUNT(orders.id) > 1 THEN 'Yes' 
+      ELSE 'No' 
     END AS has_repeat_purchase,
     CASE 
       WHEN MAX(orders.invoice_date) IS NOT NULL THEN 
