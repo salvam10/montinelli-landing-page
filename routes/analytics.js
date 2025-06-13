@@ -57,7 +57,7 @@ router.get("/orders-summary", async (req, res) => {
   }
 });
 
-router.get("/orders-summary", async (req, res) => {
+router.get("/clients-summary", async (req, res) => {
   const tokenFromQuery = req.query.token;
   const tokenFromHeader = req.headers.authorization?.split(" ")[1];
   const token = tokenFromQuery || tokenFromHeader;
