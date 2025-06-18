@@ -39,27 +39,29 @@ export const paymentOptions = [
 ];
 
 export const states = [
-  { label: "Distrito Capital", value: "Distrito Capital" },
-  { label: "Miranda", value: "Miranda" },
-  { label: "La Guaira", value: "La Guaira" },
-  { label: "Carabobo", value: "Carabobo" },
+  { label: "Anzoátegui", value: "Anzoátegui" },
   { label: "Aragua", value: "Aragua" },
+  { label: "Carabobo", value: "Carabobo" },
+  { label: "Distrito Capital", value: "Distrito Capital" },
+  { label: "La Guaira", value: "La Guaira" },
+  { label: "Miranda", value: "Miranda" },
 ];
 
 export const cities = [
+  { label: "Barcelona", value: "Barcelona" },
   { label: "Caracas", value: "Caracas" },
-  { label: "San Antonio de los altos", value: "San Antonio de los altos" },
-  { label: "Los Teques", value: "Los Teques" },
-  { label: "Maracay", value: "Maracay" },
-  { label: "La Victoria", value: "La Victoria" },
   { label: "Carrizal", value: "Carrizal" },
-  { label: "Valencia", value: "Valencia" },
   { label: "Catia La Mar", value: "Catia La Mar" },
+  { label: "Caucagua", value: "Caucagua" },
+  { label: "Charallave", value: "Charallave" },
   { label: "Guarenas", value: "Guarenas" },
   { label: "Guatire", value: "Guatire" },
   { label: "Higuerote", value: "Higuerote" },
-  { label: "Caucagua", value: "Caucagua" },
-  { label: "Charallave", value: "Charallave" },
+  { label: "La Victoria", value: "La Victoria" },
+  { label: "Los Teques", value: "Los Teques" },
+  { label: "Maracay", value: "Maracay" },
+  { label: "San Antonio de los altos", value: "San Antonio de los altos" },
+  { label: "Valencia", value: "Valencia" }
 ].sort((a, b) => a.label.localeCompare(b.label));
 
 export const phoneAreaCodes = [
@@ -78,23 +80,24 @@ export const rifTypes = [
 ];
 
 export const municipalities = [
-  { label: "Chacao", value: "Chacao" },
-  { label: "El Hatillo", value: "El Hatillo" },
   { label: "Baruta", value: "Baruta" },
-  { label: "Sucre", value: "Sucre" },
-  { label: "Libertador", value: "Libertador" },
-  { label: "Los Salias", value: "Los Salias" },
+  { label: "Brión", value: "Brión" },
   { label: "Carrizal", value: "Carrizal" },
+  { label: "Chacao", value: "Chacao" },
+  { label: "Cristóbal Rojas", value: "Cristóbal Rojas" },
+  { label: "El Hatillo", value: "El Hatillo" },
   { label: "Girardot", value: "Girardot" },
   { label: "Guaicaipuro", value: "Guaicaipuro" },
-  { label: "Ribas", value: "Ribas" },
-  { label: "Vargas", value: "Vargas" },
+  { label: "Libertador", value: "Libertador" },
+  { label: "Los Salias", value: "Los Salias" },
+  { label: "Naguanagua", value: "Naguanagua" },
   { label: "Plaza", value: "Plaza" },
-  { label: "Zamora", value: "Zamora" },
-  { label: "Brión", value: "Brión" },
-  { label: "Naguanagua", value: "Naguangua" },
+  { label: "Ribas", value: "Ribas" },
+  { label: "Simón Bolívar", value: "Simón Bolívar" },
+  { label: "Sucre", value: "Sucre" },
   { label: "Valencia", value: "Valencia" },
-  { label: "Cristóbal Rojas", value: "Cristóbal Rojas"},
+  { label: "Vargas", value: "Vargas" },
+  { label: "Zamora", value: "Zamora" },
 ].sort((a, b) => a.label.localeCompare(b.label));
 
 export const orderStatuses = [
