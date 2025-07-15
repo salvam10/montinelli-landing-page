@@ -61,7 +61,8 @@ export const cities = [
   { label: "Los Teques", value: "Los Teques" },
   { label: "Maracay", value: "Maracay" },
   { label: "San Antonio de los altos", value: "San Antonio de los altos" },
-  { label: "Valencia", value: "Valencia" }
+  { label: "Santa Teresa del Tuy", value: "Santa Teresa del Tuy" },
+  { label: "Valencia", value: "Valencia" },
 ].sort((a, b) => a.label.localeCompare(b.label));
 
 export const phoneAreaCodes = [
@@ -88,6 +89,7 @@ export const municipalities = [
   { label: "El Hatillo", value: "El Hatillo" },
   { label: "Girardot", value: "Girardot" },
   { label: "Guaicaipuro", value: "Guaicaipuro" },
+  { label: "Independencia", value: "Independencia"},
   { label: "Libertador", value: "Libertador" },
   { label: "Los Salias", value: "Los Salias" },
   { label: "Naguanagua", value: "Naguanagua" },
