@@ -52,11 +52,11 @@ const CreateOrderPage = () => {
         payment_status_id: paymentStatus.value,
         manager_approval_status: managerStatus.value,
         shipping_cost: 0,
-        shipping_status: "Despachado",
+        shipping_status: "pendiente",
         payment_method: "credito",
         client_id: selectedClientId,
         created_at: invoiceDate,
-        invoice_date: invoiceDate,
+        invoice_date: invoiceNumber? invoiceDate : null,
         invoice_number: invoiceNumber,
         productsInCart: selectedProducts, // debe incluir category_id
       })

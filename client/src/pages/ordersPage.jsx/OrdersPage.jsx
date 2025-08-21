@@ -12,6 +12,7 @@ import DataTable from "../../features/dataTable/DataTable";
 import { orderTableFilters } from "../../dummy";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { toZonedTime, format as formatTz } from "date-fns-tz";
 
 const columns = [
   {
@@ -24,9 +25,14 @@ const columns = [
     header: "Fecha",
     accessorKey: "created_at",
     footer: "Fecha de Creación",
-    cell: (info) =>
-      format(info.getValue(), "dd 'de' MMMM 'de' yyyy", { locale: es }),
-    meta: { width: "w-[160px] min-w-[160px]" },
+    cell: (info) => {
+      const utcDate = new Date(info.getValue());
+      const zonedDate = toZonedTime(utcDate, "America/Caracas");
+      return formatTz(zonedDate, "dd 'de' MMMM 'de' yyyy HH:mm", {
+        locale: es,
+      });
+    },
+    meta: { width: "w-[200px] min-w-[200px]" },
   },
   {
     header: "Cliente",

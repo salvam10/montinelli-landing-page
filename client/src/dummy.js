@@ -163,8 +163,8 @@ export const managerApprovalStatuses = [
 ];
 
 export const paymentStatuses = [
-  { text: "Pagado", value: 2 },
   { text: "Pendiente de pago", value: 1 },
+  { text: "Pagado", value: 2 },
   { text: "Vencido", value: 3 },
   { text: "En reclamo", value: 4 },
 ];
