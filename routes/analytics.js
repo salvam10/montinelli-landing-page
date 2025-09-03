@@ -112,4 +112,37 @@ ORDER BY avg_days_between_purchases DESC NULLS LAST;
   }
 });
 
+// Volumen de ventas por producto (unidades)
+router.get("/products-summary", async (req, res) => {
+  const tokenFromQuery = req.query.token;
+  const tokenFromHeader = req.headers.authorization?.split(" ")[1];
+  const token = tokenFromQuery || tokenFromHeader;
+
+  if (token !== AUTH_TOKEN) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+
+    const query = `
+      SELECT
+        p.id AS product_id,
+        p.name AS product_name,
+        oi.quantity AS quantity,
+        o.invoice_date AS invoice_date
+      FROM order_items oi
+      JOIN products p ON oi.product_id = p.id
+      JOIN orders o   ON oi.order_id = o.id
+      GROUP BY p.id, p.name, o.invoice_date, oi.quantity
+    `;
+
+    const { rows } = await postgresDB.query(query);
+    res.json(rows);
+  } catch (error) {
+    console.error("Error en /analytics/products-summary:", error);
+    res.status(500).json({ error: "Error al obtener resumen de productos" });
+  }
+});
+
+
 module.exports = router;
