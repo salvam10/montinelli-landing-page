@@ -129,11 +129,14 @@ router.get("/products-summary", async (req, res) => {
         p.id AS product_id,
         p.name AS product_name,
         oi.quantity AS quantity,
-        o.invoice_date AS invoice_date
+        o.invoice_date AS invoice_date,
+        c.name AS client_name
       FROM order_items oi
       JOIN products p ON oi.product_id = p.id
       JOIN orders o   ON oi.order_id = o.id
-      GROUP BY p.id, p.name, o.invoice_date, oi.quantity
+      JOIN clients c ON o.client_id = c.id
+      WHERE o.invoice_date IS NOT NULL
+      GROUP BY p.id, p.name, o.invoice_date, oi.quantity, c.name
     `;
 
     const { rows } = await postgresDB.query(query);
