@@ -32,7 +32,7 @@ const columns = [
         locale: es,
       });
     },
-    meta: { width: "w-[200px] min-w-[200px]" },
+    meta: { width: "w-[250px] min-w-[250px]" },
   },
   {
     header: "Cliente",

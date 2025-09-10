@@ -14,12 +14,19 @@ const CustomDatePicker = ({
   minDate,
   maxDate,
   disabled = false,
+  inline = false, // valor por defecto
 }) => {
   return (
     <div className="flex flex-col gap-2 w-full">
       {label && <label className="xs:text-[10px]">{label}</label>}
-      <div className="relative w-full flex gap-2 items-baseline border border-[#EBEBEB] pl-2">
-        <span className="text-gray-500 pointer-events-none">📅</span>
+      <div
+        className={`relative w-full flex gap-2 items-baseline ${
+          !inline ? "border border-[#EBEBEB] pl-2" : ""
+        }`}
+      >
+        {!inline && (
+          <span className="text-gray-500 pointer-events-none">📅</span>
+        )}
         <ReactDatePicker
           selected={selectedDate}
           onChange={onChange}
@@ -30,7 +37,8 @@ const CustomDatePicker = ({
           popperPlacement="bottom-start"
           locale="es"
           dateFormat="dd 'de' MMMM 'de' yyyy" // Formato largo
-          className="w-full rounded-md py-[5px] shadow-sm  text-[12px] text-sm focus:outline-none"
+          className="w-full rounded-md py-[5px] shadow-sm text-[12px] focus:outline-none"
+          inline={inline} // ✅ aquí se pasa la prop
         />
       </div>
     </div>

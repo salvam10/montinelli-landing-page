@@ -45,6 +45,7 @@ export const states = [
   { label: "Distrito Capital", value: "Distrito Capital" },
   { label: "La Guaira", value: "La Guaira" },
   { label: "Miranda", value: "Miranda" },
+  { label: "Bolivar", value: "Ciudad Bolivar" },
 ];
 
 export const cities = [
@@ -63,6 +64,7 @@ export const cities = [
   { label: "San Antonio de los altos", value: "San Antonio de los altos" },
   { label: "Santa Teresa del Tuy", value: "Santa Teresa del Tuy" },
   { label: "Valencia", value: "Valencia" },
+  { label: "Ciudad Bolivar", value: "Ciudad Bolivar" },
 ].sort((a, b) => a.label.localeCompare(b.label));
 
 export const phoneAreaCodes = [
@@ -81,20 +83,30 @@ export const rifTypes = [
 ];
 
 export const municipalities = [
+  { label: "Angostura", value: "Angostura" },
+  { label: "Angostura del Orinoco", value: "Angostura del Orinoco" },
   { label: "Baruta", value: "Baruta" },
   { label: "Brión", value: "Brión" },
+  { label: "Caroní", value: "Caroní" },
   { label: "Carrizal", value: "Carrizal" },
+  { label: "Cedeño", value: "Cedeño" },
   { label: "Chacao", value: "Chacao" },
   { label: "Cristóbal Rojas", value: "Cristóbal Rojas" },
+  { label: "El Callao", value: "El Callao" },
   { label: "El Hatillo", value: "El Hatillo" },
   { label: "Girardot", value: "Girardot" },
   { label: "Guaicaipuro", value: "Guaicaipuro" },
-  { label: "Independencia", value: "Independencia"},
+  { label: "Gran Sabana", value: "Gran Sabana" },
+  { label: "Independencia", value: "Independencia" },
   { label: "Libertador", value: "Libertador" },
   { label: "Los Salias", value: "Los Salias" },
   { label: "Naguanagua", value: "Naguanagua" },
+  { label: "Padre Pedro Chien", value: "Padre Pedro Chien" },
+  { label: "Piar", value: "Piar" },
   { label: "Plaza", value: "Plaza" },
   { label: "Ribas", value: "Ribas" },
+  { label: "Roscio", value: "Roscio" },
+  { label: "Sifontes", value: "Sifontes" },
   { label: "Simón Bolívar", value: "Simón Bolívar" },
   { label: "Sucre", value: "Sucre" },
   { label: "Valencia", value: "Valencia" },

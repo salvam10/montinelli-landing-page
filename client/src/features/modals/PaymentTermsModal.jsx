@@ -1,79 +1,88 @@
-import React, { useState, useEffect } from "react";
-
+import React, { useEffect, useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import CloseIcon from "@mui/icons-material/Close";
 import CustomSelect from "../customSelect/CustomSelect";
 import CustomFormButton from "../customFormButton/CustomFormButton";
-import CustomDatePicker from "../customDatePicker/CustomDatePicker";
 import { getOrderById, updateOrder } from "../slices/ordersSlice";
-import { format, addDays } from "date-fns";
+import { addDays, format } from "date-fns";
 import { es } from "date-fns/locale";
 
+const toYMD = (d) => format(new Date(d), "yyyy-MM-dd");
+
 const PaymentTermsModal = ({ setOpenModal, order }) => {
-  const [selectedDate, setSelectedDate] = useState(order.created_at);
-  const [options, setOptions] = useState([]);
-  const [dueDate, setDueDate] = useState();
-  const [selectedPaymentTerm, setSelectedPaymentTerm] = useState({
-    id: 1,
-    days: 7,
-  });
-
-  const { paymentTerms } = useSelector((state) => state.paymentTerms);
   const dispatch = useDispatch();
+  const { paymentTerms } = useSelector((state) => state.paymentTerms);
 
+  // Fecha base: SIEMPRE la fecha real de entrega (no editable)
+  const dispatchDate = useMemo(
+    () =>
+      order?.actual_dispatch_date ? new Date(order.actual_dispatch_date) : null,
+    [order?.actual_dispatch_date]
+  );
+
+  // Opciones del select (id + days)
+  const [options, setOptions] = useState([]);
   useEffect(() => {
-    if (paymentTerms) {
-      const options = paymentTerms.map((term) => ({
-        value: {
-          id: term.id,
-          days: term.days,
-        },
+    if (!paymentTerms) return;
+    setOptions(
+      paymentTerms.map((term) => ({
+        value: { id: term.id, days: term.days },
         label: term.name,
-      }));
-      setOptions(options);
-    }
+      }))
+    );
   }, [paymentTerms]);
 
+  // Término de pago seleccionado (inicialmente lo de la orden)
+  const [selectedPaymentTerm, setSelectedPaymentTerm] = useState({
+    id: order?.payment_term_id,
+    days: order?.payment_term_days,
+  });
+
   useEffect(() => {
-    setSelectedDate(order.created_at);
     setSelectedPaymentTerm({
-      id: order.payment_term_id,
-      days: order.payment_term_days,
+      id: order?.payment_term_id,
+      days: order?.payment_term_days,
     });
-  }, [order]);
+  }, [order?.payment_term_id, order?.payment_term_days]);
 
-  useEffect(() => {
-    const calculatedDueDate = addDays(
-      selectedDate,
-      Number(selectedPaymentTerm.days)
-    );
-    
-    setDueDate(calculatedDueDate);
-  }, [selectedPaymentTerm, selectedDate]);
+  // due_date recalculado cada vez que cambian los días (base = dispatchDate)
+  const computedDueDate = useMemo(() => {
+    if (!dispatchDate) return null;
+    const days = Number(selectedPaymentTerm?.days) || 0;
+    return addDays(dispatchDate, days);
+  }, [dispatchDate, selectedPaymentTerm?.days]);
 
-  const handleCloseClick = () => {
-    setOpenModal(false);
-  };
+  const handleClose = () => setOpenModal(false);
 
-  const handleSubmitClick = async () => {
+  const handleSubmit = async () => {
+    if (!dispatchDate || !computedDueDate) return;
     await dispatch(
       updateOrder({
         orderId: order.id,
         payment_term_id: selectedPaymentTerm.id,
-        due_date: dueDate,
+        // Guardar como 'date' (YYYY-MM-DD)
+        due_date: toYMD(computedDueDate),
       })
     );
     dispatch(getOrderById({ orderId: order.id }));
     setOpenModal(false);
   };
 
+  const disableSave = !dispatchDate || !selectedPaymentTerm?.id;
+
   return (
     <div className="modal-overlay">
-      <div className="modal gap-2">
+      <div className="modal w-[400px] h-[30vh] relative gap-2">
+        <div className="absolute top-0 right-4 cursor-pointer">
+          <button className="modal-close-button" onClick={handleClose}>
+            <CloseIcon />
+          </button>
+        </div>
         <div className="modal-header">
           <h3 className="text-[20px]">Editar las condiciones de pago</h3>
         </div>
-        <div className="modal-body flex gap-3">
+
+        <div className="modal-body flex gap-3 relative">
           <CustomSelect
             width="w-full"
             options={options}
@@ -82,39 +91,63 @@ const PaymentTermsModal = ({ setOpenModal, order }) => {
             isObjectValue={true}
             setValue={setSelectedPaymentTerm}
           />
-          <CustomDatePicker
-            selectedDate={selectedDate}
-            onChange={setSelectedDate}
-            label="Fecha de emisión"
-          />
-          <button className="modal-close-button" onClick={handleCloseClick}>
-            <CloseIcon />
-          </button>
+
+          {/* Fecha base solo lectura (entrega real) */}
+          <div className="w-full flex flex-col">
+            <label className="block text-xs mb-1 text-gray-600">
+              Entregado al cliente el:
+            </label>
+
+            <span className="responsive-text">
+              {dispatchDate
+                ? format(dispatchDate, "dd 'de' MMMM 'de' yyyy", {
+                    locale: es,
+                  })
+                : "— Sin fecha de entrega —"}
+            </span>
+          </div>
         </div>
+
+        {/* Resumen de vencimiento */}
         <div className="w-full mt-2 pl-7 border-b">
           <span className="responsive-text font-bold">
-            {dueDate instanceof Date &&
-              !isNaN(dueDate) &&
-              `Pago adeudado el ${format(dueDate, "dd 'de' MMMM 'de' yyyy", {
-                locale: es,
-              })} (Net ${selectedPaymentTerm.days})`}
+            {computedDueDate
+              ? `Pago adeudado el ${format(
+                  computedDueDate,
+                  "dd 'de' MMMM 'de' yyyy",
+                  {
+                    locale: es,
+                  }
+                )} (Net ${selectedPaymentTerm?.days ?? 0})`
+              : "Define fecha de entrega para calcular el vencimiento"}
           </span>
         </div>
+
+        {/* Aviso si falta la fecha de entrega */}
+        {!dispatchDate && (
+          <div className="w-full mt-2 pl-7 text-[12px] text-red-600">
+            Esta orden no tiene <b>fecha de entrega</b>. Asigna el despacho para
+            poder calcular el vencimiento.
+          </div>
+        )}
+
         <div className="w-full flex-end">
           <div className="w-[50%] mt-2 flex-end gap-2">
             <CustomFormButton
-              handleClickFunction={handleCloseClick}
+              handleClickFunction={handleClose}
               text="Cancelar"
               color="bg-white-500"
               textColor="text-[#000000]"
               fontBold={true}
             />
             <CustomFormButton
-              handleClickFunction={handleSubmitClick}
+              handleClickFunction={handleSubmit}
               text="Guardar"
               color="bg-blue-500"
               textColor="text-white"
               fontBold={true}
+              disabled={disableSave}
+              isLoading={false}
             />
           </div>
         </div>

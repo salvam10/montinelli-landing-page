@@ -241,6 +241,8 @@ export const updateOrder = createAsyncThunk(
     },
     { dispatch }
   ) => {
+    console.log('due_date', due_date);
+    
     try {
       const response = await axios.put(`${SERVER_URL}/api/orders/${orderId}`, {
         status,
