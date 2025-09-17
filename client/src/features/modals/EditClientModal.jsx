@@ -21,6 +21,7 @@ import { capitalizeFirstLetter } from "../../helpers/CapitalizeFirstLetter";
 
 const EditClientModal = ({ setShowModal, client }) => {
   const { isLoading } = useSelector((state) => state.clients);
+  const { paymentTerms } = useSelector((state) => state.paymentTerms);
   const [legalRepresentative, setLegalRepresentative] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [streetAddress, setStreetAddress] = useState("");
@@ -36,8 +37,29 @@ const EditClientModal = ({ setShowModal, client }) => {
   const [rif, setRif] = useState("");
   const [sicaCode, setSicaCode] = useState("");
   const [profitCode, setProfitCode] = useState("");
-
+  const [options, setOptions] = useState([]);
+  const [selectedPaymentTerm, setSelectedPaymentTerm] = useState({
+    id: client?.credit_id,
+    days: client?.credit_days,
+  });
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (!paymentTerms) return;
+    setOptions(
+      paymentTerms.map((term) => ({
+        value: { id: term.id, days: term.days },
+        label: term.name,
+      }))
+    );
+  }, [paymentTerms]);
+
+  useEffect(() => {
+    setSelectedPaymentTerm({
+      id: client?.credit_id,
+      days: client?.credit_days,
+    });
+  }, [client?.credit_id, client?.credit_days]);
 
   useEffect(() => {
     if (client && Object.keys(client).length > 0) {
@@ -84,6 +106,7 @@ const EditClientModal = ({ setShowModal, client }) => {
       state: state?.toLowerCase(),
       sunagro_code: sicaCode?.toLowerCase(),
       profit_code: profitCode?.toLowerCase(),
+      payment_term_id: selectedPaymentTerm?.id,
       formData,
     };
 
@@ -96,6 +119,11 @@ const EditClientModal = ({ setShowModal, client }) => {
   useEffect(() => {
     console.log("file", selectedFile);
   }, [selectedFile]);
+
+  useEffect(() => {
+    console.log('client', client);
+    console.log("selectedPaymentTerm", selectedPaymentTerm);
+  }, [selectedPaymentTerm]);
 
   return (
     <div className="modal-overlay">
@@ -198,6 +226,13 @@ const EditClientModal = ({ setShowModal, client }) => {
               setValue={setMobilePhone}
             />
           </div>
+          <CustomSelect
+            label="Condiciones de Pago:"
+            options={options}
+            value={selectedPaymentTerm}
+            isObjectValue={true}
+            setValue={setSelectedPaymentTerm}
+          />
           <div className="w-full flex-center">
             <CustomFormButton type="submit" isLoading={isLoading} />
           </div>

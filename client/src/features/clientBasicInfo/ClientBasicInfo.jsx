@@ -1,11 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { useDispatch } from "react-redux";
-import { updateClient } from "../slices/clientsSlice";
+import React from "react";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { capitalizeFirstLetter } from "../../helpers/CapitalizeFirstLetter";
 
 const ClientBasicInfo = ({ client, setShowModal }) => {
-
   return (
     <div className="section-container">
       <div className="w-full flex flex-col justify-between gap-5">
@@ -92,6 +89,14 @@ const ClientBasicInfo = ({ client, setShowModal }) => {
             <span className="responsive-text font-bold">Dirección:</span>
             <span className="responsive-text">
               {capitalizeFirstLetter(client?.street_address || "No disponible")}
+            </span>
+          </div>
+          <div className="w-full flex flex-col">
+            <span className="responsive-text font-bold">Días de Crédito:</span>
+            <span className="responsive-text">
+              {capitalizeFirstLetter(
+                client?.credit_description || "No disponible"
+              )}
             </span>
           </div>
         </div>

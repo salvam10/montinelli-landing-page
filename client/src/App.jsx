@@ -25,6 +25,7 @@ import CreateOrderPage from "./pages/CreateOrderPage/CreateOrderPage.jsx";
 import ClientsPage from "./pages/ClientsPage/ClientsPage.jsx";
 import CreateClientPage from "./pages/CreateClientPage/CreateClientPage.jsx";
 import ClientDetailPage from "./pages/ClientDetailPage/ClientDetailPage.jsx";
+import AccountsReceivablePage from "./pages/AccountsReceivablePage/AccountsReceivablePage.jsx";
 
 export const AuthContext = React.createContext();
 
@@ -38,9 +39,8 @@ const App = () => {
   };
 
   useEffect(() => {
-    console.log('succesfull launch');
-    
-  },[])
+    console.log("succesfull launch");
+  }, []);
 
   const dispatch = useDispatch();
 
@@ -82,6 +82,10 @@ const App = () => {
             <Route path="orders/:id" element={<Order />} />
             <Route path="orders/create" element={<CreateOrderPage />} />
             <Route path="clients" element={<ClientsPage />} />
+            <Route
+              path="accounts-receivable"
+              element={<AccountsReceivablePage />}
+            />
             <Route path="clients/:id" element={<ClientDetailPage />} />
             <Route path="clients/create" element={<CreateClientPage />} />
           </Route>

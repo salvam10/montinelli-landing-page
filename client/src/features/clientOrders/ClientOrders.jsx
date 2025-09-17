@@ -21,7 +21,7 @@ const columns = [
     accessorKey: "created_at",
     footer: "Fecha de Creación",
     cell: (info) =>
-      format(info.getValue(), "dd 'de' MMMM 'de' yyyy", { locale: es }),
+      format(info.getValue(), "dd 'de' MMM 'de' yyyy", { locale: es }),
     meta: { width: "w-[160px] min-w-[160px]" },
   },
   {

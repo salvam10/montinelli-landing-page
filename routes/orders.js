@@ -31,6 +31,7 @@ router.get("/", async (req, res) => {
       orders.product_category_id,
       clients.name AS client_name,
       orders.status,
+      orders.paid_at,
       users.firstname || ' ' || users.lastname AS user_fullname
     FROM orders
     JOIN clients ON orders.client_id = clients.id
@@ -104,6 +105,7 @@ router.get("/:orderId", async (req, res) => {
         payment_terms.description AS payment_term_description,
         payment_terms.name AS payment_term_name,
         payment_statuses.status AS payment_status,
+        orders.paid_at,
         users.firstname || ' ' || users.lastname AS user_fullname
       FROM orders
       JOIN clients ON orders.client_id = clients.id
@@ -152,6 +154,7 @@ router.get("/seller/:userId", async (req, res) => {
       orders.product_category_id,
       clients.name AS client_name,
       orders.status,
+      orders.paid_at,
       users.firstname || ' ' || users.lastname AS user_fullname
     FROM orders
     JOIN clients ON orders.client_id = clients.id
@@ -223,6 +226,7 @@ router.get("/client/:clientId", async (req, res) => {
       orders.product_category_id,
       clients.name AS client_name,
       orders.status,
+      orders.paid_at,
       users.firstname || ' ' || users.lastname AS user_fullname
     FROM orders
     JOIN clients ON orders.client_id = clients.id
@@ -291,19 +295,29 @@ router.get("/:orderId/client", async (req, res) => {
   const orderId = req.params.orderId;
   try {
     const query = `
-      SELECT c.*
-      FROM Clients c
-      JOIN Orders o ON c.id = o.client_id
+      SELECT 
+        c.*, 
+        pt.id AS credit_id,
+        pt.name AS credit_name,
+        pt.description AS credit_description,
+        pt.days AS credit_days
+      FROM clients c
+      JOIN orders o ON c.id = o.client_id
+      LEFT JOIN payment_terms pt ON pt.id = c.payment_term_id
       WHERE o.id = $1
     `;
     const { rows } = await postgresDB.query(query, [orderId]);
     const client = rows[0]; // Asumimos que cada orden tiene un solo cliente
+    if (!client) {
+      return res.status(404).send("Cliente no encontrado");
+    }
     res.status(200).send(client);
   } catch (error) {
     console.error(error);
     res.status(500).send("Error al obtener los datos del cliente");
   }
 });
+
 
 // Crear una nueva orden para el usuario
 router.post("/user/:userId", async (req, res) => {
@@ -528,6 +542,7 @@ router.put("/:orderId", async (req, res, next) => {
     due_date,
     invoice_number,
     invoice_date,
+    paid_at
   } = req.body;
 
   let updateQuery = "UPDATE orders SET ";
@@ -535,6 +550,11 @@ router.put("/:orderId", async (req, res, next) => {
   let count = 1;
 
   // Construir la consulta de actualización dinámica
+  if (paid_at !== undefined) {
+    updateQuery += `paid_at = $${count}, `;
+    updateValues.push(paid_at);
+    count++;
+  }
   if (invoice_date !== undefined) {
     updateQuery += `invoice_date = $${count}, `;
     updateValues.push(invoice_date);

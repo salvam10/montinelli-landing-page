@@ -3,6 +3,7 @@ import HourglassEmptyOutlinedIcon from "@mui/icons-material/HourglassEmptyOutlin
 import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import InboxOutlinedIcon from "@mui/icons-material/InboxOutlined";
+import AttachMoneyOutlinedIcon from "@mui/icons-material/AttachMoneyOutlined";
 
 export const clientOptions = [
   {
@@ -194,7 +195,7 @@ export const dispatchStatuses = [
 ];
 
 export const combinedStatuses = [
-  {
+  /* {
     title: "Estado de cuenta",
     statuses: [
       { text: "Al dia", value: false },
@@ -203,7 +204,7 @@ export const combinedStatuses = [
     handleOnClick: (value) => {
       return "";
     },
-  },
+  }, */
   {
     title: "Aprobación de gerencia",
     statuses: [
@@ -267,6 +268,11 @@ export const adminSidebarItems = [
     label: "Clientes",
     icon: <PersonOutlineOutlinedIcon style={{ fontSize: "20px" }} />,
     route: "/admin/clients",
+  },
+  {
+    label: "Cobranza",
+    icon: <AttachMoneyOutlinedIcon style={{ fontSize: "20px" }} />,
+    route: "/admin/accounts-receivable",
   },
 ];
 

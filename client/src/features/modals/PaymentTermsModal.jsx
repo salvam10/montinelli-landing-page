@@ -6,10 +6,11 @@ import CustomFormButton from "../customFormButton/CustomFormButton";
 import { getOrderById, updateOrder } from "../slices/ordersSlice";
 import { addDays, format } from "date-fns";
 import { es } from "date-fns/locale";
+import { updateClient } from "../slices/clientsSlice";
 
 const toYMD = (d) => format(new Date(d), "yyyy-MM-dd");
 
-const PaymentTermsModal = ({ setOpenModal, order }) => {
+const PaymentTermsModal = ({ setOpenModal, orderClient, order }) => {
   const dispatch = useDispatch();
   const { paymentTerms } = useSelector((state) => state.paymentTerms);
 
@@ -40,10 +41,10 @@ const PaymentTermsModal = ({ setOpenModal, order }) => {
 
   useEffect(() => {
     setSelectedPaymentTerm({
-      id: order?.payment_term_id,
-      days: order?.payment_term_days,
+      id: orderClient?.credit_id,
+      days: orderClient?.credit_days,
     });
-  }, [order?.payment_term_id, order?.payment_term_days]);
+  }, [orderClient?.credit_id, orderClient?.credit_days]);
 
   // due_date recalculado cada vez que cambian los días (base = dispatchDate)
   const computedDueDate = useMemo(() => {
@@ -64,6 +65,12 @@ const PaymentTermsModal = ({ setOpenModal, order }) => {
         due_date: toYMD(computedDueDate),
       })
     );
+    await dispatch(
+      updateClient({
+        id: orderClient.id,
+        payment_term_id: selectedPaymentTerm.id,
+      })
+    );
     dispatch(getOrderById({ orderId: order.id }));
     setOpenModal(false);
   };
@@ -72,7 +79,7 @@ const PaymentTermsModal = ({ setOpenModal, order }) => {
 
   return (
     <div className="modal-overlay">
-      <div className="modal w-[400px] h-[30vh] relative gap-2">
+      <div className="modal w-[450px] h-[55vh] relative gap-2">
         <div className="absolute top-0 right-4 cursor-pointer">
           <button className="modal-close-button" onClick={handleClose}>
             <CloseIcon />

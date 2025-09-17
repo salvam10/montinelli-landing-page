@@ -164,20 +164,6 @@ const OrderHeader = ({
               openDropdown={openManagerDrop}
               setOpenDropdown={setOpenManagerDrop}
             />
-            <DropdownButton
-              btnLabel="Estado de cuenta"
-              items={debtStatuses}
-              currentItem={
-                client?.has_debt == null
-                  ? "Deuda no verificada"
-                  : client.has_debt === true
-                  ? "con deuda"
-                  : "al día"
-              }
-              handleOnClick={updateDebtStatus}
-              openDropdown={openDebtDrop}
-              setOpenDropdown={setOpenDebtDrop}
-            />
           </div>
         ) : (
           <div className="text-[10px] cursor-pointer">

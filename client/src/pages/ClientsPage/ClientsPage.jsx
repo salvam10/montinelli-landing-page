@@ -9,6 +9,12 @@ import { orderTableFilters } from "../../dummy";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
+const fmtMoney = (v) =>
+  isNaN(Number(v))
+    ? "$0.00"
+    : `$${Number(v).toLocaleString("es-VE", { minimumFractionDigits: 2 })}`;
+
+    
 const columns = [
   {
     header: "Id",
@@ -17,16 +23,16 @@ const columns = [
     meta: { width: "w-[80px] min-w-[80px]" },
   },
   {
-    header: "Nombre del cliente",
-    accessorKey: "name",
-    footer: "Nombre del cliente",
-    meta: { width: "w-[300px] min-w-[250px]" },
-  },
-  {
     header: "Rif",
     accessorKey: "rif",
     footer: "Rif",
     meta: { width: "w-[160px] min-w-[160px]" },
+  },
+  {
+    header: "Nombre del cliente",
+    accessorKey: "name",
+    footer: "Nombre del cliente",
+    meta: { width: "w-[350px] min-w-[250px]" },
   },
   {
     header: "Ubicación",
@@ -39,6 +45,8 @@ const columns = [
     meta: { width: "w-[200px] min-w-[200px]" },
   },
 ];
+
+
 
 const ClientsPage = () => {
   const dispatch = useDispatch();

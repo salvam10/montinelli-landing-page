@@ -11,6 +11,7 @@ import ClientOrders from "../../features/clientOrders/ClientOrders";
 import SellerPicker from "../../features/sellerPicker/SellerPicker";
 import EditClientModal from "../../features/modals/EditClientModal";
 import CustomFormButton from "../../features/customFormButton/CustomFormButton";
+import { getPaymentTerms } from "../../features/slices/paymentTermsSlice";
 
 const ClientDetailPage = () => {
   const { id } = useParams();
@@ -25,6 +26,7 @@ const ClientDetailPage = () => {
   useEffect(() => {
     if (id) {
       dispatch(getSingleClient({ id }));
+      dispatch(getPaymentTerms());
     }
   }, [id, dispatch]);
 
@@ -64,6 +66,7 @@ const ClientDetailPage = () => {
 
         <div className="w-full md:w-[30%] flex flex-col gap-5">
           <ClientBasicInfo client={client} setShowModal={setShowModal} />
+          
           <SellerPicker
             selectedSeller={selectedSeller}
             setSelectedSeller={setSelectedSeller}

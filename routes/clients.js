@@ -3,30 +3,170 @@ const router = express.Router();
 const postgresDB = require("../db/postgres");
 
 //Obtener todos los clientes
+// Obtener clientes + métricas de cobranzas (incluye payment_terms)
+// Clientes + métricas de facturación/cobranzas (solo órdenes facturadas)
 router.get("/", async (req, res, next) => {
   try {
-    const { rows } = await postgresDB.query("SELECT * FROM clients");
-    const clients = rows;
-    res.status(201).send(clients);
+    const sql = `
+  SELECT
+  c.id,
+  c.name,
+  c.rif,
+  c.city,
+  c.municipality,
+  c.state,
+
+  /* --- FACTURAS (solo si invoice_number & invoice_date existen) --- */
+  COUNT(*) FILTER (
+    WHERE o.invoice_number IS NOT NULL AND o.invoice_date IS NOT NULL
+  ) AS invoices_total,
+
+  COUNT(*) FILTER (
+    WHERE o.invoice_number IS NOT NULL AND o.invoice_date IS NOT NULL
+      AND o.payment_status_id = 2
+  ) AS invoices_paid,
+
+  COUNT(*) FILTER (
+    WHERE o.invoice_number IS NOT NULL AND o.invoice_date IS NOT NULL
+      AND o.payment_status_id = 1
+      AND CURRENT_DATE <= o.due_date
+  ) AS invoices_pending,   -- pendientes dentro de plazo
+
+  COUNT(*) FILTER (
+    WHERE o.invoice_number IS NOT NULL AND o.invoice_date IS NOT NULL
+      AND (o.payment_status_id <> 2)
+      AND CURRENT_DATE > o.due_date
+  ) AS invoices_overdue,
+
+  /* --- MONTOS --- */
+  COALESCE(SUM(o.total) FILTER (
+    WHERE o.invoice_number IS NOT NULL AND o.invoice_date IS NOT NULL
+      AND (o.payment_status_id <> 2)
+      AND CURRENT_DATE > o.due_date
+  ), 0) AS overdue_amount,
+
+  COALESCE(SUM(o.total) FILTER (
+    WHERE o.invoice_number IS NOT NULL AND o.invoice_date IS NOT NULL
+      AND o.payment_status_id = 1
+      AND CURRENT_DATE <= o.due_date
+  ), 0) AS pending_amount,
+
+  COALESCE(SUM(o.total) FILTER (
+    WHERE o.invoice_number IS NOT NULL AND o.invoice_date IS NOT NULL
+      AND (
+        (o.payment_status_id = 1 AND CURRENT_DATE <= o.due_date) OR
+        ((o.payment_status_id <> 2) AND CURRENT_DATE > o.due_date)
+      )
+  ), 0) AS debt_total,
+
+  /* --- DÍAS DE CRÉDITO (desde clients.payment_term_id) --- */
+  pt.days AS credit_days,
+
+  /* --- ATRASOS (solo facturas vencidas con payment_status_id = 3) --- */
+  MAX(
+    CASE
+      WHEN CURRENT_DATE > o.due_date AND o.payment_status_id = 3 THEN
+        GREATEST(0, (CURRENT_DATE - o.due_date))
+      ELSE 0
+    END
+  )::int AS max_days_overdue
+
+FROM clients c
+LEFT JOIN orders o          ON o.client_id = c.id
+LEFT JOIN payment_terms pt  ON pt.id = c.payment_term_id
+GROUP BY
+  c.id, c.name, c.rif, c.city, c.municipality, c.state, pt.days
+ORDER BY
+  max_days_overdue DESC,
+  c.name;
+`;
+
+    const { rows } = await postgresDB.query(sql);
+    res.status(200).send(rows);
   } catch (error) {
-    console.log(error);
+    next(error);
   }
 });
 
 // Obtener un cliente por su ID
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
-  
+
   try {
-    const { rows } = await postgresDB.query(
-      "SELECT * FROM clients WHERE id = $1",
-      [id]
-    );
+    const sql = `
+      SELECT
+        c.id,
+        c.name,
+        c.rif,
+        c.city,
+        c.municipality,
+        c.state,
+
+        /* --- FACTURAS (solo si invoice_number & invoice_date existen) --- */
+        COUNT(*) FILTER (
+          WHERE o.invoice_number IS NOT NULL AND o.invoice_date IS NOT NULL
+        ) AS invoices_total,
+
+        COUNT(*) FILTER (
+          WHERE o.invoice_number IS NOT NULL AND o.invoice_date IS NOT NULL
+            AND o.payment_status_id = 2
+        ) AS invoices_paid,
+
+        COUNT(*) FILTER (
+          WHERE o.invoice_number IS NOT NULL AND o.invoice_date IS NOT NULL
+            AND o.payment_status_id = 1
+            AND CURRENT_DATE <= o.due_date
+        ) AS invoices_pending,   -- pendientes dentro de plazo
+
+        COUNT(*) FILTER (
+          WHERE o.invoice_number IS NOT NULL AND o.invoice_date IS NOT NULL
+            AND (o.payment_status_id <> 2)
+            AND CURRENT_DATE > o.due_date
+        ) AS invoices_overdue,
+
+        /* --- MONTOS --- */
+        COALESCE(SUM(o.total) FILTER (
+          WHERE o.invoice_number IS NOT NULL AND o.invoice_date IS NOT NULL
+            AND (o.payment_status_id <> 2)
+            AND CURRENT_DATE > o.due_date
+        ), 0) AS overdue_amount,
+
+        COALESCE(SUM(o.total) FILTER (
+          WHERE o.invoice_number IS NOT NULL AND o.invoice_date IS NOT NULL
+            AND o.payment_status_id = 1
+            AND CURRENT_DATE <= o.due_date
+        ), 0) AS pending_amount,
+
+        COALESCE(SUM(o.total) FILTER (
+          WHERE o.invoice_number IS NOT NULL AND o.invoice_date IS NOT NULL
+            AND (
+              (o.payment_status_id = 1 AND CURRENT_DATE <= o.due_date) OR
+              ((o.payment_status_id <> 2) AND CURRENT_DATE > o.due_date)
+            )
+        ), 0) AS debt_total,
+
+        /* --- DÍAS DE CRÉDITO (desde clients.payment_term_id) --- */
+        pt.id AS credit_id,
+        pt.days AS credit_days,
+        pt.description AS credit_description,
+        pt.name AS credit_name,
+
+        /* --- ATRASOS --- */
+        COALESCE(MAX(GREATEST(0, (CURRENT_DATE - o.due_date)))::int, 0) AS max_days_overdue
+
+      FROM clients c
+      LEFT JOIN orders o         ON o.client_id = c.id
+      LEFT JOIN payment_terms pt ON pt.id = c.payment_term_id
+      WHERE c.id = $1
+      GROUP BY c.id, c.name, c.rif, c.city, c.municipality, c.state, pt.id, pt.days,   pt.description, pt.name
+    `;
+
+    const { rows } = await postgresDB.query(sql, [id]);
     if (rows.length === 0) {
       return res.status(404).json({ message: "Cliente no encontrado" });
     }
-    
-    res.status(200).send(rows[0]);
+
+    res.status(200).json(rows[0]);
   } catch (error) {
     console.error("Error al obtener cliente por ID:", error);
     res.status(500).json({ message: "Error interno del servidor" });
@@ -178,6 +318,7 @@ router.put("/:id", async (req, res) => {
     has_debt,
     created_at,
     user_id,
+    payment_term_id,
   } = req.body;
 
   let updateQuery = "UPDATE clients SET ";
@@ -185,11 +326,16 @@ router.put("/:id", async (req, res) => {
   let count = 1;
 
   // Construir el query dinámico
-   if (sunagro_code !== undefined) {
-     updateQuery += `sunagro_code = $${count}, `;
-     updateValues.push(sunagro_code);
-     count++;
-   }
+  if (payment_term_id !== undefined) {
+    updateQuery += `payment_term_id = $${count}, `;
+    updateValues.push(payment_term_id);
+    count++;
+  }
+  if (sunagro_code !== undefined) {
+    updateQuery += `sunagro_code = $${count}, `;
+    updateValues.push(sunagro_code);
+    count++;
+  }
   if (user_id !== undefined) {
     updateQuery += `user_id = $${count}, `;
     updateValues.push(user_id);

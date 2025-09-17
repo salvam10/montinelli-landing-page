@@ -6,6 +6,10 @@ const express = require("express");
 const app = express();
 const path = require("path");
 
+/* Cron Jobs */
+require("./jobs/checkOverdueOrders");
+require("./jobs/checkClientsDebt");
+
 /* Librerias para gestionar sesiones e inicio de sesión */
 var cookieParser = require("cookie-parser");
 var passport = require("passport");
@@ -124,6 +128,7 @@ app.use("/api/auth", authRouter);
 app.get("/", async (req, res, next) => {
   res.send("Welcome to GSM.");
 });
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {
