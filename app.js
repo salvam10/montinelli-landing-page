@@ -22,8 +22,12 @@ var SQLiteStore = require("connect-sqlite3")(session);
 const productVariationAttsRouter = require("./routes/prodVariationAttributes");
 const productVariationsRouter = require("./routes/product_variations");
 const attributesValuesRouter = require("./routes/attributesValues");
+const marketCheckItemsRouter = require("./routes/marketCheckItems");
 const categoriesRouter = require("./routes/product_categories");
+const marketProductsRouter = require("./routes/marketProducts");
 const paymentTermsRouter = require("./routes/paymentTerms");
+const marketBrandsRouter = require("./routes/marketBrands");
+const marketChecksRouter = require("./routes/marketChecks");
 const attributesRouter = require("./routes/attributes");
 const brandsRouter = require("./routes/product_brands");
 const analyticsRoutes = require("./routes/analytics");
@@ -58,6 +62,7 @@ const reactRouterRoutes = [
 
   // Pedidos del usuario
   "/mis-pedidos",
+  "/market-check",
   "/orders",
   "/orders/:orderId",
   "/orders/category/:prodCategoryId",
@@ -112,7 +117,11 @@ app.use(
 app.use("/api/product-variation-attributes", productVariationAttsRouter);
 app.use("/api/product-variations", productVariationsRouter);
 app.use("/api/attributes-values", attributesValuesRouter);
+app.use("/api/market-products", marketProductsRouter);
 app.use("/api/payment-terms", paymentTermsRouter);
+app.use("/api/market-brands", marketBrandsRouter);
+app.use("/api/market-checks", marketChecksRouter);
+app.use("/api/market-check-items", marketCheckItemsRouter);
 app.use("/api/attributes", attributesRouter);
 app.use("/api/categories", categoriesRouter);
 app.use("/api/products", productsRouter);

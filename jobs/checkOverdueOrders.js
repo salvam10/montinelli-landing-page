@@ -7,7 +7,7 @@ const checkOverdueOrders = async () => {
 };
 
 // Corre todos los días a medianoche
-cron.schedule("* * * * *", () => {
+cron.schedule("*/30 * * * *", () => {
   console.log("[cron] ejecutando checkOverdueOrders…");
   checkOverdueOrders().catch(console.error);
 });

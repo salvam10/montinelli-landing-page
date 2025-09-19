@@ -3,16 +3,60 @@ const router = express.Router();
 const postgresDB = require("../db/postgres");
 
 // Obtener todas las categorías
+// Obtener categorías (todas o filtradas)
+// Obtener categorías (todas o filtradas)
 router.get("/", async (req, res, next) => {
   try {
-    const { rows } = await postgresDB.query("SELECT * FROM product_categories");
-    const categories = rows;
-    res.status(200).send(categories);
+    let { q, active, level, parent_id } = req.query;
+
+    const where = [];
+    const params = [];
+    let i = 1;
+
+    // --- Múltiples q (ej: ?q=Montinelli&q=Peros) ---
+    if (q) {
+      if (!Array.isArray(q)) {
+        q = [q]; // si solo viene un valor, lo metemos en array
+      }
+      const placeholders = q.map(() => `$${i++}`).join(", ");
+      where.push(`name IN (${placeholders})`);
+      params.push(...q);
+    }
+
+    if (active === "true" || active === "false") {
+      where.push(`active = $${i++}`);
+      params.push(active === "true");
+    }
+
+    if (level) {
+      where.push(`level = $${i++}`);
+      params.push(Number(level));
+    }
+
+    if (parent_id === "null") {
+      where.push(`parent_id IS NULL`);
+    } else if (parent_id !== undefined) {
+      where.push(`parent_id = $${i++}`);
+      params.push(Number(parent_id));
+    }
+
+    const whereSQL = where.length ? `WHERE ${where.join(" AND ")}` : "";
+
+    const sql = `
+      SELECT *
+      FROM product_categories
+      ${whereSQL}
+      ORDER BY COALESCE(parent_id, 0), name;
+    `;
+
+    const { rows } = await postgresDB.query(sql, params);
+    res.status(200).send(rows);
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ message: "Error al obtener las categorías" });
   }
 });
+
 
 // Obtener una categoría por su id
 router.get("/:catId", async (req, res) => {

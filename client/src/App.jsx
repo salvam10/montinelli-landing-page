@@ -26,6 +26,7 @@ import ClientsPage from "./pages/ClientsPage/ClientsPage.jsx";
 import CreateClientPage from "./pages/CreateClientPage/CreateClientPage.jsx";
 import ClientDetailPage from "./pages/ClientDetailPage/ClientDetailPage.jsx";
 import AccountsReceivablePage from "./pages/AccountsReceivablePage/AccountsReceivablePage.jsx";
+import NewMarketCheck from "./features/newMarketCheck/NewMarketCheck.jsx";
 
 export const AuthContext = React.createContext();
 
@@ -62,6 +63,7 @@ const App = () => {
           <Route element={<SellerLayout />}>
             <Route path="/" element={<HomePage />} />
             <Route path="mis-pedidos" element={<SellerOrdersPage />} />
+            <Route path="market-check" element={<NewMarketCheck />} />
             <Route path="orders/:orderId" element={<SellerSingleOrder />} />
             <Route path="categorias" element={<CategoriesPage />} />
             <Route path="categorias/:name" element={<Category />} />

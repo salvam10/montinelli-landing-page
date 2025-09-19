@@ -8,9 +8,9 @@ const CategoriesList = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    dispatch(getCategories());
-  }, []);
+ useEffect(() => {
+   dispatch(getCategories({ names: ["Montinelli", "Peros"] }));
+ }, [dispatch]);
 
 
   const handleClick = (category) => {
