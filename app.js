@@ -146,7 +146,7 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, async () => {
-  console.log(`Servidor escuchando en el puerto: ${PORT}`);
+  console.log(`Servidor escuchando en el puerto seleccionado: ${PORT}`);
 });
 
 module.exports = app;
