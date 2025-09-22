@@ -1,85 +1,181 @@
-import { useEffect, useMemo, useState } from "react";
-/* import CategorySelects from "../components/CategorySelects"; */
+import React, { useEffect, useMemo, useState, useContext } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import SearchBar from "../searchBar/SearchBar";
-/* import ProductRow from "../components/ProductRow"; */
-/* import { fetchJSON, postJSON } from "../lib/api"; */
 import ClientPicker from "../clientPicker/ClientPicker";
+import CategoryPicker from "../categoryPicker/CategoryPicker";
+import { getMarketProductsByCat } from "../slices/marketProductsSlice";
+import MarketProductRow from "../marketProductRow/MarketProductRow";
+import {
+  submitMarketCheck,
+  clearSubmitState,
+} from "../slices/marketCheckSlice";
+import { AuthContext } from "../../App";
+import axios from "axios";
 
-const NewMarketCheck = ({ sellerId }) => {
+const NewMarketCheck = () => {
+  const { user } = useContext(AuthContext);
+  const dispatch = useDispatch();
+
+  const { marketProducts } = useSelector((state) => state.marketProducts);
+
+  const [bcvRate, setBcvRate] = useState(0);
+  const [currency, setCurrency] = useState("USD"); // GLOBAL: "USD" | "VES"
+  const [fxRate, setFxRate] = useState(""); // GLOBAL: solo si currency === "VES"
+
   const [selectedClientId, setSelectedClientId] = useState(null);
-  const [categoryId, setCategoryId] = useState(null); // categoría grande
-  const [subcategoryId, setSubcategoryId] = useState(null); // subcategoría
+  const [selectedCatId, setSelectedCatId] = useState(null); // subcategoría seleccionada
   const [q, setQ] = useState("");
-  const [products, setProducts] = useState([]);
-  const [lines, setLines] = useState({}); // productId -> { price_amount, currency_code, fx_rate_used, photo_url }
+  const [lines, setLines] = useState({}); // { [productId]: { price } }
 
-  const canLoadProducts = useMemo(
-    () => Boolean(subcategoryId),
-    [subcategoryId]
-  );
+  // Cargar tasa (paralelo/BCV) al montar
+  useEffect(() => {
+    const fetchBcvRate = async () => {
+      try {
+        const resp = await axios.get(
+          "https://ve.dolarapi.com/v1/dolares/paralelo"
+        );
+        // Si tu API te da «promedio», úsalo como default
+        const rate = Number(resp?.data?.promedio || 0);
+        if (rate > 0) {
+          setBcvRate(rate);
+          setFxRate(String(rate)); // por defecto precargar la tasa global
+        }
+      } catch (err) {
+        console.error("Error fetching FX rate:", err);
+      }
+    };
+    fetchBcvRate();
+  }, []);
 
-  
+  // Cargar productos por subcategoría
+  useEffect(() => {
+    if (selectedCatId) {
+      dispatch(getMarketProductsByCat({ categoryId: selectedCatId }));
+    }
+  }, [selectedCatId, dispatch]);
+
+  // Limpiar estado de submit al montar/desmontar
+  useEffect(() => {
+    return () => dispatch(clearSubmitState());
+  }, [dispatch]);
+
   const setLine = (productId, v) => {
-    setLines((prev) => ({ ...prev, [productId]: v }));
+    setLines((prev) => ({
+      ...prev,
+      [productId]: v,
+    }));
   };
 
-/*   const handleSubmit = async () => {
-    if (!sellerId) return alert("Falta sellerId");
-    if (!selectedClientId) return alert("Selecciona un establecimiento");
-    if (!subcategoryId) return alert("Selecciona una subcategoría");
+  const filteredProducts = useMemo(() => {
+    const term = (q || "").trim().toLowerCase();
+    if (!term) return marketProducts;
+    return marketProducts.filter((p) =>
+      [p.name, p.presentation, p.brand_name]
+        .filter(Boolean)
+        .some((t) => String(t).toLowerCase().includes(term))
+    );
+  }, [q, marketProducts]);
 
-    // Construimos payload
+  const canSubmit = useMemo(() => {
+    if (currency === "VES" && (!fxRate || Number(fxRate) <= 0)) return false;
+    const hasAny = Object.values(lines).some((v) => Number(v?.price) > 0);
+    return !!user && !!selectedClientId && !!selectedCatId && hasAny;
+  }, [currency, fxRate, lines, user, selectedClientId, selectedCatId]);
+
+  const handleSubmit = () => {
+    if (!user) return alert("Falta sellerId");
+    if (!selectedClientId) return alert("Selecciona un establecimiento");
+    if (!selectedCatId) return alert("Selecciona una categoría");
+    if (currency === "VES" && (!fxRate || Number(fxRate) <= 0)) {
+      return alert("Indica una tasa válida para Bs.");
+    }
+
+    const rate = Number(fxRate);
+    const linesArray = Object.entries(lines)
+      .filter(([, v]) => v && Number(v.price) > 0)
+      .map(([productId, v]) => {
+        const raw = Number(v.price);
+        const price_usd =
+          currency === "VES" ? +(raw / rate).toFixed(2) : +raw.toFixed(2);
+
+        return {
+          market_product_id: Number(productId),
+          currency_code: "USD", // siempre enviamos USD
+          price_usd,
+          fx_rate_used: currency === "VES" ? rate : null, // referencia de conversión
+        };
+      });
+
+    if (!linesArray.length) return alert("Agrega al menos un precio válido.");
+
     const payload = {
-      seller_id: sellerId,
-      establishment_id: selectedClientId,
+      seller_id: user.id,
+      client_id: selectedClientId,
       visited_at: new Date().toISOString(),
       notes: "",
-      lines: Object.entries(lines)
-        .filter(([, v]) => v && Number(v.price_amount) > 0)
-        .map(([productId, v]) => ({
-          competitor_product_id: Number(productId),
-          currency_code: v.currency_code || "USD",
-          fx_rate_used:
-            v.currency_code === "VES" ? Number(v.fx_rate_used || 0) : null,
-          price_amount: Number(v.price_amount),
-          photo_url: v.photo_url || null,
-          shelf_info: null,
-        })),
+      lines: linesArray,
     };
 
-    if (!payload.lines.length) return alert("Agrega al menos un precio.");
-
-    try {
-      const res = await postJSON("/api/market-surveys", payload);
-      alert(`Check guardado. ID: ${res?.survey_id || "?"}`);
-      setLines({});
-    } catch (e) {
-      alert(`Error al guardar: ${e.message}`);
-    }
-  }; */
+    dispatch(submitMarketCheck(payload));
+  };
 
   return (
     <div className="max-w-6xl mx-auto p-4 grid gap-4">
-      <h1 className="text-2xl font-semibold">Estudio de Precios — Nuevo</h1>
+      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Estudio de Precios</h1>
+        </div>
+
+        {/* Controles globales */}
+        <div className="flex flex-wrap gap-3 items-end">
+          <div className="grid gap-1">
+            <label className="responsive-text text-gray-500">
+              Moneda (Global)
+            </label>
+            <select
+              className="responsive-text border rounded px-3 py-2 min-w-[140px]"
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+            >
+              <option value="USD">USD</option>
+              <option value="VES">Bs (VES)</option>
+            </select>
+          </div>
+
+          {currency === "VES" && (
+            <div className="grid gap-1">
+              <label className="responsive-text text-gray-500">
+                Tasa Global (sugerida: {bcvRate || "—"})
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.000001"
+                className="responsive-text border rounded px-3 py-2 min-w-[160px]"
+                placeholder="Tasa (Bs/USD)"
+                value={fxRate}
+                onChange={(e) => setFxRate(e.target.value)}
+              />
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Establecimiento */}
       <div className="grid gap-2">
-        <label className="text-sm font-medium">Establecimiento</label>
-        <ClientPicker value={selectedClientId} onChange={setSelectedClientId} />
+        <ClientPicker
+          showInfo={false}
+          selectedClientId={selectedClientId}
+          setSelectedClientId={setSelectedClientId}
+        />
       </div>
 
-      {/* Categoría y Subcategoría */}
+      {/* Categoría/Subcategoría */}
       <div className="grid gap-2">
-        <label className="text-sm font-medium">Categoría / Subcategoría</label>
-        {/*  <CategorySelects
-          categoryId={categoryId}
-          onCategoryChange={(id) => {
-            setCategoryId(id);
-            setSubcategoryId(null);
-          }}
-          subcategoryId={subcategoryId}
-          onSubcategoryChange={setSubcategoryId}
-        /*/}
+        <CategoryPicker
+          selectedCatId={selectedCatId}
+          setSelectedCatId={setSelectedCatId}
+        />
       </div>
 
       {/* Búsqueda */}
@@ -91,33 +187,38 @@ const NewMarketCheck = ({ sellerId }) => {
       {/* Lista de productos */}
       <div className="border rounded">
         <div className="grid grid-cols-12 gap-2 px-3 py-2 bg-gray-50 border-b text-sm font-medium">
-          <div className="col-span-5">Producto</div>
-          <div className="col-span-2">Moneda</div>
-          <div className="col-span-2">Precio</div>
-          <div className="col-span-2">Tasa (si Bs)</div>
-          <div className="col-span-1 text-right">Foto</div>
+          {/* Encabezados alineados con las columnas del row (2 img + 6 info + 4 precio) */}
+          <div className="col-span-8">Producto</div>
+          <div className="col-span-4">
+            Precio {currency === "VES" ? "(Bs)" : "(USD)"}
+          </div>
         </div>
-        {/* 
-        {products.length === 0 ? (
+
+        {filteredProducts.length === 0 ? (
           <div className="px-3 py-6 text-gray-500">
             No hay productos para la subcategoría seleccionada.
           </div>
         ) : (
-          products.map((p) => (
-            <ProductRow
+          filteredProducts.map((p) => (
+            <MarketProductRow
               key={p.id}
               product={p}
               value={lines[p.id]}
+              currency={currency}
+              fxRate={fxRate || bcvRate}
               onChange={(v) => setLine(p.id, v)}
             />
           ))
-        )} */}
+        )}
       </div>
 
       <div className="flex justify-end">
         <button
-          onClick={()=>{}}
-          className="px-4 py-2 rounded bg-emerald-600 text-white"
+          onClick={handleSubmit}
+          className={`responsive-text px-4 py-2 rounded text-white ${
+            canSubmit ? "bg-emerald-600 hover:bg-emerald-700" : "bg-gray-300"
+          }`}
+          disabled={!canSubmit}
         >
           Guardar precios
         </button>

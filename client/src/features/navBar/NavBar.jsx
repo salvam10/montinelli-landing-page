@@ -9,6 +9,7 @@ import { AuthContext } from "../../App";
 import { userLogout } from "../slices/usersSlice";
 import MobileMenu from "../mobileMenu/MobileMenu";
 import InboxOutlinedIcon from "@mui/icons-material/InboxOutlined";
+import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 
 const NavBar = () => {
   const { user, setUser } = useContext(AuthContext);
@@ -35,6 +36,7 @@ const NavBar = () => {
   const handleCartClick = () => navigate(`/carrito`);
   const handleLogoClick = () => navigate(`/`);
   const handleOrdersClick = () => navigate(`/mis-pedidos`);
+  const handlePriceResearchClick = () => navigate(`/market-check`);
   const logout = () => {
     dispatch(userLogout());
     setUser(null);
@@ -54,6 +56,10 @@ const NavBar = () => {
             <div className="flex gap-1 cursor-pointer hover:font-bold">
               <InboxOutlinedIcon />
               <span onClick={handleOrdersClick}>Mis pedidos</span>
+            </div>
+            <div className="flex gap-1 cursor-pointer hover:font-bold">
+              <LocalOfferOutlinedIcon />
+              <span onClick={handlePriceResearchClick}>Estudio Precios</span>
             </div>
             <div className="flex gap-1 cursor-pointer hover:font-bold">
               <PersonOutlineOutlinedIcon />

@@ -14,6 +14,7 @@ export const changePillBgColor = (setPillBg, currentStatus) => {
       break;
     case "pendiente":
     case "pendiente de pago":
+    case "agendado":
       setPillBg("bg-[rgba(242,214,0,0.5)]");
       break;
     case "negado":

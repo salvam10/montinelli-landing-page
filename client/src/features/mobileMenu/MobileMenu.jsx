@@ -15,6 +15,12 @@ const MobileMenu = ({ isOpen, setIsOpen }) => {
     navigate("/mis-pedidos");
   };
 
+   const goToMarketCheck = () => {
+     closeMenu();
+     navigate("/market-check");
+   };
+
+
   const logout = () => {
     dispatch(userLogout());
     setUser(null);
@@ -38,6 +44,12 @@ const MobileMenu = ({ isOpen, setIsOpen }) => {
             className="w-full text-left text-lg text-gray-800 hover:text-blue-600"
           >
             Pedidos
+          </button>
+          <button
+            onClick={goToMarketCheck}
+            className="w-full text-left text-lg text-gray-800 hover:text-blue-600"
+          >
+            Estudio Precios
           </button>
           <button
             onClick={logout}

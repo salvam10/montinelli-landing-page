@@ -6,6 +6,8 @@ import cartReducer from "../features/slices/cartSlice";
 import categoriesReducer from "../features/slices/categoriesSlice";
 import ordersReducer from "../features/slices/ordersSlice";
 import paymentTermsReducer from "../features/slices/paymentTermsSlice";
+import marketProductsReducer from "../features/slices/marketProductsSlice";
+import marketCheckReducer from "../features/slices/marketCheckSlice";
 
 export const store = configureStore({
   reducer: {
@@ -15,6 +17,8 @@ export const store = configureStore({
     clients: clientsReducer,
     categories: categoriesReducer,
     orders: ordersReducer,
-    paymentTerms: paymentTermsReducer
+    paymentTerms: paymentTermsReducer,
+    marketProducts: marketProductsReducer,
+    marketChecks: marketCheckReducer,
   },
 });

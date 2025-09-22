@@ -13,7 +13,7 @@ const SearchBar = ({ placeholder = "Buscar producto...", onChange }) => {
         value={q}
         onChange={handleChange}
         placeholder={placeholder}
-        className="w-full border rounded px-3 py-2"
+        className="w-full responsive-text border rounded px-3 py-2"
         type="text"
       />
     </div>

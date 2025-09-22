@@ -2,8 +2,7 @@ const express = require("express");
 const router = express.Router();
 const postgresDB = require("../db/postgres");
 
-
- // GET /api/market-products
+// GET /api/market-products
 router.get("/", async (req, res, next) => {
   try {
     const q = req.query.q || null;
@@ -76,7 +75,95 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-// Crear nuevo producto 
+// GET /api/market-products/category/:id?q=atun&active=true&brand_id=1&page=1&pageSize=20
+router.get("/category/:id", async (req, res, next) => {
+  try {
+    // 1) Lee y valida el id de categoría
+    const categoryId = Number(req.params.id);
+    if (!Number.isInteger(categoryId)) {
+      return res.status(400).json({ ok: false, message: "category id inválido" });
+    }
+
+    // 2) Otros filtros opcionales
+    const q = req.query.q || null;
+    const active = req.query.active; // 'true' | 'false' | undefined
+    const brandId = req.query.brand_id ? Number(req.query.brand_id) : null;
+    const categoryText = req.query.category || null; // si aún quieres filtrar por texto de categoría
+
+    const page = Math.max(1, parseInt(req.query.page || "1", 10));
+    const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize || "20", 10)));
+    const offset = (page - 1) * pageSize;
+
+    // 3) Build WHERE dinámico (comienza con category_id = :id)
+    const where = [];
+    const params = [];
+
+    // filtro obligatorio por id de categoría (de la ruta)
+    params.push(categoryId);
+    where.push(`category_id = $${params.length}`);
+
+    if (q) {
+      params.push(`%${q}%`);
+      where.push(`name ILIKE $${params.length}`);
+    }
+
+    if (active !== undefined) {
+      params.push(active === "true");
+      where.push(`is_active = $${params.length}`);
+    }
+
+    if (brandId) {
+      params.push(brandId);
+      where.push(`brand_id = $${params.length}`);
+    }
+
+    // (opcional) si también quieres permitir filtrar por texto de categoría
+    if (categoryText) {
+      params.push(categoryText);
+      where.push(`category = $${params.length}`);
+    }
+
+    const whereSql = `WHERE ${where.join(" AND ")}`;
+
+    // 4) Queries
+    const dataSql = `
+      SELECT *
+      FROM market_products
+      ${whereSql}
+      ORDER BY name ASC
+      LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+    `;
+    const dataParams = [...params, pageSize, offset];
+
+    const countSql = `
+      SELECT COUNT(*)::int AS total
+      FROM market_products
+      ${whereSql}
+    `;
+
+    const [{ rows }, countRes] = await Promise.all([
+      postgresDB.query(dataSql, dataParams),
+      postgresDB.query(countSql, params),
+    ]);
+
+    const total = countRes.rows[0]?.total || 0;
+    const totalPages = Math.ceil(total / pageSize);
+
+    res.status(200).json({
+      ok: true,
+      data: rows,
+      page,
+      pageSize,
+      total,
+      totalPages,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+// Crear nuevo producto
 router.post("/", async (req, res, next) => {
   try {
     const {

@@ -4,7 +4,11 @@ import { getClients, getSingleClient } from "../slices/clientsSlice";
 import CustomCombobox from "../customCombobox/CustomCombobox";
 import { capitalizeFirstLetter } from "../../helpers/CapitalizeFirstLetter";
 
-const ClientPicker = ({ selectedClientId, setSelectedClientId }) => {
+const ClientPicker = ({
+  selectedClientId,
+  setSelectedClientId,
+  showInfo = true,
+}) => {
   const [options, setOptions] = useState([]);
   const { clients, client } = useSelector((state) => state.clients);
   const dispatch = useDispatch();
@@ -12,10 +16,6 @@ const ClientPicker = ({ selectedClientId, setSelectedClientId }) => {
   // Cargar todos los clientes al montar
   useEffect(() => {
     dispatch(getClients());
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "auto";
-    };
   }, []);
 
   // Cargar detalles del cliente seleccionado (por id)
@@ -59,71 +59,73 @@ const ClientPicker = ({ selectedClientId, setSelectedClientId }) => {
           setSelected={setSelectedClientId}
         />
       </div>
-      <div className="w-full">
-        <div className="w-full flex flex-col">
-          <span className="responsive-text font-bold">Nombre:</span>
-          <span className="responsive-text">
-            {capitalizeFirstLetter(client.name || "No disponible")}
-          </span>
+      {showInfo && (
+        <div className="w-full">
+          <div className="w-full flex flex-col">
+            <span className="responsive-text font-bold">Nombre:</span>
+            <span className="responsive-text">
+              {capitalizeFirstLetter(client.name || "No disponible")}
+            </span>
+          </div>
+          <div className="w-full flex flex-col">
+            <span className="responsive-text font-bold">Rif:</span>
+            <a
+              className="text-[#0079bf] hover:text-[#ff9f1a] client-detail-label cursor-pointer"
+              href={client.rif_url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {client.rif || "No disponible"}
+            </a>
+          </div>
+          <div className="w-full flex flex-col">
+            <span className="responsive-text font-bold">
+              Representante legal:
+            </span>
+            <span className="responsive-text">
+              {capitalizeFirstLetter(
+                client.legal_representative || "No disponible"
+              )}
+            </span>
+          </div>
+          <div className="w-full flex flex-col">
+            <span className="responsive-text font-bold">Teléfono:</span>
+            <span className="responsive-text">
+              {capitalizeFirstLetter(client.phone || "No disponible")}
+            </span>
+          </div>
+          <div className="w-full flex flex-col">
+            <span className="responsive-text font-bold">Código Sica:</span>
+            <span className="responsive-text">
+              {client.sunagro_code || "No disponible"}
+            </span>
+          </div>
+          <div className="w-full flex flex-col">
+            <span className="responsive-text font-bold">Ciudad:</span>
+            <span className="responsive-text">
+              {capitalizeFirstLetter(client.city || "No disponible")}
+            </span>
+          </div>
+          <div className="w-full flex flex-col">
+            <span className="responsive-text font-bold">Estado:</span>
+            <span className="responsive-text">
+              {capitalizeFirstLetter(client.state || "No disponible")}
+            </span>
+          </div>
+          <div className="w-full flex flex-col">
+            <span className="responsive-text font-bold">Municipio:</span>
+            <span className="responsive-text">
+              {capitalizeFirstLetter(client.municipality || "No disponible")}
+            </span>
+          </div>
+          <div className="w-full flex flex-col">
+            <span className="responsive-text font-bold">Dirección:</span>
+            <span className="responsive-text">
+              {capitalizeFirstLetter(client.street_address || "No disponible")}
+            </span>
+          </div>
         </div>
-        <div className="w-full flex flex-col">
-          <span className="responsive-text font-bold">Rif:</span>
-          <a
-            className="text-[#0079bf] hover:text-[#ff9f1a] client-detail-label cursor-pointer"
-            href={client.rif_url}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {client.rif || "No disponible"}
-          </a>
-        </div>
-        <div className="w-full flex flex-col">
-          <span className="responsive-text font-bold">
-            Representante legal:
-          </span>
-          <span className="responsive-text">
-            {capitalizeFirstLetter(
-              client.legal_representative || "No disponible"
-            )}
-          </span>
-        </div>
-        <div className="w-full flex flex-col">
-          <span className="responsive-text font-bold">Teléfono:</span>
-          <span className="responsive-text">
-            {capitalizeFirstLetter(client.phone || "No disponible")}
-          </span>
-        </div>
-        <div className="w-full flex flex-col">
-          <span className="responsive-text font-bold">Código Sica:</span>
-          <span className="responsive-text">
-            {client.sunagro_code || "No disponible"}
-          </span>
-        </div>
-        <div className="w-full flex flex-col">
-          <span className="responsive-text font-bold">Ciudad:</span>
-          <span className="responsive-text">
-            {capitalizeFirstLetter(client.city || "No disponible")}
-          </span>
-        </div>
-        <div className="w-full flex flex-col">
-          <span className="responsive-text font-bold">Estado:</span>
-          <span className="responsive-text">
-            {capitalizeFirstLetter(client.state || "No disponible")}
-          </span>
-        </div>
-        <div className="w-full flex flex-col">
-          <span className="responsive-text font-bold">Municipio:</span>
-          <span className="responsive-text">
-            {capitalizeFirstLetter(client.municipality || "No disponible")}
-          </span>
-        </div>
-        <div className="w-full flex flex-col">
-          <span className="responsive-text font-bold">Dirección:</span>
-          <span className="responsive-text">
-            {capitalizeFirstLetter(client.street_address || "No disponible")}
-          </span>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

@@ -13,31 +13,32 @@ router.get("/", async (req, res, next) => {
     const params = [];
     let i = 1;
 
-    // --- Múltiples q (ej: ?q=Montinelli&q=Peros) ---
+    // --- Filtro por nombre (q)
     if (q) {
-      if (!Array.isArray(q)) {
-        q = [q]; // si solo viene un valor, lo metemos en array
-      }
+      if (!Array.isArray(q)) q = [q];
       const placeholders = q.map(() => `$${i++}`).join(", ");
       where.push(`name IN (${placeholders})`);
       params.push(...q);
     }
 
+    // --- Filtro por estado
     if (active === "true" || active === "false") {
       where.push(`active = $${i++}`);
       params.push(active === "true");
     }
 
+    // --- Filtro por nivel
     if (level) {
       where.push(`level = $${i++}`);
       params.push(Number(level));
     }
 
-    if (parent_id === "null") {
-      where.push(`parent_id IS NULL`);
-    } else if (parent_id !== undefined) {
-      where.push(`parent_id = $${i++}`);
-      params.push(Number(parent_id));
+    // --- Filtro por parent_id (uno o varios)
+    if (parent_id) {
+      if (!Array.isArray(parent_id)) parent_id = [parent_id];
+      const placeholders = parent_id.map(() => `$${i++}`).join(", ");
+      where.push(`parent_id IN (${placeholders})`);
+      params.push(...parent_id.map(Number));
     }
 
     const whereSQL = where.length ? `WHERE ${where.join(" AND ")}` : "";
@@ -56,6 +57,7 @@ router.get("/", async (req, res, next) => {
     res.status(500).json({ message: "Error al obtener las categorías" });
   }
 });
+
 
 
 // Obtener una categoría por su id

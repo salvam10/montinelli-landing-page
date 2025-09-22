@@ -69,9 +69,16 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+
 router.post("/", async (req, res, next) => {
   try {
-    const { seller_id, client_id, notes, created_at, updated_at } = req.body;
+    const {
+      seller_id,
+      client_id,
+      notes,
+      visited_at,
+      lines = [], // [{ market_product_id, currency_code, price_amount, fx_rate_used, price_usd, photo_url, shelf_info }]
+    } = req.body;
 
     if (!seller_id || !client_id) {
       return res.status(400).json({
@@ -80,28 +87,49 @@ router.post("/", async (req, res, next) => {
       });
     }
 
-    const now = new Date();
-
     const sql = `
-      INSERT INTO market_checks (seller_id, client_id, notes, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING *;
+      WITH new_check AS (
+        INSERT INTO market_checks (seller_id, client_id, notes, created_at, updated_at)
+        VALUES ($1, $2, $3, COALESCE($4::timestamptz, NOW()), NOW())
+        RETURNING id
+      ),
+      ins_items AS (
+        INSERT INTO market_check_items
+          (market_check_id, market_product_id, currency_code, fx_rate_used, price_usd, created_at, updated_at)
+        SELECT
+          nc.id,
+          x.market_product_id::int,
+          COALESCE(x.currency_code, 'USD'),
+          NULLIF(x.fx_rate_used::text, '')::numeric,
+          NULLIF(x.price_usd::text, '')::numeric,
+          NOW(),
+          NOW()
+        FROM new_check nc,
+             jsonb_to_recordset($5::jsonb) AS x(
+               market_product_id int,
+               currency_code text,
+               fx_rate_used numeric,
+               price_usd numeric 
+             )
+      )
+      SELECT id AS survey_id FROM new_check;
     `;
 
-    const values = [
+    const params = [
       seller_id,
       client_id,
-      notes || null,
-      created_at || now,
-      updated_at || now,
+      notes ?? null,
+      visited_at ?? null,
+      JSON.stringify(lines),
     ];
-    const { rows } = await postgresDB.query(sql, values);
 
-    res.status(201).json({ ok: true, data: rows[0] });
+    const { rows } = await postgresDB.query(sql, params);
+    return res.status(201).json({ ok: true, survey_id: rows[0].survey_id });
   } catch (error) {
     next(error);
   }
 });
+
 
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
