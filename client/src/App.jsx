@@ -26,7 +26,7 @@ import ClientsPage from "./pages/ClientsPage/ClientsPage.jsx";
 import CreateClientPage from "./pages/CreateClientPage/CreateClientPage.jsx";
 import ClientDetailPage from "./pages/ClientDetailPage/ClientDetailPage.jsx";
 import AccountsReceivablePage from "./pages/AccountsReceivablePage/AccountsReceivablePage.jsx";
-import NewMarketCheck from "./features/newMarketCheck/NewMarketCheck.jsx";
+import NewMarketCheckPage from "./pages/newMarketCheckPage/NewMarketCheckPage.jsx";
 import CompetitorDashboard from "./features/competitorDashboard/CompetitorDashboard.jsx";
 
 export const AuthContext = React.createContext();
@@ -64,7 +64,7 @@ const App = () => {
           <Route element={<SellerLayout />}>
             <Route path="/" element={<HomePage />} />
             <Route path="mis-pedidos" element={<SellerOrdersPage />} />
-            <Route path="market-check" element={<NewMarketCheck />} />
+            <Route path="market-check" element={<NewMarketCheckPage />} />
             <Route
               path="market-check-confirmation"
               element={<SuccesfullPage title="Estudio" />}

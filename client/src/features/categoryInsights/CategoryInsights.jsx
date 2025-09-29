@@ -1,11 +1,14 @@
 // src/components/categoryInsights/CategoryInsights.jsx
-import React, { useMemo } from "react";
+import React, { useMemo,useEffect } from "react";
 import DynamicBarChart from "../dynamicBarChart/DynamicBarChart";
 
-const CategoryInsights = ({ summary, selectedProductId }) => {
-  const rows = summary?.data ?? [];
-  const { agg = "median", category_center } = summary?.meta ?? {};
+const CategoryInsights = ({ productsSummary, selectedProductId }) => {
+  const rows = productsSummary?.data ?? [];
+  const { agg = "median", category_center } = productsSummary?.meta ?? {};
   const centerLabel = agg === "mean" ? "Media" : "Mediana";
+
+  console.log('category_center', category_center);
+
 
   const chartData = useMemo(() => {
     const sorted = [...rows].sort((a, b) => {
@@ -40,7 +43,7 @@ const CategoryInsights = ({ summary, selectedProductId }) => {
         <DynamicBarChart
           data={chartData}
           orientation="horizontal"
-          height={440}
+          height={540}
           sort="desc"
           colorMode="bySelection"
           barHighlightById={selectedProductId}

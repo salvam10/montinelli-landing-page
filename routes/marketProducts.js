@@ -97,14 +97,15 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-
 // GET /api/market-products/category/:id?q=atun&active=true&brand_id=1&page=1&pageSize=20
 router.get("/category/:id", async (req, res, next) => {
   try {
     // 1) Lee y valida el id de categoría
     const categoryId = Number(req.params.id);
     if (!Number.isInteger(categoryId)) {
-      return res.status(400).json({ ok: false, message: "category id inválido" });
+      return res
+        .status(400)
+        .json({ ok: false, message: "category id inválido" });
     }
 
     // 2) Otros filtros opcionales
@@ -114,7 +115,10 @@ router.get("/category/:id", async (req, res, next) => {
     const categoryText = req.query.category || null; // si aún quieres filtrar por texto de categoría
 
     const page = Math.max(1, parseInt(req.query.page || "1", 10));
-    const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize || "20", 10)));
+    const pageSize = Math.min(
+      100,
+      Math.max(1, parseInt(req.query.pageSize || "20", 10))
+    );
     const offset = (page - 1) * pageSize;
 
     // 3) Build WHERE dinámico (comienza con category_id = :id)
@@ -184,7 +188,6 @@ router.get("/category/:id", async (req, res, next) => {
     next(error);
   }
 });
-
 
 /**
  * Espera:
@@ -332,13 +335,10 @@ router.get("/competitor-prices", async (req, res) => {
       data: chartData,
     });
   } catch (err) {
-      console.error("[GET /competitor-prices] error:", err.message, err.stack);
-      res
-        .status(500)
-        .json({ error: err.message || "Error obteniendo precios" });
+    console.error("[GET /competitor-prices] error:", err.message, err.stack);
+    res.status(500).json({ error: err.message || "Error obteniendo precios" });
   }
 });
-
 
 // GET /competitor-products-summary
 // Params:
@@ -347,7 +347,8 @@ router.get("/competitor-prices", async (req, res) => {
 // - sinceDays: number (opcional; ej 90 -> solo precios recientes)
 // - agg: "mean" | "median" (opcional; default "mean")
 // - highlightProductId: number (opcional; solo pasa a meta)
-router.get("/competitor-products-summary", async (req, res) => {
+// - excludeClientIds: string "5,7,12" (opcional; excluye estos client_id del cálculo)
+router.get("/competitor-products-summary", async (req, res) => {  
   try {
     const {
       categoryId,
@@ -355,6 +356,7 @@ router.get("/competitor-products-summary", async (req, res) => {
       sinceDays,
       agg = "mean",
       highlightProductId,
+      excludeClientIds
     } = req.query;
 
     if (!categoryId && !productIds) {
@@ -388,7 +390,23 @@ router.get("/competitor-products-summary", async (req, res) => {
       params.push(`${Number(sinceDays)} days`);
     }
 
-    const whereSql = whereParts.length ? `WHERE ${whereParts.join(" AND ")}` : "";
+    if (excludeClientIds) {
+      const excludeList = String(excludeClientIds)
+        .split(",")
+        .map((s) => Number(s.trim()))
+        .filter(Boolean);
+
+      if (!excludeList.length) {
+        return res.status(400).json({ error: "excludeClientIds inválido" });
+      }
+
+      whereParts.push(`NOT (mc.client_id = ANY($${p++}))`);
+      params.push(excludeList);
+    }
+
+    const whereSql = whereParts.length
+      ? `WHERE ${whereParts.join(" AND ")}`
+      : "";
 
     // Elegir métrica central para "value"
     // - mean: AVG(price_usd)
@@ -432,9 +450,11 @@ router.get("/competitor-products-summary", async (req, res) => {
       ),
       category_stats AS (
         SELECT
-          ${agg === "median"
-            ? `percentile_cont(0.5) WITHIN GROUP (ORDER BY center_value)`
-            : `AVG(center_value)`} AS category_center
+          ${
+            agg === "median"
+              ? `percentile_cont(0.5) WITHIN GROUP (ORDER BY center_value)`
+              : `AVG(center_value)`
+          } AS category_center
         FROM per_product
       )
       SELECT
@@ -473,17 +493,21 @@ router.get("/competitor-products-summary", async (req, res) => {
         agg,
         since_days: sinceDays ? Number(sinceDays) : null,
         category_center:
-          rows[0]?.category_center != null ? Number(rows[0].category_center) : null,
-        highlight_product_id: highlightProductId ? Number(highlightProductId) : null,
+          rows[0]?.category_center != null
+            ? Number(rows[0].category_center)
+            : null,
+        highlight_product_id: highlightProductId
+          ? Number(highlightProductId)
+          : null,
       },
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Error interno", details: String(err?.message || err) });
+    res
+      .status(500)
+      .json({ error: "Error interno", details: String(err?.message || err) });
   }
 });
-
-
 
 // Crear nuevo producto
 router.post("/", async (req, res, next) => {
@@ -588,7 +612,6 @@ router.post("/", async (req, res, next) => {
     next(error);
   }
 });
-
 
 // Actualizar producto por id
 router.put("/:id", async (req, res) => {

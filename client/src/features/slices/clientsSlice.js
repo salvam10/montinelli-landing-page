@@ -53,6 +53,7 @@ export const createClient = createAsyncThunk(
       profit_code,
       created_at,
       user_id,
+      is_prospect,
     },
     thunkAPI
   ) => {
@@ -70,6 +71,7 @@ export const createClient = createAsyncThunk(
         profit_code,
         created_at,
         user_id,
+        is_prospect,
       };
 
       const clientResponse = await axios.post(

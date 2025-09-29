@@ -105,8 +105,8 @@ const DynamicBarChart = ({
       data={prepared}
       layout={orientation === "horizontal" ? "vertical" : "horizontal"}
       width={orientation === "horizontal" ? 800 : chartWidth}
-      height={orientation === "horizontal" ? chartHeight : 360}
-      margin={{ top: 10, right: 20, left: 10, bottom: 20 }}
+      height={orientation === "horizontal" ? chartHeight : chartHeight}
+      margin={{ top: 36, right: 100, left: 10, bottom: 20 }}
       barCategoryGap={16}
     >
       <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -141,21 +141,6 @@ const DynamicBarChart = ({
         labelStyle={{ fontWeight: "bold" }}
       />
 
-      {avgLine && (
-        <ReferenceLine
-          y={orientation === "horizontal" ? undefined : avg}
-          x={orientation === "horizontal" ? avg : undefined}
-          stroke="#111827"
-          strokeDasharray="4 4"
-          label={{
-            value: `Promedio $${avg.toFixed(2)}`,
-            position: "insideTopRight",
-            fill: "#111827",
-            fontSize: 12,
-          }}
-        />
-      )}
-
       <Bar
         dataKey={yKey}
         radius={[8, 8, 0, 0]}
@@ -173,6 +158,24 @@ const DynamicBarChart = ({
             <Cell key={`cell-${entry.id ?? entry.name ?? index}`} fill={fill} />
           );
         })}
+
+        {avgLine && (
+          <ReferenceLine
+            y={orientation === "horizontal" ? undefined : avg}
+            x={orientation === "horizontal" ? avg : undefined}
+            stroke="#111827"
+            strokeWidth={2}
+            strokeDasharray="6 6"
+            ifOverflow="extendDomain"
+            label={{
+              value: `Promedio $${avg.toFixed(2)}`,
+              position: orientation === "horizontal" ? "top" : "right",
+              fill: "#111827",
+              fontSize: 12,
+            }}
+          />
+        )}
+
         {showValueLabels && prepared.length <= 25 && (
           <LabelList
             dataKey={yKey}
@@ -197,9 +200,9 @@ const DynamicBarChart = ({
           {ChartCore}
         </div>
       ) : (
-        <div className="w-full overflow-x-auto">
-          <div style={{ width: chartWidth, height: 360 }}>
-            <ResponsiveContainer width="100%" height="100%">
+        <div className="w-full overflow-x-auto ">
+          <div style={{ width: chartWidth, height: chartHeight }}>
+            <ResponsiveContainer width="100%" height={chartHeight}>
               {ChartCore}
             </ResponsiveContainer>
           </div>

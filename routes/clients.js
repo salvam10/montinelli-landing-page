@@ -188,6 +188,7 @@ router.post("/", async (req, res, next) => {
     sunagro_code,
     created_at,
     user_id,
+    is_prospect
   } = req.body;
 
   let insertQuery = "INSERT INTO clients(";
@@ -266,6 +267,12 @@ router.post("/", async (req, res, next) => {
     insertQuery += "profit_code, ";
     valueQuery += `$${count}, `;
     insertValues.push(profit_code);
+    count++;
+  }
+  if (is_prospect !== undefined) {
+    insertQuery += "is_prospect, ";
+    valueQuery += `$${count}, `;
+    insertValues.push(is_prospect);
     count++;
   }
 

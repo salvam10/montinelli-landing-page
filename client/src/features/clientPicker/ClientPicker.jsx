@@ -1,129 +1,170 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { getClients, getSingleClient } from "../slices/clientsSlice";
+import {
+  getClients,
+  getSingleClient,
+  createClient,
+} from "../slices/clientsSlice";
 import CustomCombobox from "../customCombobox/CustomCombobox";
 import { capitalizeFirstLetter } from "../../helpers/CapitalizeFirstLetter";
+import axios from "axios";
+import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 
 const ClientPicker = ({
   selectedClientId,
   setSelectedClientId,
   showInfo = true,
-}) => {
-  const [options, setOptions] = useState([]);
-  const { clients, client } = useSelector((state) => state.clients);
-  const dispatch = useDispatch();
 
-  // Cargar todos los clientes al montar
+  includeProspects = true,
+  canCreateProspect = false,
+  autoSelectFirst = true,
+
+  onProspectCreated,
+}) => {
+  const dispatch = useDispatch();
+  const { clients, client } = useSelector((s) => s.clients);
+
+  const [options, setOptions] = useState([]);
+  const [query, setQuery] = useState("");
+  const [selectedLabel, setSelectedLabel] = useState(""); // 🔹 lo que se ve en el input
+
+  // Mapa id->label para resolver el label al seleccionar
+  const labelById = useMemo(() => {
+    const map = new Map();
+    options.forEach((o) => map.set(String(o.value), o.label));
+    return map;
+  }, [options]);
+
   useEffect(() => {
     dispatch(getClients());
-  }, []);
+  }, [dispatch]);
 
-  // Cargar detalles del cliente seleccionado (por id)
   useEffect(() => {
-    if (selectedClientId) {
+    if (selectedClientId != null && selectedClientId !== "") {
       dispatch(getSingleClient({ id: selectedClientId }));
+      // si tenemos label en cache, úsalo
+      const lbl = labelById.get(String(selectedClientId));
+      if (lbl) setSelectedLabel(lbl);
+    } else {
+      setSelectedLabel("");
     }
-  }, [selectedClientId]);
+  }, [selectedClientId, dispatch, labelById]);
 
-  // Formatear las opciones del combo
   useEffect(() => {
-    if (clients?.length) {
-      const formattedClients = clients
-        .filter((client) => typeof client.name === "string")
-        .map((client) => {
-          const formattedName = capitalizeFirstLetter(client.name);
-          return {
-            label: formattedName,
-            value: client.id, // <-- ahora usamos client.id como value
-          };
-        });
+    if (!Array.isArray(clients)) return;
 
-      setOptions(formattedClients);
+    const visible = clients.filter((c) =>
+      includeProspects ? true : !c.is_prospect
+    );
 
-      // Si no hay cliente seleccionado, usa el primero como predeterminado
-      if (!selectedClientId && formattedClients[0]) {
-        setSelectedClientId(formattedClients[0].value);
-      }
+    const formatted = visible
+      .filter((c) => typeof c.name === "string")
+      .map((c) => ({
+        value: String(c.id),
+        label:
+          includeProspects && c.is_prospect
+            ? `🟡 ${capitalizeFirstLetter(c.name)}`
+            : capitalizeFirstLetter(c.name),
+        isProspect: !!c.is_prospect,
+      }));
+
+    setOptions(formatted);
+
+    if (autoSelectFirst && !selectedClientId && formatted[0]) {
+      setSelectedClientId(Number(formatted[0].value));
+      setSelectedLabel(formatted[0].label); // 🔹 asegura que se vea
     }
-  }, [clients]);
+  }, [
+    clients,
+    includeProspects,
+    autoSelectFirst,
+    selectedClientId,
+    setSelectedClientId,
+  ]);
+
+  const handleCreateProspect = async (nameFromArg) => {
+    const name = (nameFromArg ?? query ?? "").trim();
+    if (!name) return;
+    console.log('name', name);
+    
+     // await dispatch(createClient({ name: name, is_prospect: true }));
+
+      // 1) Mostrar inmediatamente el nombre en el input (aunque aún no haya llegado getClients)
+      /* const pretty = `🟡 ${capitalizeFirstLetter(name)}`;
+      setSelectedLabel(pretty);
+      setSelectedClientId(Number(data?.id));
+      setQuery(""); */
+  };
+
+
+  const clearSelection = () => {
+    setSelectedClientId(null);
+    setSelectedLabel("");
+  };
 
   return (
     <div className="section-container">
-      <div className="w-full flex">
+      <div className="w-full flex items-center justify-between">
         <h2 className="font-bold text-[14px]">Cliente</h2>
+        {selectedClientId && (
+          <div className="flex items-center gap-2">
+            {/* Pill del seleccionado */}
+            <span className="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-gray-100 text-gray-700 text-xs">
+              {selectedLabel || "Seleccionado"}
+              <button
+                type="button"
+                onClick={clearSelection}
+                className="ml-1 hover:text-gray-900"
+                title="Limpiar"
+              >
+                <CloseOutlinedIcon fontSize="small" />
+              </button>
+            </span>
+          </div>
+        )}
       </div>
+
       <div className="w-full relative">
         <CustomCombobox
           options={options}
           selected={selectedClientId}
-          setSelected={setSelectedClientId}
+          setSelected={(val) => {
+            const idNum = Number(val) || null;
+            setSelectedClientId(idNum);
+            // resolver label desde options
+            const lbl = labelById.get(String(val)) || "";
+            setSelectedLabel(lbl);
+          }}
+          selectedLabel={selectedLabel} // 🔹 asegura que se vea el nombre
+          onQueryChange={(text) => setQuery(text)}
+          onCreate={canCreateProspect ? handleCreateProspect : undefined}
+          onOpenChange={(open) => {
+            // cuando se cierre, limpiamos la query
+            if (!open) setQuery("");
+          }}
         />
       </div>
+
       {showInfo && (
-        <div className="w-full">
+        <div className="w-full mt-2">
           <div className="w-full flex flex-col">
             <span className="responsive-text font-bold">Nombre:</span>
             <span className="responsive-text">
-              {capitalizeFirstLetter(client.name || "No disponible")}
+              {capitalizeFirstLetter(client?.name || "No disponible")}
             </span>
           </div>
           <div className="w-full flex flex-col">
             <span className="responsive-text font-bold">Rif:</span>
             <a
               className="text-[#0079bf] hover:text-[#ff9f1a] client-detail-label cursor-pointer"
-              href={client.rif_url}
+              href={client?.rif_url}
               target="_blank"
               rel="noopener noreferrer"
             >
-              {client.rif || "No disponible"}
+              {client?.rif || "No disponible"}
             </a>
           </div>
-          <div className="w-full flex flex-col">
-            <span className="responsive-text font-bold">
-              Representante legal:
-            </span>
-            <span className="responsive-text">
-              {capitalizeFirstLetter(
-                client.legal_representative || "No disponible"
-              )}
-            </span>
-          </div>
-          <div className="w-full flex flex-col">
-            <span className="responsive-text font-bold">Teléfono:</span>
-            <span className="responsive-text">
-              {capitalizeFirstLetter(client.phone || "No disponible")}
-            </span>
-          </div>
-          <div className="w-full flex flex-col">
-            <span className="responsive-text font-bold">Código Sica:</span>
-            <span className="responsive-text">
-              {client.sunagro_code || "No disponible"}
-            </span>
-          </div>
-          <div className="w-full flex flex-col">
-            <span className="responsive-text font-bold">Ciudad:</span>
-            <span className="responsive-text">
-              {capitalizeFirstLetter(client.city || "No disponible")}
-            </span>
-          </div>
-          <div className="w-full flex flex-col">
-            <span className="responsive-text font-bold">Estado:</span>
-            <span className="responsive-text">
-              {capitalizeFirstLetter(client.state || "No disponible")}
-            </span>
-          </div>
-          <div className="w-full flex flex-col">
-            <span className="responsive-text font-bold">Municipio:</span>
-            <span className="responsive-text">
-              {capitalizeFirstLetter(client.municipality || "No disponible")}
-            </span>
-          </div>
-          <div className="w-full flex flex-col">
-            <span className="responsive-text font-bold">Dirección:</span>
-            <span className="responsive-text">
-              {capitalizeFirstLetter(client.street_address || "No disponible")}
-            </span>
-          </div>
+          {/* ... resto de campos si quieres */}
         </div>
       )}
     </div>

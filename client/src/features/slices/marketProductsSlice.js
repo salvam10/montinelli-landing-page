@@ -104,34 +104,42 @@ export const getCompetitorProductsSummary = createAsyncThunk(
       agg = "mean", // "mean" | "median"
       sinceDays, // opcional: e.g. 90
       highlightProductId, // opcional: el que tienes seleccionado en el state
+      excludeClientIds, // opcional: string con ids separados por coma 
     },
     { rejectWithValue }
   ) => {
     try {
-     const params = {};
+      const params = {};
 
-     if (categoryId != null) {
-       params.categoryId = Number(categoryId);
-     } else if (productIds != null) {
-       const ids = Array.isArray(productIds) ? productIds : [productIds];
-       const clean = ids.map(Number).filter(Boolean);
-       if (!clean.length)
-         throw new Error("Debes enviar categoryId o productIds válidos");
-       params.productIds = clean.join(",");
-     } else {
-       throw new Error("Debes enviar categoryId o productIds");
-     }
+      if (categoryId != null) {
+        params.categoryId = Number(categoryId);
+      } else if (productIds != null) {
+        const ids = Array.isArray(productIds) ? productIds : [productIds];
+        const clean = ids.map(Number).filter(Boolean);
+        if (!clean.length)
+          throw new Error("Debes enviar categoryId o productIds válidos");
+        params.productIds = clean.join(",");
+      } else {
+        throw new Error("Debes enviar categoryId o productIds");
+      }
 
-     if (agg) params.agg = agg;
-     if (sinceDays != null) params.sinceDays = Number(sinceDays);
-     if (highlightProductId != null)
-       params.highlightProductId = Number(highlightProductId);
+      if (agg) params.agg = agg;
+      if (sinceDays != null) params.sinceDays = Number(sinceDays);
+      if (highlightProductId != null)
+        params.highlightProductId = Number(highlightProductId);
 
-      const res = await axios.get(`${SERVER_URL}/api/market-products/competitor-products-summary`, {
-        params
-      });
+      if (excludeClientIds) {
+        params.excludeClientIds = excludeClientIds;
+      }
 
-      const json = res.data.data;
+      const res = await axios.get(
+        `${SERVER_URL}/api/market-products/competitor-products-summary`,
+        {
+          params,
+        }
+      );
+
+      const json = res.data;
 
       // normaliza para que siempre devuelva { data, meta }
       if (Array.isArray(json?.data)) return json;
