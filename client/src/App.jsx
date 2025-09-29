@@ -27,6 +27,7 @@ import CreateClientPage from "./pages/CreateClientPage/CreateClientPage.jsx";
 import ClientDetailPage from "./pages/ClientDetailPage/ClientDetailPage.jsx";
 import AccountsReceivablePage from "./pages/AccountsReceivablePage/AccountsReceivablePage.jsx";
 import NewMarketCheck from "./features/newMarketCheck/NewMarketCheck.jsx";
+import CompetitorDashboard from "./features/competitorDashboard/CompetitorDashboard.jsx";
 
 export const AuthContext = React.createContext();
 
@@ -64,6 +65,10 @@ const App = () => {
             <Route path="/" element={<HomePage />} />
             <Route path="mis-pedidos" element={<SellerOrdersPage />} />
             <Route path="market-check" element={<NewMarketCheck />} />
+            <Route
+              path="market-check-confirmation"
+              element={<SuccesfullPage title="Estudio" />}
+            />
             <Route path="orders/:orderId" element={<SellerSingleOrder />} />
             <Route path="categorias" element={<CategoriesPage />} />
             <Route path="categorias/:name" element={<Category />} />
@@ -84,12 +89,16 @@ const App = () => {
             <Route path="orders/:id" element={<Order />} />
             <Route path="orders/create" element={<CreateOrderPage />} />
             <Route path="clients" element={<ClientsPage />} />
+            <Route path="clients/:id" element={<ClientDetailPage />} />
+            <Route path="clients/create" element={<CreateClientPage />} />
             <Route
               path="accounts-receivable"
               element={<AccountsReceivablePage />}
             />
-            <Route path="clients/:id" element={<ClientDetailPage />} />
-            <Route path="clients/create" element={<CreateClientPage />} />
+            <Route
+              path="competitor-dashboard"
+              element={<CompetitorDashboard />}
+            />
           </Route>
         </Routes>
       </BrowserRouter>

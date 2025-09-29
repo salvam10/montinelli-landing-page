@@ -47,17 +47,17 @@ const NavBar = () => {
       {windowWidth > 640 ? (
         /* DESKTOP NAVBAR */
         <div className="w-full flex-end p-[15px] bg-white">
-          <div className="w-[85%] flex-start cursor-pointer hover:font-bold">
+          <div className="w-[65%] flex-start cursor-pointer hover:font-bold">
             <span className="text-lg font-bold pl-4" onClick={handleLogoClick}>
               CORPORACION GSM
             </span>
           </div>
-          <div className="w-[30%] flex-start gap-5 text-[#0079bf] ">
+          <div className="w-[35%] flex-start gap-5 text-[#0079bf]">
             <div className="flex gap-1 cursor-pointer hover:font-bold">
               <InboxOutlinedIcon />
               <span onClick={handleOrdersClick}>Mis pedidos</span>
             </div>
-            <div className="flex gap-1 cursor-pointer hover:font-bold">
+            <div className=" flex gap-1 cursor-pointer hover:font-bold">
               <LocalOfferOutlinedIcon />
               <span onClick={handlePriceResearchClick}>Estudio Precios</span>
             </div>

@@ -10,11 +10,13 @@ import {
   clearSubmitState,
 } from "../slices/marketCheckSlice";
 import { AuthContext } from "../../App";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const NewMarketCheck = () => {
   const { user } = useContext(AuthContext);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const { marketProducts } = useSelector((state) => state.marketProducts);
 
@@ -32,7 +34,7 @@ const NewMarketCheck = () => {
     const fetchBcvRate = async () => {
       try {
         const resp = await axios.get(
-          "https://ve.dolarapi.com/v1/dolares/paralelo"
+          "https://ve.dolarapi.com/v1/dolares/oficial"
         );
         // Si tu API te da «promedio», úsalo como default
         const rate = Number(resp?.data?.promedio || 0);
@@ -82,7 +84,7 @@ const NewMarketCheck = () => {
     return !!user && !!selectedClientId && !!selectedCatId && hasAny;
   }, [currency, fxRate, lines, user, selectedClientId, selectedCatId]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!user) return alert("Falta sellerId");
     if (!selectedClientId) return alert("Selecciona un establecimiento");
     if (!selectedCatId) return alert("Selecciona una categoría");
@@ -116,7 +118,12 @@ const NewMarketCheck = () => {
       lines: linesArray,
     };
 
-    dispatch(submitMarketCheck(payload));
+    await dispatch(submitMarketCheck(payload));
+    setSelectedCatId(null);
+    setSelectedClientId(null);
+    setLines({});
+    setQ("");
+    navigate("/market-check-confirmation");
   };
 
   return (

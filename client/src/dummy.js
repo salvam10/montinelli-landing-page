@@ -4,6 +4,7 @@ import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import InboxOutlinedIcon from "@mui/icons-material/InboxOutlined";
 import AttachMoneyOutlinedIcon from "@mui/icons-material/AttachMoneyOutlined";
+import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
 
 export const clientOptions = [
   {
@@ -273,6 +274,11 @@ export const adminSidebarItems = [
     label: "Cobranza",
     icon: <AttachMoneyOutlinedIcon style={{ fontSize: "20px" }} />,
     route: "/admin/accounts-receivable",
+  },
+  {
+    label: "Estadísticas",
+    icon: <BarChartOutlinedIcon style={{ fontSize: "20px" }} />,
+    route: "/admin/competitor-dashboard",
   },
 ];
 

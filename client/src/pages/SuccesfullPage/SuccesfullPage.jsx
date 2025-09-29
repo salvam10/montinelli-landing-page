@@ -5,7 +5,7 @@ import { useDispatch } from "react-redux";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { cleanCart } from "../../features/slices/cartSlice";
 
-const SuccesfullPage = () => {
+const SuccesfullPage = ({ title = "Pedido" }) => {
   const { cart } = useSelector((state) => state.cart);
   const dispatch = useDispatch();
 
@@ -22,7 +22,7 @@ const SuccesfullPage = () => {
       <div className="section-container h-[80%]">
         <div className="flex-center flex-col">
           <h3 className="font-bold xs:text-[30px] md:text-[50px]">
-            Pedido Realizado
+            {title} Realizado
           </h3>
           <CheckCircleIcon style={{ fontSize: "50px", color: "green" }} />
         </div>

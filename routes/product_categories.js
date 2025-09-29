@@ -30,7 +30,7 @@ router.get("/", async (req, res, next) => {
     // --- Filtro por nivel
     if (level) {
       where.push(`level = $${i++}`);
-      params.push(Number(level));
+      params.push(level); // 👈 sin Number()
     }
 
     // --- Filtro por parent_id (uno o varios)

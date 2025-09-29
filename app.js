@@ -45,7 +45,6 @@ const CLIENT_URL = process.env.CLIENT_URL;
 app.use(express.static("client/build"));
 // Define las rutas que deseas que sean manejadas por React Router
 
-
 const reactRouterRoutes = [
   "/", // Página principal
   "/signin", // Inicio de sesión
@@ -62,17 +61,20 @@ const reactRouterRoutes = [
 
   // Pedidos del usuario
   "/mis-pedidos",
-  "/market-check",
   "/orders",
   "/orders/:orderId",
   "/orders/category/:prodCategoryId",
+
+  //Estudio de mercado
+  "/market-check",
+  "/market-check-confirmation",
 
   // Panel de administración
   "/admin",
   "/admin/orders",
   "/admin/orders/:orderId",
+  "/admin/competitor-dashboard",
 ];
-
 
 // Middleware para las rutas manejadas por React Router
 const reactRouterMiddleware = (req, res, next) => {
@@ -137,7 +139,6 @@ app.use("/api/auth", authRouter);
 app.get("/", async (req, res, next) => {
   res.send("Welcome to GSM.");
 });
-
 
 // Error handling middleware
 app.use((err, req, res, next) => {

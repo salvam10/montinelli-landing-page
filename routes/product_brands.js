@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const postgresDB = require("../db/postgres");
 
-// Obtener todas las categorías
+// Obtener todas las marcas
 router.get("/", async (req, res, next) => {
   try {
     const { rows } = await postgresDB.query("SELECT * FROM product_brands");
@@ -14,7 +14,7 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-// Obtener una categoría por su id
+// Obtener una marca por su id
 router.get("/:brandId", async (req, res) => {
   const { brandId } = req.params
   try {
@@ -33,21 +33,48 @@ router.get("/:brandId", async (req, res) => {
   }
 });
 
-// Agregar una nueva categoría
+// Agregar una nueva marca
 router.post("/", async (req, res, next) => {
-  const { name } = req.body;
   try {
-    const { rows } = await postgresDB.query(
-      `INSERT INTO product_brands(name) VALUES($1) RETURNING *`,
-      [name]
-    );
-    res.status(201).send(rows[0]);
+    const body = req.body;
+
+    // Caso 1: si viene un solo objeto { name: "Bubba" }
+    if (!Array.isArray(body)) {
+      const { name } = body;
+      const { rows } = await postgresDB.query(
+        `INSERT INTO product_brands (name) VALUES ($1) 
+         ON CONFLICT (name) DO NOTHING
+         RETURNING *`,
+        [name]
+      );
+      return res.status(201).send(rows[0]);
+    }
+
+    // Caso 2: si viene un array de objetos [{ name: "Bubba" }, { name: "Arel" }]
+    const values = [];
+    const params = [];
+
+    body.forEach((brand, idx) => {
+      params.push(`($${idx + 1})`);
+      values.push(brand.name);
+    });
+
+    const query = `
+      INSERT INTO product_brands (name)
+      VALUES ${params.join(", ")}
+      ON CONFLICT (name) DO NOTHING
+      RETURNING *;
+    `;
+
+    const { rows } = await postgresDB.query(query, values);
+    res.status(201).json(rows);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
 
-// Eliminar una categoría
+
+// Eliminar una marca
 router.delete("/:brandId", async (req, res) => {
   const { brandId } = req.params;
   const query = "DELETE FROM product_brands WHERE id = $1 RETURNING *";
@@ -62,7 +89,7 @@ router.delete("/:brandId", async (req, res) => {
   }
 });
 
-// Actualizar una categoría
+// Actualizar una marca
 router.put("/:brandId", async (req, res, next) => {
   const { brandId } = req.params;
   const { name } = req.body;
