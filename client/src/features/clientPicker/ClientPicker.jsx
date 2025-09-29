@@ -14,11 +14,9 @@ const ClientPicker = ({
   selectedClientId,
   setSelectedClientId,
   showInfo = true,
-
   includeProspects = true,
   canCreateProspect = false,
   autoSelectFirst = true,
-
   onProspectCreated,
 }) => {
   const dispatch = useDispatch();

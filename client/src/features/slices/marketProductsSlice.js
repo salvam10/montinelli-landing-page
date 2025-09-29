@@ -104,7 +104,7 @@ export const getCompetitorProductsSummary = createAsyncThunk(
       agg = "mean", // "mean" | "median"
       sinceDays, // opcional: e.g. 90
       highlightProductId, // opcional: el que tienes seleccionado en el state
-      excludeClientIds, // opcional: string con ids separados por coma 
+      excludeClientIds, // opcional: string con ids separados por coma
     },
     { rejectWithValue }
   ) => {
@@ -155,7 +155,7 @@ export const getMarketProductsByCat = createAsyncThunk(
   async ({ categoryId }, thunkAPI) => {
     try {
       const response = await axios.get(
-        `${SERVER_URL}/api/market-products/category/${categoryId}`
+        `${SERVER_URL}/api/market-products/category/${categoryId}?pageSize=1000`
       );
       return response.data.data;
     } catch (error) {
