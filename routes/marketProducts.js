@@ -348,7 +348,7 @@ router.get("/competitor-prices", async (req, res) => {
 // - agg: "mean" | "median" (opcional; default "mean")
 // - highlightProductId: number (opcional; solo pasa a meta)
 // - excludeClientIds: string "5,7,12" (opcional; excluye estos client_id del cálculo)
-router.get("/competitor-products-summary", async (req, res) => {  
+router.get("/competitor-products-summary", async (req, res) => {
   try {
     const {
       categoryId,
@@ -356,7 +356,8 @@ router.get("/competitor-products-summary", async (req, res) => {
       sinceDays,
       agg = "mean",
       highlightProductId,
-      excludeClientIds
+      excludeClientIds,
+      excludeProductIds,
     } = req.query;
 
     if (!categoryId && !productIds) {
@@ -404,6 +405,20 @@ router.get("/competitor-products-summary", async (req, res) => {
       params.push(excludeList);
     }
 
+    if (excludeProductIds) {
+      const excludeProdList = String(excludeProductIds)
+        .split(",")
+        .map((s) => Number(s.trim()))
+        .filter(Boolean);
+
+      if (!excludeProdList.length) {
+        return res.status(400).json({ error: "excludeProductIds inválido" });
+      }
+
+      whereParts.push(`NOT (mci.market_product_id = ANY($${p++}))`);
+      params.push(excludeProdList);
+    }
+
     const whereSql = whereParts.length
       ? `WHERE ${whereParts.join(" AND ")}`
       : "";
@@ -423,6 +438,8 @@ router.get("/competitor-products-summary", async (req, res) => {
           c.name AS client_name,
           mci.market_product_id AS product_id,
           mp.name AS product_name,
+          mp.weight_g AS product_weight_g,
+          mp.presentation AS product_presentation,
           mci.price_usd,
           ROW_NUMBER() OVER (
             PARTITION BY mc.client_id, mci.market_product_id
@@ -441,6 +458,8 @@ router.get("/competitor-products-summary", async (req, res) => {
         SELECT
           product_id,
           MAX(product_name) AS product_name,
+          MAX(product_weight_g) AS weight_g,
+          MAX(product_presentation) AS presentation,
           COUNT(*)          AS clients_count,
           percentile_cont(0.25) WITHIN GROUP (ORDER BY price_usd) AS p25,
           ${centralValueSql} AS center_value,
@@ -460,6 +479,8 @@ router.get("/competitor-products-summary", async (req, res) => {
       SELECT
         pp.product_id,
         pp.product_name,
+        pp.weight_g,
+        pp.presentation,
         pp.clients_count,
         pp.p25,
         pp.center_value,
@@ -475,12 +496,16 @@ router.get("/competitor-products-summary", async (req, res) => {
     `;
 
     const { rows } = await postgresDB.query(rowsSql, params);
+    console.log(rows);
+    
 
     res.json({
       count: rows.length,
       data: rows.map((r) => ({
         product_id: Number(r.product_id),
         product_name: r.product_name,
+        product_presentation: r.presentation,
+        product_weight_g: r.weight_g != null ? Number(r.weight_g) : null,
         clients_count: Number(r.clients_count),
         p25: r.p25 != null ? Number(r.p25) : null,
         [agg === "median" ? "median_price" : "mean_price"]:

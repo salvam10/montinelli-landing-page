@@ -105,6 +105,7 @@ export const getCompetitorProductsSummary = createAsyncThunk(
       sinceDays, // opcional: e.g. 90
       highlightProductId, // opcional: el que tienes seleccionado en el state
       excludeClientIds, // opcional: string con ids separados por coma
+      excludeProductIds, // opcional: string con ids separados por coma
     },
     { rejectWithValue }
   ) => {
@@ -132,6 +133,10 @@ export const getCompetitorProductsSummary = createAsyncThunk(
         params.excludeClientIds = excludeClientIds;
       }
 
+      if (excludeProductIds) {
+        params.excludeProductIds = excludeProductIds;
+      }
+
       const res = await axios.get(
         `${SERVER_URL}/api/market-products/competitor-products-summary`,
         {
@@ -149,6 +154,7 @@ export const getCompetitorProductsSummary = createAsyncThunk(
     }
   }
 );
+
 
 export const getMarketProductsByCat = createAsyncThunk(
   "products/getMarketProductsByCat",

@@ -1,14 +1,19 @@
 // src/components/categoryInsights/CategoryInsights.jsx
-import React, { useMemo,useEffect } from "react";
+import React, { useMemo, useEffect } from "react";
 import DynamicBarChart from "../dynamicBarChart/DynamicBarChart";
 
-const CategoryInsights = ({ productsSummary, selectedProductId }) => {
+const CategoryInsights = ({
+  productsSummary,
+  selectedProductId,
+  productChips,
+  productsCatalog,
+  excludedProductIds, 
+  toggleProduct,
+}) => {
   const rows = productsSummary?.data ?? [];
   const { agg = "median", category_center } = productsSummary?.meta ?? {};
   const centerLabel = agg === "mean" ? "Media" : "Mediana";
-
-  console.log('category_center', category_center);
-
+  
 
   const chartData = useMemo(() => {
     const sorted = [...rows].sort((a, b) => {
@@ -69,6 +74,31 @@ const CategoryInsights = ({ productsSummary, selectedProductId }) => {
         />
       </div>
 
+      {/* Chips de productos */}
+      <div className="flex flex-wrap gap-2 max-h-28 overflow-auto border rounded-xl p-2">
+        {productChips.map((p) => {
+          const isExcluded = excludedProductIds.has(p.id);
+          return (
+            <button
+              key={p.id}
+              onClick={() => toggleProduct(p.id)}
+              className={`px-3 py-1 rounded-full text-sm border ${
+                isExcluded
+                  ? "bg-neutral-100 text-neutral-500 border-neutral-300 line-through"
+                  : "bg-white hover:bg-neutral-50"
+              }`}
+              title={
+                isExcluded
+                  ? "Actualmente excluido (clic para incluir)"
+                  : "Clic para excluir"
+              }
+            >
+              {p.name}
+            </button>
+          );
+        })}
+      </div>
+      
       {/* Card de la tabla (debajo) */}
       <div className="mt-6 border rounded-2xl p-4 bg-white overflow-auto">
         <div className="flex items-baseline justify-between mb-3">

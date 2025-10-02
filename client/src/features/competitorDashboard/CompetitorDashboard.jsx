@@ -19,24 +19,33 @@ const CompetitorDashboard = () => {
   const [brand, setBrand] = useState();
 
   const [excludedClientIds, setExcludedClientIds] = useState(() => new Set());
+  const [excludedProductIds, setExcludedProductIds] = useState(() => new Set());
   const [searchClient, setSearchClient] = useState("");
 
   const dispatch = useDispatch();
 
-
   useEffect(() => {
     if (!category) return;
-    const excludeIdsArray = Array.from(excludedClientIds);
+
+    // helper interno
+    const joinSet = (s) =>
+      s && s.size
+        ? Array.from(s)
+            .sort((a, b) => a - b)
+            .join(",")
+        : undefined;
+
+    const excludeClientIds = joinSet(excludedClientIds);
+    const excludeProductIds = joinSet(excludedProductIds);
+
     dispatch(
       getCompetitorProductsSummary({
-        categoryId: category,
-        excludeClientIds: excludeIdsArray.length
-          ? excludeIdsArray.join(",")
-          : undefined,
+        categoryId: Number(category),
+        excludeClientIds,
+        excludeProductIds,
       })
     );
-  }, [category, excludedClientIds, dispatch]);
-
+  }, [category, excludedClientIds, excludedProductIds, dispatch]);
 
   useEffect(() => {
     if (marketProduct) {
@@ -46,7 +55,6 @@ const CompetitorDashboard = () => {
       setExcludedClientIds(new Set()); // reset exclusiones al cambiar producto
     }
   }, [marketProduct, dispatch]);
-  
 
   // catálogo de clientes presentes en la data
   const clientsCatalog = useMemo(() => {
@@ -57,6 +65,14 @@ const CompetitorDashboard = () => {
     return Array.from(byId.entries()).map(([id, name]) => ({ id, name }));
   }, [competitorPrices]);
 
+  // catálogo de productos presentes en la data
+  const productsCatalog = useMemo(() => {
+    const byId = new Map();
+    productsSummary?.data?.forEach((r) => {
+      byId.set(r.product_id, r.product_name);
+    });
+    return Array.from(byId.entries()).map(([id, name]) => ({ id, name }));
+  }, [productsSummary]);
 
   // data filtrada para el gráfico
   const priceData = useMemo(
@@ -81,6 +97,16 @@ const CompetitorDashboard = () => {
     });
   };
 
+  // handlers incluir/excluir
+  const toggleProduct = (productId) => {
+    setExcludedProductIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(productId)) next.delete(productId);
+      else next.add(productId);
+      return next;
+    });
+  };
+
   const resetFilters = () => {
     setExcludedClientIds(new Set());
     setSearchClient("");
@@ -93,6 +119,11 @@ const CompetitorDashboard = () => {
       .filter((c) => (q ? c.name.toLowerCase().includes(q) : true))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [clientsCatalog, searchClient]);
+
+  const productChips = useMemo(() => {
+    return productsCatalog.sort((a, b) => a.name.localeCompare(b.name));
+  }, [productsCatalog]);
+  
 
   return (
     <div className="w-full overflow-x-hidden px-6">
@@ -175,6 +206,10 @@ const CompetitorDashboard = () => {
         <CategoryInsights
           productsSummary={productsSummary}
           selectedProductId={marketProduct}
+          productChips={productChips}
+          productsCatalog={productsCatalog}
+          excludedProductIds={excludedProductIds}
+          toggleProduct={toggleProduct}
         />
       )}
     </div>
