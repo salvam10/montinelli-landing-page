@@ -49,6 +49,24 @@ const trelloColors = [
   "#c4c9cc",
 ];
 
+
+const CustomTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
+  const entry = payload[0].payload;
+  console.log('entry', entry);
+  // ← tu fila original
+  const when  = entry.date
+  const val   = Number(entry.value).toFixed(2);
+
+  return (
+    <div className="rounded-xl bg-white border p-3 shadow">
+      <div className="font-semibold">{label}</div>
+      <div className="text-sm">Valor: ${val}</div>
+      {when && <div className="text-sm">Fecha: {when}</div>}
+    </div>
+  );
+};
+
 const defaultSubLabel = (entry) => {
   if (!entry) return "";
   const pres = entry.product_presentation || entry.presentation || "";
@@ -60,44 +78,6 @@ const defaultSubLabel = (entry) => {
 
 const truncate = (t, n = 18) => (t?.length > n ? t.slice(0, n) + "…" : t || "");
 
-// --- NUEVO: ticks personalizados para eje X (vertical) y eje Y (horizontal)
-const makeCustomXAxisTick = (lookup, subLabelFn, nameMaxLen = 18) => (props) => {
-  const { x, y, payload } = props;
-  const value = payload?.value ?? "";
-  const entry = lookup.get(value);
-  const line1 = truncate(value, nameMaxLen);
-  const line2 = subLabelFn(entry);
-  return (
-    <g transform={`translate(${x},${y})`}>
-      {/* línea principal */}
-      <text
-        dy={0}
-        y={0}
-        x={0}
-        textAnchor="end"
-        fontSize={12}
-        fill="#111827"
-        transform="translate(-4,10)"
-      >
-        {line1}
-      </text>
-      {/* subetiqueta (más pequeña, gris) */}
-      {line2 ? (
-        <text
-          dy={0}
-          y={0}
-          x={0}
-          textAnchor="end"
-          fontSize={10}
-          fill="#6b7280"
-          transform="translate(-4,22)"
-        >
-          {truncate(line2, nameMaxLen + 6)}
-        </text>
-      ) : null}
-    </g>
-  );
-};
 
 const makeCustomYAxisTick = (lookup, subLabelFn, nameMaxLen = 18) => (props) => {
   const { x, y, payload } = props;
@@ -185,7 +165,7 @@ const DynamicBarChart = ({
   };
 
   // 4) tamaños
-  const chartWidth = Math.max(prepared.length * (barWidth + 16), 600);
+  const chartWidth = Math.max(prepared.length * (barWidth + 16), 800);
   const perRow = Math.max(24, Number(rowHeight) || 36);
   const chartHeight =
     orientation === "horizontal"
@@ -205,10 +185,7 @@ const DynamicBarChart = ({
     return map;
   }, [prepared]);
 
-  const CustomXAxisTick = useMemo(
-    () => makeCustomXAxisTick(nameLookup, subLabelFn, nameMaxLen),
-    [nameLookup, subLabelFn, nameMaxLen]
-  );
+
   const CustomYAxisTick = useMemo(
     () => makeCustomYAxisTick(nameLookup, subLabelFn, nameMaxLen),
     [nameLookup, subLabelFn, nameMaxLen]
@@ -230,9 +207,9 @@ const DynamicBarChart = ({
           <YAxis
             dataKey={xKey}
             type="category"
-            width={170}                  // un poco más de ancho para dos líneas
+            width={170} // un poco más de ancho para dos líneas
             interval={0}
-            tick={CustomYAxisTick}       // <-- NUEVO
+            tick={CustomYAxisTick}
           />
         </>
       ) : (
@@ -241,7 +218,7 @@ const DynamicBarChart = ({
             dataKey={xKey}
             interval={0}
             height={48}
-            tick={CustomXAxisTick}       // <-- NUEVO
+            tick={{ angle: -90, textAnchor: "end", fontSize: 12 }}
           />
           <YAxis tick={{ fontSize: 12 }} />
         </>
@@ -249,13 +226,7 @@ const DynamicBarChart = ({
 
       <Tooltip
         // label ya muestra el name; agregamos la sublabel en el "labelFormatter"
-        labelFormatter={(label) => {
-          const entry = nameLookup.get(label);
-          const sub = subLabelFn(entry);
-          return sub ? `${label} — ${sub}` : label;
-        }}
-        formatter={(v) => [`$${Number(v).toFixed(2)}`, "Valor"]}
-        labelStyle={{ fontWeight: "bold" }}
+        content={<CustomTooltip />}
       />
 
       <Bar

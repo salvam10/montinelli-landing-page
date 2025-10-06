@@ -8,7 +8,8 @@ import {
   getCompetitorProductsSummary,
 } from "../slices/marketProductsSlice";
 import CategoryInsights from "../categoryInsights/CategoryInsights";
-
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 const CompetitorDashboard = () => {
   const { competitorPrices, productsSummary } = useSelector(
@@ -83,6 +84,11 @@ const CompetitorDashboard = () => {
           id: item.client_id,
           name: item.client_name,
           value: item.price_usd,
+          date: item.created_at
+            ? format(new Date(item.created_at), "d 'de' MMM 'de' yyyy", {
+                locale: es,
+              })
+            : null,
         })),
     [competitorPrices, excludedClientIds]
   );
@@ -123,7 +129,6 @@ const CompetitorDashboard = () => {
   const productChips = useMemo(() => {
     return productsCatalog.sort((a, b) => a.name.localeCompare(b.name));
   }, [productsCatalog]);
-  
 
   return (
     <div className="w-full overflow-x-hidden px-6">
