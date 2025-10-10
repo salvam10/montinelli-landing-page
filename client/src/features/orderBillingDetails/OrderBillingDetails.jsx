@@ -19,7 +19,8 @@ const OrderBillingDetails = ({ orderProducts, orderClient, order }) => {
   const [paymentStatus, setPaymentStatus] = useState("Pendiente");
   const { msg, overdue } = usePaymentInfo(order);
 
-  const { isLoading, markAsPending, markAsPaid } = usePaymentActions(order);
+  const { isLoading, markAsPending, markAsPaid, registerDebtCheck } =
+    usePaymentActions(order);
   const [showPayPicker, setShowPayPicker] = useState(false);
   const [payDate, setPayDate] = useState(() => new Date());
 
@@ -41,6 +42,10 @@ const OrderBillingDetails = ({ orderProducts, orderClient, order }) => {
     }
     markAsPending();
   };
+
+  const handleRegisterDebtCheck = () => { 
+    registerDebtCheck(new Date());
+  }
 
   const confirmMarkAsPaid = async () => {
     await markAsPaid(payDate);
@@ -137,7 +142,12 @@ const OrderBillingDetails = ({ orderProducts, orderClient, order }) => {
       {/* Botón + popover de fecha de pago */}
       {order?.invoice_number && (
         <div className="w-full flex justify-end relative">
-          <div className="flex">
+          <div className="w-[50%] flex">
+            <CustomFormButton
+              isLoading={isLoading}
+              text="Registrar Revisión"
+              handleClickFunction={handleRegisterDebtCheck} /
+            >
             <CustomFormButton
               isLoading={isLoading}
               text={

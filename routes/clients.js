@@ -72,7 +72,7 @@ router.get("/", async (req, res, next) => {
   )::int AS max_days_overdue,
 
   /* --- ÚLTIMA ACTUALIZACIÓN DE UNA ORDEN --- */
-  MAX(o.updated_at) AS last_order_update
+  MAX(o.last_debt_check) AS last_debt_check
 
 
 FROM clients c

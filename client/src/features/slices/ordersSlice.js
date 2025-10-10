@@ -238,7 +238,8 @@ export const updateOrder = createAsyncThunk(
       shipping_company,
       scheduled_dispatch_date,
       actual_dispatch_date,
-      paid_at
+      paid_at,
+      last_debt_check
     },
     { dispatch }
   ) => {
@@ -257,7 +258,8 @@ export const updateOrder = createAsyncThunk(
         scheduled_dispatch_date,
         actual_dispatch_date,
         shipping_status,
-        paid_at
+        paid_at,
+        last_debt_check
       });
       return response.data;
     } catch (error) {

@@ -8,6 +8,7 @@ import DataTable from "../../features/dataTable/DataTable";
 import { orderTableFilters } from "../../dummy";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { formatInTimeZone } from "date-fns-tz";
 
 const fmtMoney = (v) =>
   isNaN(Number(v))
@@ -94,12 +95,20 @@ const columns = [
     meta: { width: "w-[150px] min-w-[120px]", align: "center" },
   },
   {
-    header: "Última Actualización",
-    accessorKey: "last_order_update",
-    footer: "Última Actualización",
-    cell: (info) =>
-      format(info.getValue(), "dd 'de' MMM 'de' yyyy", { locale: es }),
-    meta: { width: "w-[160px] min-w-[160px]" },
+    header: "Última actualización",
+    accessorKey: "last_debt_check",
+    footer: "Última actualización",
+    cell: (info) => {
+      const value = info.getValue();
+      if (!value) return "—"; // o "Sin revisión", "No registrada", etc.
+      return formatInTimeZone(
+        value, // Date | string | number
+        "America/Caracas", // zona objetivo
+        "dd 'de' MMM 'de' yyyy, hh:mm a",
+        { locale: es }
+      );
+    },
+    meta: { width: "w-[250px] min-w-[250px]" },
   },
 ];
 

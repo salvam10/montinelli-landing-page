@@ -7,6 +7,7 @@ import CustomFormButton from "../../features/customFormButton/CustomFormButton";
 import DataTable from "../../features/dataTable/DataTable";
 import { orderTableFilters } from "../../dummy";
 import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import { es } from "date-fns/locale";
 
 const columns = [
@@ -109,10 +110,18 @@ const columns = [
   },
   {
     header: "Última actualización",
-    accessorKey: "updated_at",
+    accessorKey: "last_debt_check",
     footer: "Última actualización",
-    cell: (info) =>
-      format(info.getValue(), "dd 'de' MMM 'de' yyyy", { locale: es }),
+    cell: (info) => {
+      const value = info.getValue();
+      if (!value) return "—"; // o "Sin revisión", "No registrada", etc.
+      return formatInTimeZone(
+        value, // Date | string | number
+        "America/Caracas", // zona objetivo
+        "dd 'de' MMM 'de' yyyy, hh:mm a",
+        { locale: es }
+      );
+    },
     meta: { width: "w-[250px] min-w-[250px]" },
   },
 ];

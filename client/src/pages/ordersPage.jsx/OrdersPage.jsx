@@ -114,17 +114,17 @@ const columns = [
   },
   {
     header: "Última actualización",
-    accessorKey: "updated_at",
+    accessorKey: "last_debt_check",
     footer: "Última actualización",
     cell: (info) => {
-      const utcDate = new Date(info.getValue());
-      const zonedDate = toZonedTime(utcDate, "America/Caracas");
-      return formatTz(zonedDate, "dd 'de' MMMM 'de' yyyy", {
+      const value = info.getValue();
+      if (!value) return "—"; // o "Sin revisión", "No registrada", etc.
+      return format(new Date(value), "dd 'de' MMM 'de' yyyy, hh:mm a", {
         locale: es,
       });
     },
-    meta: { width: "w-[200px] min-w-[200px]" },
-  },
+    meta: { width: "w-[250px] min-w-[250px]" },
+  }
 ];
 
 const OrdersPage = () => {

@@ -21,6 +21,7 @@ router.get("/", async (req, res) => {
       orders.client_id, 
       orders.created_at, 
       orders.updated_at,
+      orders.last_debt_check,
       orders.payment_term_id,
       orders.due_date,
       orders.billing_status,
@@ -216,6 +217,7 @@ router.get("/client/:clientId", async (req, res) => {
       orders.client_id, 
       orders.created_at, 
       orders.updated_at,
+      orders.last_debt_check,
       orders.payment_term_id,
       orders.due_date,
       orders.billing_status,
@@ -542,7 +544,8 @@ router.put("/:orderId", async (req, res, next) => {
     due_date,
     invoice_number,
     invoice_date,
-    paid_at
+    paid_at,
+    last_debt_check
   } = req.body;
 
   let updateQuery = "UPDATE orders SET ";
@@ -550,6 +553,11 @@ router.put("/:orderId", async (req, res, next) => {
   let count = 1;
 
   // Construir la consulta de actualización dinámica
+  if (last_debt_check !== undefined) {
+    updateQuery += `last_debt_check = $${count}, `;
+    updateValues.push(last_debt_check);
+    count++;
+  }
   if (paid_at !== undefined) {
     updateQuery += `paid_at = $${count}, `;
     updateValues.push(paid_at);
