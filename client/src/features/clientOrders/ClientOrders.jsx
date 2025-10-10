@@ -107,6 +107,14 @@ const columns = [
     },
     meta: { width: "w-[180px] min-w-[180px]" },
   },
+  {
+    header: "Última actualización",
+    accessorKey: "updated_at",
+    footer: "Última actualización",
+    cell: (info) =>
+      format(info.getValue(), "dd 'de' MMM 'de' yyyy", { locale: es }),
+    meta: { width: "w-[250px] min-w-[250px]" },
+  },
 ];
 
 const ClientOrders = ({ client, productCatId }) => {

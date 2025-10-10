@@ -93,6 +93,14 @@ const columns = [
     footer: "Totales",
     meta: { width: "w-[150px] min-w-[120px]", align: "center" },
   },
+  {
+    header: "Última Actualización",
+    accessorKey: "last_order_update",
+    footer: "Última Actualización",
+    cell: (info) =>
+      format(info.getValue(), "dd 'de' MMM 'de' yyyy", { locale: es }),
+    meta: { width: "w-[160px] min-w-[160px]" },
+  },
 ];
 
 const AccountsReceivablePage = () => {

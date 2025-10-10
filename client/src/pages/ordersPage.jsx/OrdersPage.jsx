@@ -112,6 +112,19 @@ const columns = [
     },
     meta: { width: "w-[180px] min-w-[180px]" },
   },
+  {
+    header: "Última actualización",
+    accessorKey: "updated_at",
+    footer: "Última actualización",
+    cell: (info) => {
+      const utcDate = new Date(info.getValue());
+      const zonedDate = toZonedTime(utcDate, "America/Caracas");
+      return formatTz(zonedDate, "dd 'de' MMMM 'de' yyyy", {
+        locale: es,
+      });
+    },
+    meta: { width: "w-[200px] min-w-[200px]" },
+  },
 ];
 
 const OrdersPage = () => {

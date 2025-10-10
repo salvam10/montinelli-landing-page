@@ -69,7 +69,11 @@ router.get("/", async (req, res, next) => {
         GREATEST(0, (CURRENT_DATE - o.due_date))
       ELSE 0
     END
-  )::int AS max_days_overdue
+  )::int AS max_days_overdue,
+
+  /* --- ÚLTIMA ACTUALIZACIÓN DE UNA ORDEN --- */
+  MAX(o.updated_at) AS last_order_update
+
 
 FROM clients c
 LEFT JOIN orders o          ON o.client_id = c.id

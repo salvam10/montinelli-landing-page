@@ -11,14 +11,16 @@ const CategoryInsights = ({
   toggleProduct,
 }) => {
   const rows = productsSummary?.data ?? [];
+  console.log('rows', rows);
+  
   const { agg = "median", category_center } = productsSummary?.meta ?? {};
   const centerLabel = agg === "mean" ? "Media" : "Mediana";
   
 
   const chartData = useMemo(() => {
     const sorted = [...rows].sort((a, b) => {
-      const av = a.mean_price ?? a.median_price ?? 0;
-      const bv = b.mean_price ?? b.median_price ?? 0;
+      const av = a.clients_count ?? a.clients_count ?? 0;
+      const bv = b.clients_count ?? b.clients_count ?? 0;
       return bv - av;
     });
     return sorted.map((r) => ({
