@@ -10,7 +10,7 @@ const checkClientsDebt = async () => {
   console.log(`[checkClientsDebt] Clientes sin deuda: ${stats.without_debt}`);
 };
 
-// Corre todos los días a medianoche
+
 cron.schedule("*/30 * * * *", () => {
   console.log("[cron] ejecutando checkClientsDebt…");
   checkClientsDebt().catch(console.error);
