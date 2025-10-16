@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
   getClients,
@@ -9,6 +9,7 @@ import CustomCombobox from "../customCombobox/CustomCombobox";
 import { capitalizeFirstLetter } from "../../helpers/CapitalizeFirstLetter";
 import axios from "axios";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
+
 
 const ClientPicker = ({
   selectedClientId,
@@ -24,9 +25,11 @@ const ClientPicker = ({
 
   const [options, setOptions] = useState([]);
   const [query, setQuery] = useState("");
-  const [selectedLabel, setSelectedLabel] = useState(""); // 🔹 lo que se ve en el input
+  const [selectedLabel, setSelectedLabel] = useState("");
 
-  // Mapa id->label para resolver el label al seleccionar
+  // El hijo nos provee una función que: blur del input + foco a un sentinela
+  const comboboxCloseRef = useRef(null);
+
   const labelById = useMemo(() => {
     const map = new Map();
     options.forEach((o) => map.set(String(o.value), o.label));
@@ -40,7 +43,6 @@ const ClientPicker = ({
   useEffect(() => {
     if (selectedClientId != null && selectedClientId !== "") {
       dispatch(getSingleClient({ id: selectedClientId }));
-      // si tenemos label en cache, úsalo
       const lbl = labelById.get(String(selectedClientId));
       if (lbl) setSelectedLabel(lbl);
     } else {
@@ -70,7 +72,7 @@ const ClientPicker = ({
 
     if (autoSelectFirst && !selectedClientId && formatted[0]) {
       setSelectedClientId(Number(formatted[0].value));
-      setSelectedLabel(formatted[0].label); // 🔹 asegura que se vea
+      setSelectedLabel(formatted[0].label);
     }
   }, [
     clients,
@@ -80,20 +82,30 @@ const ClientPicker = ({
     setSelectedClientId,
   ]);
 
-  const handleCreateProspect = async (nameFromArg) => {
-    const name = (nameFromArg ?? query ?? "").trim();
+  const handleCreateProspect = async (name) => {
     if (!name) return;
-    console.log('name', name);
-    
-     // await dispatch(createClient({ name: name, is_prospect: true }));
+    const cleaned = String(name).trim();
+    if (!cleaned) return;
 
-      // 1) Mostrar inmediatamente el nombre en el input (aunque aún no haya llegado getClients)
-      /* const pretty = `🟡 ${capitalizeFirstLetter(name)}`;
-      setSelectedLabel(pretty);
-      setSelectedClientId(Number(data?.id));
-      setQuery(""); */
+    try {
+      const created = await dispatch(
+        createClient({ name: cleaned, is_prospect: true })
+      ).unwrap();
+
+      setSelectedClientId(Number(created.id));
+      setSelectedLabel(`🟡 ${capitalizeFirstLetter(created.name)}`);
+
+      setQuery("");
+
+      // Cerrar definitivamente y mover el foco fuera del input
+      comboboxCloseRef.current?.();
+
+      onProspectCreated?.(created);
+      dispatch(getClients());
+    } catch (err) {
+      return;
+    }
   };
-
 
   const clearSelection = () => {
     setSelectedClientId(null);
@@ -106,7 +118,6 @@ const ClientPicker = ({
         <h2 className="font-bold text-[14px]">Cliente</h2>
         {selectedClientId && (
           <div className="flex items-center gap-2">
-            {/* Pill del seleccionado */}
             <span className="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-gray-100 text-gray-700 text-xs">
               {selectedLabel || "Seleccionado"}
               <button
@@ -129,16 +140,16 @@ const ClientPicker = ({
           setSelected={(val) => {
             const idNum = Number(val) || null;
             setSelectedClientId(idNum);
-            // resolver label desde options
             const lbl = labelById.get(String(val)) || "";
             setSelectedLabel(lbl);
+            // Cerrar y desplazar foco para que no se reabra
+            comboboxCloseRef.current?.();
           }}
-          selectedLabel={selectedLabel} // 🔹 asegura que se vea el nombre
+          selectedLabel={selectedLabel}
           onQueryChange={(text) => setQuery(text)}
           onCreate={canCreateProspect ? handleCreateProspect : undefined}
-          onOpenChange={(open) => {
-            // cuando se cierre, limpiamos la query
-            if (!open) setQuery("");
+          onProvideClose={(fn) => {
+            comboboxCloseRef.current = fn;
           }}
         />
       </div>
@@ -162,7 +173,6 @@ const ClientPicker = ({
               {client?.rif || "No disponible"}
             </a>
           </div>
-          {/* ... resto de campos si quieres */}
         </div>
       )}
     </div>

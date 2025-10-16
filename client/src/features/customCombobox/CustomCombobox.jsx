@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   Combobox,
   ComboboxInput,
@@ -19,9 +20,24 @@ const CustomCombobox = ({
   label,
   onQueryChange,
   onCreate,
+  selectedLabel, // mostrar texto aunque la opción aún no esté en options
+  onProvideClose, // el padre recibe una función para cerrar definitivamente
 }) => {
   const [query, setQuery] = useState("");
   const inputRef = useRef(null);
+  const sentinelRef = useRef(null); // elemento invisible que recibe el foco al cerrar
+
+  // Exponer al padre cómo cerrar: blur del input + foco al sentinela + limpiar query
+  useEffect(() => {
+    if (typeof onProvideClose === "function") {
+      onProvideClose(() => {
+        inputRef.current?.blur();
+        // mover el foco a un sentinela para evitar que el input reciba foco por re-render
+        sentinelRef.current?.focus();
+        setQuery("");
+      });
+    }
+  }, [onProvideClose]);
 
   const normOptions = useMemo(
     () =>
@@ -31,7 +47,13 @@ const CustomCombobox = ({
       })),
     [options]
   );
+
   const selectedValue = selected == null ? "" : String(selected);
+
+  // Limpiar query cuando cambia el seleccionado
+  useEffect(() => {
+    setQuery("");
+  }, [selectedValue]);
 
   const filtered = useMemo(() => {
     if (!query) return normOptions;
@@ -46,6 +68,8 @@ const CustomCombobox = ({
     label: "",
   };
 
+  const effectiveDisplay = selectedLabel || selectedOption.label || "";
+
   const norm = (s) =>
     String(s || "")
       .trim()
@@ -54,10 +78,22 @@ const CustomCombobox = ({
   const canShowCreate =
     Boolean(onCreate) && Boolean(norm(query)) && !hasExactMatch;
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!onCreate || !query.trim()) return;
+    const name = query.trim();
+
+    // Cerrar visualmente de inmediato y desplazar foco
     inputRef.current?.blur();
-    onCreate(query.trim());
+    sentinelRef.current?.focus();
+
+    // Delegar creación al padre y esperar
+    await onCreate(name);
+
+    // Limpiar búsqueda
+    setQuery("");
+
+    // Salvaguarda
+    document.activeElement?.blur?.();
   };
 
   return (
@@ -73,7 +109,7 @@ const CustomCombobox = ({
             <ComboboxInput
               ref={inputRef}
               className="w-full py-[5px] px-[15px] bg-white border border-[#EBEBEB] rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm xs:text-[12px]"
-              displayValue={() => selectedOption.label}
+              displayValue={() => effectiveDisplay}
               onChange={(e) => {
                 const v = e.target.value;
                 setQuery(v);
@@ -130,6 +166,15 @@ const CustomCombobox = ({
             )}
           </ComboboxOptions>
         </Combobox>
+
+        {/* Sentinela invisible: recibe el foco al cerrar para evitar re-apertura */}
+        <button
+          ref={sentinelRef}
+          tabIndex={-1}
+          aria-hidden="true"
+          className="sr-only"
+          type="button"
+        />
       </div>
     </div>
   );
