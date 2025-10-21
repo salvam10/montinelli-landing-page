@@ -43,11 +43,12 @@ export const paymentOptions = [
 export const states = [
   { label: "Anzoátegui", value: "Anzoátegui" },
   { label: "Aragua", value: "Aragua" },
+  { label: "Bolivar", value: "Ciudad Bolivar" },
   { label: "Carabobo", value: "Carabobo" },
   { label: "Distrito Capital", value: "Distrito Capital" },
   { label: "La Guaira", value: "La Guaira" },
   { label: "Miranda", value: "Miranda" },
-  { label: "Bolivar", value: "Ciudad Bolivar" },
+  { label: "Nueva Esparta", value: "Nueva Esparta" },
 ];
 
 export const cities = [
@@ -57,16 +58,17 @@ export const cities = [
   { label: "Catia La Mar", value: "Catia La Mar" },
   { label: "Caucagua", value: "Caucagua" },
   { label: "Charallave", value: "Charallave" },
+  { label: "Ciudad Bolivar", value: "Ciudad Bolivar" },
   { label: "Guarenas", value: "Guarenas" },
   { label: "Guatire", value: "Guatire" },
   { label: "Higuerote", value: "Higuerote" },
   { label: "La Victoria", value: "La Victoria" },
   { label: "Los Teques", value: "Los Teques" },
   { label: "Maracay", value: "Maracay" },
+  { label: "Porlamar", value: "Porlamar" },
   { label: "San Antonio de los altos", value: "San Antonio de los altos" },
   { label: "Santa Teresa del Tuy", value: "Santa Teresa del Tuy" },
   { label: "Valencia", value: "Valencia" },
-  { label: "Ciudad Bolivar", value: "Ciudad Bolivar" },
 ].sort((a, b) => a.label.localeCompare(b.label));
 
 export const phoneAreaCodes = [
@@ -102,6 +104,7 @@ export const municipalities = [
   { label: "Independencia", value: "Independencia" },
   { label: "Libertador", value: "Libertador" },
   { label: "Los Salias", value: "Los Salias" },
+  { label: "Mariño", value: "Mariño" },
   { label: "Naguanagua", value: "Naguanagua" },
   { label: "Padre Pedro Chien", value: "Padre Pedro Chien" },
   { label: "Piar", value: "Piar" },

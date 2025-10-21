@@ -11,7 +11,7 @@ const checkClientsDebt = async () => {
 };
 
 
-cron.schedule("*/30 * * * *", () => {
+cron.schedule("* * * * *", () => {
   console.log("[cron] ejecutando checkClientsDebt…");
   checkClientsDebt().catch(console.error);
 });
