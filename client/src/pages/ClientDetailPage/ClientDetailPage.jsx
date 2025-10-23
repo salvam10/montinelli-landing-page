@@ -5,6 +5,7 @@ import {
   getSingleClient,
   updateClient,
 } from "../../features/slices/clientsSlice";
+import { getPaymentsByClientId } from "../../features/slices/paymentsSlice";
 import { getUserById } from "../../features/slices/usersSlice";
 import ClientBasicInfo from "../../features/clientBasicInfo/ClientBasicInfo";
 import ClientOrders from "../../features/clientOrders/ClientOrders";
@@ -12,11 +13,13 @@ import SellerPicker from "../../features/sellerPicker/SellerPicker";
 import EditClientModal from "../../features/modals/EditClientModal";
 import CustomFormButton from "../../features/customFormButton/CustomFormButton";
 import { getPaymentTerms } from "../../features/slices/paymentTermsSlice";
+import ClientPayments from "../../features/clientPayments/ClientPayments";
 
 const ClientDetailPage = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
   const { client } = useSelector((state) => state.clients);
+  const { clientPayments, isLoading } = useSelector((state) => state.payments);
   const { single_user } = useSelector((state) => state.users);
 
   const [selectedSeller, setSelectedSeller] = useState({});
@@ -27,6 +30,7 @@ const ClientDetailPage = () => {
     if (id) {
       dispatch(getSingleClient({ id }));
       dispatch(getPaymentTerms());
+      dispatch(getPaymentsByClientId({ clientId: id }));
     }
   }, [id, dispatch]);
 
@@ -56,17 +60,21 @@ const ClientDetailPage = () => {
 
   return (
     <div className="w-full flex items-center flex-col p-5 pb-52 bg-transparent gap-5 overflow-x-hidden">
-      <div className="xs:w-full md:w-[80%] flex-end">
-      </div>
+      <div className="xs:w-full md:w-[80%] flex-end"></div>
       <div className="xs:w-full md:w-[80%] flex flex-col md:flex-row gap-5">
         <div className="w-full md:w-[70%] flex flex-col gap-5">
           <ClientOrders client={client} productCatId={34} />
           <ClientOrders client={client} productCatId={35} />
+          <ClientPayments
+            client={client}
+            clientPayments={clientPayments}
+            isLoading={isLoading}
+          />
         </div>
 
         <div className="w-full md:w-[30%] flex flex-col gap-5">
           <ClientBasicInfo client={client} setShowModal={setShowModal} />
-          
+
           <SellerPicker
             selectedSeller={selectedSeller}
             setSelectedSeller={setSelectedSeller}

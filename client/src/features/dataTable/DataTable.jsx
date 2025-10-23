@@ -19,6 +19,7 @@ const DataTable = ({
   onDelete,
   onRowClick,
   globalFilter,
+  notFoundMessage,
 }) => {
   const [sorting, setSorting] = useState([]);
 
@@ -123,7 +124,9 @@ const DataTable = ({
         </>
       ) : (
         <div className="flex justify-center py-4">
-          <span className="font-bold text-gray-500">No hay Pedidos</span>
+          <span className="font-bold text-gray-500">
+            {notFoundMessage || "No hay pedidos"}
+          </span>
         </div>
       )}
     </div>

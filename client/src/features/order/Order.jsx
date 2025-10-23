@@ -6,12 +6,12 @@ import {
   getClientByOrderId,
   getProductsByOrderId,
   getOrderById,
+  getOrderBalance,
 } from "../../features/slices/ordersSlice";
 /* Components */
 import OrderBillingDetails from "../orderBillingDetails/OrderBillingDetails";
 import OrderProductsDetails from "../orderProductDetails/OrderProductsDetails";
 import OrderClientDetails from "../orderClientDetails/OrderClientDetails";
-import OrderClientStatus from "../orderClientStatus/OrderClientStatus";
 import OrderHeader from "../orderHeader/OrderHeader";
 import { getPaymentTerms } from "../../features/slices/paymentTermsSlice";
 
@@ -19,7 +19,7 @@ const Order = () => {
   const [openManagerDrop, setOpenManagerDrop] = useState(false);
   const [openDebtDrop, setOpenDebtDrop] = useState(false);
   const [openGroupedDrop, setOpenGroupedDrop] = useState(false);
-  const { orderProducts, orderClient, order } = useSelector(
+  const { orderProducts, orderClient, orderBalance, order } = useSelector(
     (state) => state.orders
   );
 
@@ -31,11 +31,12 @@ const Order = () => {
     dispatch(getProductsByOrderId({ orderId: id }));
     dispatch(getClientByOrderId({ orderId: id }));
     dispatch(getPaymentTerms());
+    dispatch(getOrderBalance({ orderId: id }));
   }, []);
 
   useEffect(() => {
-    console.log("orderClient", orderClient);
-  }, [orderClient]);
+    console.log("orderBalance", orderBalance);
+  }, [orderBalance]);
 
   return (
     <div className="flex items-center flex-col p-5 bg-transparent gap-5">
@@ -58,6 +59,7 @@ const Order = () => {
             orderProducts={orderProducts}
             orderClient={orderClient}
             order={order}
+            orderBalance={orderBalance}
           />
         </div>
         <div className="w-full md:w-[30%] flex flex-col gap-5">

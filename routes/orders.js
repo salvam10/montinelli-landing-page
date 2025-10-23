@@ -321,6 +321,24 @@ router.get("/:orderId/client", async (req, res) => {
 });
 
 
+// Obtener balance de una orden por su id
+router.get("/:orderId/balance", async (req, res) => { 
+  const { orderId } = req.params;
+  try {
+    const result = await postgresDB.query(
+      `
+      SELECT * FROM order_balances WHERE order_id = $1
+    `,
+      [orderId]
+    ); 
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error interno del servidor" });
+  }
+});
+
+
 // Crear una nueva orden para el usuario
 router.post("/user/:userId", async (req, res) => {
   const { userId } = req.params;

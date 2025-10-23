@@ -79,6 +79,21 @@ export const getClientOrders = createAsyncThunk(
   }
 );
 
+// Obtener el balance de una orden
+export const getOrderBalance = createAsyncThunk(
+  "orders/getOrderBalance",
+  async ({ orderId }, thunkAPI) => {
+    try {
+      const response = await axios.get(
+        `${SERVER_URL}/api/orders/${orderId}/balance`
+      );
+      return response.data;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+);
+
 /* Obtener los productos de una orden */
 export const getProductsByOrderId = createAsyncThunk(
   "orders/getProductsByOrderId",
@@ -239,12 +254,12 @@ export const updateOrder = createAsyncThunk(
       scheduled_dispatch_date,
       actual_dispatch_date,
       paid_at,
-      last_debt_check
+      last_debt_check,
     },
     { dispatch }
   ) => {
-    console.log('due_date', due_date);
-    
+    console.log("due_date", due_date);
+
     try {
       const response = await axios.put(`${SERVER_URL}/api/orders/${orderId}`, {
         status,
@@ -259,7 +274,7 @@ export const updateOrder = createAsyncThunk(
         actual_dispatch_date,
         shipping_status,
         paid_at,
-        last_debt_check
+        last_debt_check,
       });
       return response.data;
     } catch (error) {
@@ -281,6 +296,7 @@ const ordersSlice = createSlice({
     orderClient: {},
     orderProducts: [],
     orderStatuses: [],
+    orderBalance: {},
     hasError: false,
     isLoading: false,
   },
@@ -467,6 +483,22 @@ const ordersSlice = createSlice({
       })
 
       .addCase(getClientOrders.rejected, (state) => {
+        state.isLoading = false;
+        state.hasError = true;
+      })
+
+      // GET ORDER BALANCE
+      .addCase(getOrderBalance.pending, (state) => {
+        state.isLoading = true;
+        state.hasError = false;
+      })
+      .addCase(getOrderBalance.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.hasError = false;
+        state.orderBalance = action.payload;
+      })
+
+      .addCase(getOrderBalance.rejected, (state) => {
         state.isLoading = false;
         state.hasError = true;
       });

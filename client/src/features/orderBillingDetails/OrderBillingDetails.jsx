@@ -13,7 +13,12 @@ import { usePaymentInfo } from "../../hooks/usePaymentInfo";
 import { usePaymentActions } from "../../hooks/usePaymentActions";
 import { changePillBgColor } from "../../helpers/changePillColor";
 
-const OrderBillingDetails = ({ orderProducts, orderClient, order }) => {
+const OrderBillingDetails = ({
+  orderProducts,
+  orderClient,
+  order,
+  orderBalance,
+}) => {
   const [showPaymentTermsModal, setShowPaymentTermsModal] = useState(false);
 
   const [paymentStatus, setPaymentStatus] = useState("Pendiente");
@@ -43,9 +48,9 @@ const OrderBillingDetails = ({ orderProducts, orderClient, order }) => {
     markAsPending();
   };
 
-  const handleRegisterDebtCheck = () => { 
+  const handleRegisterDebtCheck = () => {
     registerDebtCheck(new Date());
-  }
+  };
 
   const confirmMarkAsPaid = async () => {
     await markAsPaid(payDate);
@@ -110,7 +115,7 @@ const OrderBillingDetails = ({ orderProducts, orderClient, order }) => {
           </div>
           <div className="billing-li-details justify-end">
             <span className="responsive-text">
-              ${fmtMoney(order?.total /* o order.paid_amount */)}
+              ${fmtMoney(orderBalance?.allocated)}
             </span>
           </div>
         </li>
@@ -132,7 +137,7 @@ const OrderBillingDetails = ({ orderProducts, orderClient, order }) => {
               {fmtMoney(
                 paymentStatus === "Pagado"
                   ? 0
-                  : order?.total /* o order.balance */
+                  : orderBalance?.balance /* o order.balance */
               )}
             </span>
           </div>
@@ -146,8 +151,8 @@ const OrderBillingDetails = ({ orderProducts, orderClient, order }) => {
             <CustomFormButton
               isLoading={isLoading}
               text="Registrar Revisión"
-              handleClickFunction={handleRegisterDebtCheck} /
-            >
+              handleClickFunction={handleRegisterDebtCheck}
+            />
             <CustomFormButton
               isLoading={isLoading}
               text={
