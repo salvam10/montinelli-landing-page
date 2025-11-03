@@ -8,7 +8,9 @@ import CloseIcon from "@mui/icons-material/Close";
 import { AuthContext } from "../../App";
 import { getOrders } from "../slices/ordersSlice";
 
-const AdminSidebar = ({ isOpen = false, setIsOpen = () => {} }) => {
+const AdminSidebar = ({ isOpen = false, setIsOpen = () => { } }) => {
+  console.log('hello');
+  
   const { setUser } = useContext(AuthContext);
   const dispatch = useDispatch();
   const navigate = useNavigate();
