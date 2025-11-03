@@ -4,7 +4,6 @@ import PropTypes from "prop-types";
 import CustomFormButton from "../customFormButton/CustomFormButton";
 import PaymentTermsModal from "../modals/PaymentTermsModal";
 import Pill from "../pill/Pill";
-
 import PaymentTermsMenu from "./PaymentTermsMenu";
 import PayDatePopover from "./PayDatePopover";
 
@@ -20,24 +19,16 @@ const OrderBillingDetails = ({
   orderBalance,
 }) => {
   const [showPaymentTermsModal, setShowPaymentTermsModal] = useState(false);
-
   const [paymentStatus, setPaymentStatus] = useState("Pendiente");
   const { msg, overdue } = usePaymentInfo(order);
-
   const { isLoading, markAsPending, markAsPaid, registerDebtCheck } =
     usePaymentActions(order);
   const [showPayPicker, setShowPayPicker] = useState(false);
   const [payDate, setPayDate] = useState(() => new Date());
 
-  const [pillBg, setPillBg] = useState("");
-
   useEffect(() => {
     setPaymentStatus(order?.payment_status);
   }, [order]);
-
-  useEffect(() => {
-    changePillBgColor(setPillBg, paymentStatus);
-  }, [paymentStatus]);
 
   const handleMarkButtonClick = () => {
     if (paymentStatus !== "Pagado") {
@@ -57,102 +48,113 @@ const OrderBillingDetails = ({
     setShowPayPicker(false);
   };
 
+  // Cálculo auxiliar de días de vencimiento
+  const dueDate = order?.due_date ? new Date(order.due_date) : null;
+  const daysLeft = dueDate
+    ? Math.ceil((dueDate - new Date()) / (1000 * 60 * 60 * 24))
+    : null;
+
   return (
-    <div className="w-full flex-center flex-col gap-1 bg-white p-5 relative">
-      {order?.invoice_number && (
-        <div className="w-full relative flex flex-between">
-          <Pill
-            setBgColor={changePillBgColor}
-            prefix="Pedido"
-            status={paymentStatus}
-          />
-          <PaymentTermsMenu onEdit={() => setShowPaymentTermsModal(true)} />
-        </div>
-      )}
-
-      {/* Detalles */}
-      <div className="w-full flex flex-col gap-5 border rounded-md py-2 px-5">
-        <li className="flex">
-          <div className="billing-li-label">
-            <span className="responsive-text">Subtotal</span>
-          </div>
-          <div className="billing-li-details">
-            <span className="responsive-text ">
-              {sumQty(orderProducts)} artículos
-            </span>
-            <span className="responsive-text ">
-              ${fmtMoney(order?.subtotal)}
-            </span>
-          </div>
-        </li>
-
-        <li className="flex">
-          <div className="billing-li-label">
-            <span className="responsive-text ">Envío</span>
-          </div>
-          <div className="billing-li-details">
-            <span className="responsive-text ">Standard</span>
-            <span className="responsive-text ">
-              ${fmtMoney(order?.shippingCost)}
-            </span>
-          </div>
-        </li>
-
-        <li className="flex border-b">
-          <div className="billing-li-label">
-            <span className="responsive-text font-bold">Total</span>
-          </div>
-          <div className="billing-li-details justify-end">
-            <span className="responsive-text font-bold">
-              ${fmtMoney(order?.total)}
-            </span>
-          </div>
-        </li>
-
-        <li className="flex">
-          <div className="billing-li-label">
-            <span className="responsive-text">Pagado</span>
-          </div>
-          <div className="billing-li-details justify-end">
-            <span className="responsive-text">
-              ${fmtMoney(orderBalance?.allocated)}
-            </span>
-          </div>
-        </li>
-
-        <li className="flex">
-          <div className="billing-li-label">
-            <span className="responsive-text">Saldo</span>
-          </div>
-          <div className="billing-li-details">
-            <span
-              className={`responsive-text max-w-60 ${
-                overdue ? " text-red-500 font-bold px-2 py-0.5 rounded" : ""
-              }`}
-            >
-              {msg}
-            </span>
-            <span className="responsive-text">
-              $
-              {fmtMoney(
-                paymentStatus === "Pagado"
-                  ? 0
-                  : orderBalance?.balance /* o order.balance */
-              )}
-            </span>
-          </div>
-        </li>
+    <div className="w-full bg-white rounded-xl shadow-sm border p-5 flex flex-col gap-4">
+      {/* Encabezado */}
+      <div className="w-full flex justify-between items-center">
+        <Pill
+          setBgColor={changePillBgColor}
+          prefix="Pedido"
+          status={paymentStatus}
+        />
+        <PaymentTermsMenu onEdit={() => setShowPaymentTermsModal(true)} />
       </div>
 
-      {/* Botón + popover de fecha de pago */}
+      {/* Contenedor de resumen y pagos */}
+      <div className="w-full border rounded-lg p-6">
+        <h3 className="font-semibold text-gray-800 mb-4 text-base">
+          Resumen y pagos
+        </h3>
+
+        <div className="grid grid-cols-2 gap-6 text-sm text-gray-700">
+          {/* Columna izquierda */}
+          <ul className="flex flex-col gap-3">
+            <li className="flex justify-between border-b pb-2">
+              <div>
+                <div className="text-gray-700">Subtotal</div>
+                <div className="text-xs text-gray-500">
+                  {sumQty(orderProducts)} artículos
+                </div>
+              </div>
+              <div className="text-gray-800">${fmtMoney(order?.subtotal)}</div>
+            </li>
+
+            <li className="flex justify-between border-b pb-2">
+              <div>
+                <div className="text-gray-700">Envío</div>
+                <div className="text-xs text-gray-500">Standard</div>
+              </div>
+              <div className="text-gray-800">
+                ${fmtMoney(order?.shippingCost)}
+              </div>
+            </li>
+
+            <li className="flex justify-between pt-1">
+              <div className="font-semibold text-gray-900">Total</div>
+              <div className="font-semibold text-gray-900">
+                ${fmtMoney(order?.total)}
+              </div>
+            </li>
+          </ul>
+
+          {/* Columna derecha */}
+          <ul className="flex flex-col gap-3">
+            <li className="flex justify-between">
+              <div className="text-gray-700">Pagado</div>
+              <div className="text-gray-800">
+                ${fmtMoney(orderBalance?.allocated)}
+              </div>
+            </li>
+
+            <li className="flex justify-between">
+              <div
+                className={`text-gray-700 ${
+                  overdue ? "text-red-600 font-semibold" : ""
+                }`}
+              >
+                Saldo
+              </div>
+              <div className="text-gray-800">
+                $
+                {fmtMoney(
+                  paymentStatus === "Pagado" ? 0 : orderBalance?.balance
+                )}
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        {/* Fecha de vencimiento */}
+        {dueDate && (
+          <div className="text-right text-sm text-gray-500 mt-4">
+            {daysLeft > 0
+              ? `Vence en ${daysLeft} días (${dueDate.toLocaleDateString(
+                  "es-VE"
+                )})`
+              : `Venció el ${dueDate.toLocaleDateString("es-VE")}`}
+          </div>
+        )}
+      </div>
+
+      {/* Botones inferiores */}
       {order?.invoice_number && (
-        <div className="w-full flex justify-end relative">
-          <div className="w-[50%] flex">
-            <CustomFormButton
-              isLoading={isLoading}
-              text="Registrar Revisión"
-              handleClickFunction={handleRegisterDebtCheck}
-            />
+        <div className="w-full flex justify-between gap-3">
+          {/* Botón de registrar revisión */}
+          <CustomFormButton
+            isLoading={isLoading}
+            text="Registrar Revisión"
+            handleClickFunction={handleRegisterDebtCheck}
+            className="w-full"
+          />
+
+          {/* Contenedor relativo para el botón de pago + popover */}
+          <div className="relative w-full flex justify-end">
             <CustomFormButton
               isLoading={isLoading}
               text={
@@ -161,26 +163,30 @@ const OrderBillingDetails = ({
                   : "Marcar como pagado"
               }
               handleClickFunction={handleMarkButtonClick}
+              className="w-full"
             />
-          </div>
 
-          {showPayPicker && (
-            <PayDatePopover
-              date={payDate}
-              onChange={setPayDate}
-              onAssign={confirmMarkAsPaid}
-              onCancel={() => setShowPayPicker(false)}
-              title="Selecciona la fecha de pago"
-            />
-          )}
+            {/* Popover de fecha de pago (aparece justo encima del botón) */}
+            {showPayPicker && (
+              <PayDatePopover
+                date={payDate}
+                onChange={setPayDate}
+                onAssign={confirmMarkAsPaid}
+                onCancel={() => setShowPayPicker(false)}
+                title="Selecciona la fecha de pago"
+              />
+            )}
+          </div>
         </div>
       )}
 
+      {/* Modal de condiciones de pago */}
       {showPaymentTermsModal && (
         <PaymentTermsModal
           setOpenModal={setShowPaymentTermsModal}
           order={order}
           orderClient={orderClient}
+          onSave={() => setShowPaymentTermsModal(false)}
         />
       )}
     </div>
@@ -190,6 +196,8 @@ const OrderBillingDetails = ({
 OrderBillingDetails.propTypes = {
   orderProducts: PropTypes.array,
   order: PropTypes.object,
+  orderClient: PropTypes.object,
+  orderBalance: PropTypes.object,
 };
 
 export default OrderBillingDetails;

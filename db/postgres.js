@@ -10,7 +10,7 @@ const Pool = require("pg").Pool;
 }); */
 
 const pool = new Pool({
-  connectionString: process.env.PROD_DATABASE_URL,
+  connectionString: process.env.LOCAL_DATABASE_URL,
   ssl: {
     rejectUnauthorized: false,
   },

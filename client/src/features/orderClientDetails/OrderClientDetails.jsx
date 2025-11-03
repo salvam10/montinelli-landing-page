@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-import CustomFormButton from "../customFormButton/CustomFormButton";
-import CustomTextInput from "../customTextInput/CustomTextInput";
-import { updateOrder, getOrderById } from "../slices/ordersSlice";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import AddInvoiceModal from "../modals/AddInvoiceModal";
+import { updateOrder, getOrderById } from "../slices/ordersSlice";
 
 const OrderClientDetails = ({ orderClient, order }) => {
   const [managerStatus, setManagerStatus] = useState(null);
@@ -18,85 +16,114 @@ const OrderClientDetails = ({ orderClient, order }) => {
   }, [order]);
 
   return (
-    <div className="w-full flex justify-between py-5 px-5 bg-white gap-2">
-      <div className="w-full flex flex-col justify-between gap-2">
-        {/* Client Basic Details */}
-        <div className="w-full flex-center flex-col gap-2">
-          <div className="w-full flex flex-col">
-            <span className="client-detail-label">Cliente</span>
-            <div className="flex gap-1">
-              <span className="responsive-text">{orderClient.name}</span>
-              <span className="responsive-text text-[rgba(235,90,70,1)] font-bold">
-                {orderClient.has_debt && "(con deuda)"}
-              </span>
-            </div>
-          </div>
-          <div className="w-full flex flex-col">
-            <span className="client-detail-label">Representante legal</span>
-            <span className="responsive-text">
-              {orderClient.legal_representative || "No disponible"}
-            </span>
-          </div>
-          <div className="w-full flex flex-col ">
-            <span className="client-detail-label">Teléfono</span>
-            <span className="responsive-text">
-              {orderClient.phone || "No disponible"}
-            </span>
-          </div>
-          <div className="w-full flex flex-col ">
-            <span className="client-detail-label">Cod Sunagro</span>
-            <span className="responsive-text">
-              {orderClient.sunagro_code || "No disponible"}
-            </span>
-          </div>
-          <div className="w-full flex flex-col">
-            <span className="client-detail-label">Rif</span>
-            <a
-              className="text-[#0079bf] hover:text-[#ff9f1a] client-detail-label cursor-pointer"
-              href={orderClient.rif_url}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {orderClient.rif}
-            </a>
-          </div>
-          <div className="w-full flex flex-col">
-            <span className="client-detail-label">Vendedor</span>
-            <span className="responsive-text">{order.user_fullname}</span>
-          </div>
-        </div>
-        {/* Client Address */}
-        <div className="w-full flex flex-col">
-          <span className="client-detail-label">Dirección</span>
-          <div className="flex flex-col gap-1">
-            <span className="responsive-text gap-1">
-              {orderClient.street_address}
-            </span>
-            <span className="responsive-text">Estado: {orderClient.state}</span>
-            <span className="responsive-text">Ciudad: {orderClient.city}</span>
-            <span className="responsive-text gap-1">
-              Municipio: {orderClient.municipality}
-            </span>
-          </div>
-        </div>
-        {/* Invoice Number*/}
+    <div className="bg-white rounded-2xl border p-5">
+      {/* Header */}
+      <div className="flex justify-between items-start mb-4">
+        <h2 className="text-base font-semibold text-gray-900">
+          Información del cliente
+        </h2>
+        {orderClient.has_debt && (
+          <span className="text-xs bg-red-100 text-amber-700 px-2 py-0.5 rounded-full">
+            con deuda
+          </span>
+        )}
+      </div>
+
+      {/* Client details grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4 text-sm">
+        {/* Cliente */}
         <div className="flex flex-col">
-          <span className="client-detail-label">Factura</span>
-          <div className="flex flex-between items-baseline gap-1">
-            <span className="responsive-text">
+          <span className="text-gray-500">Cliente</span>
+          <span className="font-medium text-gray-900">
+            {orderClient.name || "No disponible"}
+          </span>
+        </div>
+
+        {/* Teléfono */}
+        <div className="flex flex-col">
+          <span className="text-gray-500">Teléfono</span>
+          <span className="font-medium text-gray-900">
+            {orderClient.phone || "No disponible"}
+          </span>
+        </div>
+
+        {/* RIF */}
+        <div className="flex flex-col">
+          <span className="text-gray-500">RIF</span>
+          <a
+            href={orderClient.rif_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-blue-600 hover:text-blue-800"
+          >
+            {orderClient.rif || "No disponible"}
+          </a>
+        </div>
+
+        {/* Vendedor */}
+        <div className="flex flex-col">
+          <span className="text-gray-500">Vendedor</span>
+          <span className="font-medium text-gray-900">
+            {order.user_fullname || "No disponible"}
+          </span>
+        </div>
+
+        {/* Representante legal */}
+        <div className="flex flex-col">
+          <span className="text-gray-500">Representante legal</span>
+          <span className="font-medium text-gray-900">
+            {orderClient.legal_representative || "No disponible"}
+          </span>
+        </div>
+
+        {/* Código Sunagro */}
+        <div className="flex flex-col">
+          <span className="text-gray-500">Cod. Sunagro</span>
+          <span className="font-medium text-gray-900">
+            {orderClient.sunagro_code || "No disponible"}
+          </span>
+        </div>
+
+        {/* Código Profit */}
+        <div className="flex flex-col">
+          <span className="text-gray-500">Cod. Profit</span>
+          <span className="font-medium text-gray-900">
+            {orderClient.profit_code || "No disponible"}
+          </span>
+        </div>
+
+        {/* Dirección */}
+        <div className="flex flex-col col-span-2 md:col-span-3">
+          <span className="text-gray-500">Dirección</span>
+          <span className="font-medium text-gray-900">
+            {orderClient.street_address ||
+              `${orderClient.city || ""}, ${orderClient.state || ""}, ${
+                orderClient.municipality || ""
+              }`}
+          </span>
+        </div>
+
+        {/* Factura (editable si aprobado) */}
+        <div className="flex flex-col col-span-2 md:col-span-3">
+          <span className="text-gray-500">Factura</span>
+          <div className="flex items-center justify-between border rounded-xl px-3 py-2 bg-gray-50">
+            <span className="font-medium text-gray-900">
               {invoiceNumber || "Sin factura creada"}
             </span>
             <span
-              className="text-[#B3B3B3] cursor-pointer hover:bg-[#EBEBEB] hover:text-[#000000] hover:rounded-lg"
               onClick={() => {
-                if (managerStatus.toLowerCase() === "aprobado") {
-                  setOpenInvoiceModal(!openInvoiceModal);
+                if (
+                  managerStatus &&
+                  managerStatus.toLowerCase() === "aprobado"
+                ) {
+                  setOpenInvoiceModal(true);
                 } else {
                   alert("El pedido aún no ha sido aprobado por gerencia.");
                 }
               }}
+              className="text-gray-400 hover:text-gray-600 cursor-pointer"
             >
-              <EditOutlinedIcon style={{ fontSize: "large" }} />
+              <EditOutlinedIcon fontSize="small" />
             </span>
           </div>
           {openInvoiceModal && (

@@ -10,6 +10,7 @@ import marketProductsReducer from "../features/slices/marketProductsSlice";
 import marketCheckReducer from "../features/slices/marketCheckSlice";
 import brandsReducer from "../features/slices/brandsSlice";
 import paymentsReducer from "../features/slices/paymentsSlice";
+import orderItemsReducer from "../features/slices/orderItemsSlice";
 
 export const store = configureStore({
   reducer: {
@@ -24,5 +25,6 @@ export const store = configureStore({
     marketChecks: marketCheckReducer,
     brands: brandsReducer,
     payments: paymentsReducer,
+    orderItems: orderItemsReducer
   },
 });

@@ -77,7 +77,19 @@ router.get("/", async (req, res) => {
 
 // Obtener una orden por su id
 router.get("/:orderId", async (req, res) => {
-  const { orderId } = req.params;
+  const raw = req.params.orderId;
+  console.log(
+    "orderId recibido:",
+    raw,
+    "typeof:",
+    typeof raw,
+    "url:",
+    req.originalUrl
+  );
+  const orderId = Number.parseInt(raw, 10);
+  if (Number.isNaN(orderId)) {
+    return res.status(400).json({ message: "orderId inválido" });
+  }
   try {
     const result = await postgresDB.query(
       `
@@ -275,7 +287,7 @@ router.get("/:orderId/items", async (req, res) => {
   const { userId, orderId } = req.params;
   try {
     const { rows } = await postgresDB.query(
-      "SELECT p.*, oi.quantity, oi.price AS order_price FROM products p JOIN order_items oi ON p.id = oi.product_id JOIN orders o ON oi.order_id = o.id WHERE o.id = $1",
+      "SELECT p.*, oi.quantity, oi.price AS order_price, oi.discount_pct FROM products p JOIN order_items oi ON p.id = oi.product_id JOIN orders o ON oi.order_id = o.id WHERE o.id = $1",
       [orderId]
     );
     if (rows.length === 0) {
@@ -320,9 +332,8 @@ router.get("/:orderId/client", async (req, res) => {
   }
 });
 
-
 // Obtener balance de una orden por su id
-router.get("/:orderId/balance", async (req, res) => { 
+router.get("/:orderId/balance", async (req, res) => {
   const { orderId } = req.params;
   try {
     const result = await postgresDB.query(
@@ -330,14 +341,13 @@ router.get("/:orderId/balance", async (req, res) => {
       SELECT * FROM order_balances WHERE order_id = $1
     `,
       [orderId]
-    ); 
+    );
     res.json(result.rows[0]);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error interno del servidor" });
   }
 });
-
 
 // Crear una nueva orden para el usuario
 router.post("/user/:userId", async (req, res) => {
@@ -563,7 +573,7 @@ router.put("/:orderId", async (req, res, next) => {
     invoice_number,
     invoice_date,
     paid_at,
-    last_debt_check
+    last_debt_check,
   } = req.body;
 
   let updateQuery = "UPDATE orders SET ";

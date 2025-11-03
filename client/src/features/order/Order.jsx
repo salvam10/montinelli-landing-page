@@ -14,11 +14,18 @@ import OrderProductsDetails from "../orderProductDetails/OrderProductsDetails";
 import OrderClientDetails from "../orderClientDetails/OrderClientDetails";
 import OrderHeader from "../orderHeader/OrderHeader";
 import { getPaymentTerms } from "../../features/slices/paymentTermsSlice";
+import ProductPickerModal from "../productPickerModal/ProductPickerModal";
+import { addOrderItemsBulk } from "../../features/slices/orderItemsSlice";
+import { getAllProducts } from "../slices/productsSlice";
 
 const Order = () => {
   const [openManagerDrop, setOpenManagerDrop] = useState(false);
   const [openDebtDrop, setOpenDebtDrop] = useState(false);
   const [openGroupedDrop, setOpenGroupedDrop] = useState(false);
+  const [openAddProd, setOpenAddProd] = useState(false);
+  const [selectedProducts, setSelectedProducts] = useState([]);
+  const [productName, setProductName] = useState("");
+  const { products, isLoading } = useSelector((state) => state.products);
   const { orderProducts, orderClient, orderBalance, order } = useSelector(
     (state) => state.orders
   );
@@ -32,11 +39,15 @@ const Order = () => {
     dispatch(getClientByOrderId({ orderId: id }));
     dispatch(getPaymentTerms());
     dispatch(getOrderBalance({ orderId: id }));
+    dispatch(getAllProducts());
   }, []);
 
-  useEffect(() => {
-    console.log("orderBalance", orderBalance);
-  }, [orderBalance]);
+  const handleSubmitClick = async () => { 
+    await dispatch(addOrderItemsBulk({ orderId: order.id, products: selectedProducts }));
+    dispatch(getProductsByOrderId({ orderId: id }));
+    dispatch(getOrderById({ orderId: id }));
+    dispatch(getOrderBalance({ orderId: id }));
+  };
 
   return (
     <div className="flex items-center flex-col p-5 bg-transparent gap-5">
@@ -52,9 +63,14 @@ const Order = () => {
           setOpenGroupedDrop={setOpenGroupedDrop}
         />
       </div>
-      <div className="xs:w-full md:w-[80%] flex flex-col md:flex-row gap-5">
-        <div className="w-full md:w-[70%] flex flex-col gap-5">
-          <OrderProductsDetails orderProducts={orderProducts} order={order} />
+      <div className="xs:w-full md:w-[90%] flex flex-col gap-5">
+        <div className="w-full flex flex-col gap-5">
+          <OrderClientDetails orderClient={orderClient} order={order} />
+          <OrderProductsDetails
+            orderProducts={orderProducts}
+            order={order}
+            setOpenAddProd={setOpenAddProd}
+          />
           <OrderBillingDetails
             orderProducts={orderProducts}
             orderClient={orderClient}
@@ -62,10 +78,19 @@ const Order = () => {
             orderBalance={orderBalance}
           />
         </div>
-        <div className="w-full md:w-[30%] flex flex-col gap-5">
-          <OrderClientDetails orderClient={orderClient} order={order} />
-        </div>
       </div>
+      {openAddProd && (
+        <ProductPickerModal
+          products={products}
+          productName={productName}
+          setProductName={setProductName}
+          setOpenModal={setOpenAddProd}
+          openModal={openAddProd}
+          selectedProducts={selectedProducts}
+          setSelectedProducts={setSelectedProducts}
+          handleSubmitClick={handleSubmitClick}
+        />
+      )}
     </div>
   );
 };
