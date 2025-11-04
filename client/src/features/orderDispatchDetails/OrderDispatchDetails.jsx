@@ -71,7 +71,7 @@ const OrderDispatchDetails = ({ order }) => {
             <MoreHorizIcon style={{ color: "#000000" }} />
           </button>
           {openDropdown && (
-            <div className="absolute right-0 mt-2 z-10">
+            <div className="absolute left-60 top-0 mt-2 z-10">
               <DispatchDropdown
                 setOpenDropdown={setOpenDropdown}
                 order={order}

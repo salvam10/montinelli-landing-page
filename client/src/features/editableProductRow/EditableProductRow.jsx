@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import {
   updateOrderItem,
@@ -8,7 +8,6 @@ import { Pencil, Trash2 } from "lucide-react";
 import { getOrderById, getProductsByOrderId } from "../slices/ordersSlice";
 import { getOrderBalance } from "../slices/ordersSlice";
 
-
 const EditableProductRow = ({ product, orderId }) => {
   const dispatch = useDispatch();
   const [isEditing, setIsEditing] = useState(false);
@@ -17,6 +16,14 @@ const EditableProductRow = ({ product, orderId }) => {
     price: product.order_price,
     discount_pct: product.discount_pct ?? 0,
   });
+
+ useEffect(() => {
+   setTemp({
+     quantity: product.quantity,
+     price: product.order_price,
+     discount_pct: product.discount_pct ?? 0,
+   });
+ }, [product]);
 
   const handleChange = (field, value) => {
     setTemp((prev) => ({ ...prev, [field]: value }));

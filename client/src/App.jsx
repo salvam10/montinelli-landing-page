@@ -40,10 +40,6 @@ const App = () => {
     setUser,
   };
 
-  useEffect(() => {
-    console.log("succesfull launch");
-  }, []);
-
   const dispatch = useDispatch();
 
   useEffect(() => {

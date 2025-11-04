@@ -1,10 +1,20 @@
 import React from "react";
+import { useEffect } from "react";
 import EditableProductRow from "../editableProductRow/EditableProductRow";
 import OrderDispatchDetails from "../orderDispatchDetails/OrderDispatchDetails";
 import { Plus } from "lucide-react";
 import ProductPicker from "../productPicker/ProductPicker";
 
-const OrderProductsDetails = ({ orderProducts = [], order, setOpenAddProd }) => {
+const OrderProductsDetails = ({
+  orderProducts = [],
+  order,
+  setOpenAddProd,
+}) => {
+
+  useEffect(() => {
+    console.log("orderProducts", orderProducts);
+  }, [orderProducts]);
+
   return (
     <div className="bg-white rounded-2xl border p-5 space-y-5">
       {/* Encabezado con botón de añadir */}

@@ -1,87 +1,100 @@
-import React, { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import CustomFormButton from "../customFormButton/CustomFormButton";
-import CustomDatePicker from "../customDatePicker/CustomDatePicker";
-import CustomSelect from "../customSelect/CustomSelect";
-import CloseIcon from "@mui/icons-material/Close";
-import { format, addDays } from "date-fns";
+import React, { useState } from "react";
+import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
+import EventAvailableOutlinedIcon from "@mui/icons-material/EventAvailableOutlined";
+import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined";
+import ScheduleDispatchModal from "../modals/ScheduleDispatchModal";
+import DispatchDropdown from "../dispatchDropdown/DispatchDropdown";
+import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { shippingCompanies } from "../../dummy";
-import { updateOrder, getOrderById } from "../slices/ordersSlice";
 
-const ScheduleDispatchModal = ({ order, setOpenModal }) => {
-  const { isLoading } = useSelector((state) => state.orders);
-  const [shippingCompany, setShippingCompany] = useState(shippingCompanies[0]);
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const dispatch = useDispatch();
+const OrderDispatchDetails = ({ order }) => {
+  const [openModal, setOpenModal] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(false);
 
-  useEffect(() => {
-    setSelectedDate(new Date());
-  }, [order]);
+  const dispatchStatus = order?.shipping_status || "Sin despacho asignado";
+  const hasScheduledDispatch = Boolean(order?.scheduled_dispatch_date);
 
-  const handleCloseClick = () => {
-    setOpenModal(false);
-  };
-
-  const handleSubmitClick = async () => {
-    await dispatch(
-      updateOrder({
-        orderId: order.id,
-        scheduled_dispatch_date: selectedDate,
-        shipping_company: shippingCompany.value,
-        shipping_status: "Despacho agendado",
-      })
-    );
-    dispatch(getOrderById({ orderId: order.id }));
-    setOpenModal(false);
-  };
+  const formattedDate = (d) =>
+    d ? format(new Date(d), "d 'de' MMMM 'de' yyyy", { locale: es }) : "-";
 
   return (
-    <div className="modal-overlay">
-      <div className="modal gap-2">
-        <div className="modal-header">
-          <h3 className="text-[20px]">Programar despacho del pedido</h3>
-        </div>
-        <div className="modal-body flex gap-3">
-          <CustomDatePicker
-            selectedDate={selectedDate}
-            onChange={setSelectedDate}
-            label="Fecha de despacho"
+    <div className="border-t pt-5 mt-3 space-y-4">
+      <h3 className="text-base font-semibold text-gray-900">Despacho</h3>
+
+      <div className="flex flex-wrap items-center gap-6">
+        <div className="flex items-center gap-2 text-sm text-gray-700">
+          <EventAvailableOutlinedIcon
+            fontSize="small"
+            className="text-gray-500"
           />
-          <CustomSelect
-            width="w-full"
-            options={shippingCompanies}
-            label="Empresa de Transporte"
-            value={shippingCompany}
-            isObjectValue={true}
-            setValue={setShippingCompany}
-          />
-          <button className="modal-close-button" onClick={handleCloseClick}>
-            <CloseIcon />
-          </button>
-        </div>
-        <div className="w-full flex-end">
-          <div className="w-[50%] mt-2 flex-end gap-2">
-            <CustomFormButton
-              handleClickFunction={handleCloseClick}
-              text="Cancelar"
-              color="bg-white-500"
-              textColor="text-[#000000]"
-              fontBold={true}
-            />
-            <CustomFormButton
-              isLoading={isLoading}
-              handleClickFunction={handleSubmitClick}
-              text="Guardar"
-              color="bg-blue-500"
-              textColor="text-white"
-              fontBold={true}
-            />
+          <div className="flex flex-col">
+            <span className="text-gray-500 text-xs">Fecha pautada</span>
+            <span className="font-medium text-gray-900">
+              {formattedDate(order?.scheduled_dispatch_date)}
+            </span>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2 text-sm text-gray-700">
+          <LocalShippingOutlinedIcon
+            fontSize="small"
+            className="text-gray-500"
+          />
+          <div className="flex flex-col">
+            <span className="text-gray-500 text-xs">{dispatchStatus}</span>
+            <span className="font-medium text-gray-900">
+              {formattedDate(order?.actual_dispatch_date)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-between items-center">
+        {!hasScheduledDispatch && (
+          <button
+            onClick={() => setOpenModal(true)}
+            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-blue-700 transition-all duration-150"
+          >
+            <EventAvailableOutlinedIcon fontSize="small" />
+            Programar Despacho
+          </button>
+        )}
+
+        {/* Botón con posición relativa */}
+        <div className="relative">
+          <button
+            type="button"
+            className="p-2 rounded-full hover:bg-gray-100"
+            onClick={() => setOpenDropdown((v) => !v)}
+            title="Opciones de despacho"
+          >
+            <MoreHorizIcon style={{ color: "#000000" }} />
+          </button>
+
+          {openDropdown && (
+            <div className="absolute right-0 mt-2 z-10">
+              <DispatchDropdown
+                setOpenDropdown={setOpenDropdown}
+                order={order}
+              />
+            </div>
+          )}
+
+          {/* Modal posicionado relativo al ícono */}
+          {openModal && (
+            <div
+              className="absolute z-20 top-100 left-100 bg-red-500"
+            >
+              <ScheduleDispatchModal
+                order={order}
+                setOpenModal={setOpenModal}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-export default ScheduleDispatchModal;
+export default OrderDispatchDetails;
