@@ -69,6 +69,7 @@ export const cities = [
   { label: "San Antonio de los altos", value: "San Antonio de los altos" },
   { label: "Santa Teresa del Tuy", value: "Santa Teresa del Tuy" },
   { label: "Valencia", value: "Valencia" },
+
 ].sort((a, b) => a.label.localeCompare(b.label));
 
 export const phoneAreaCodes = [
@@ -97,6 +98,7 @@ export const municipalities = [
   { label: "Chacao", value: "Chacao" },
   { label: "Cristóbal Rojas", value: "Cristóbal Rojas" },
   { label: "El Callao", value: "El Callao" },
+  { label: "El Junko", value: "El Junko" },
   { label: "El Hatillo", value: "El Hatillo" },
   { label: "Girardot", value: "Girardot" },
   { label: "Guaicaipuro", value: "Guaicaipuro" },
