@@ -5,8 +5,11 @@ import {
   deleteOrderItem,
 } from "../../features/slices/orderItemsSlice";
 import { Pencil, Trash2 } from "lucide-react";
-import { getOrderById, getProductsByOrderId } from "../slices/ordersSlice";
-import { getOrderBalance } from "../slices/ordersSlice";
+import {
+  getOrderById,
+  getProductsByOrderId,
+  getOrderBalance,
+} from "../slices/ordersSlice";
 
 const EditableProductRow = ({ product, orderId }) => {
   const dispatch = useDispatch();
@@ -17,13 +20,13 @@ const EditableProductRow = ({ product, orderId }) => {
     discount_pct: product.discount_pct ?? 0,
   });
 
- useEffect(() => {
-   setTemp({
-     quantity: product.quantity,
-     price: product.order_price,
-     discount_pct: product.discount_pct ?? 0,
-   });
- }, [product]);
+  useEffect(() => {
+    setTemp({
+      quantity: product.quantity,
+      price: product.order_price,
+      discount_pct: product.discount_pct ?? 0,
+    });
+  }, [product]);
 
   const handleChange = (field, value) => {
     setTemp((prev) => ({ ...prev, [field]: value }));
@@ -38,7 +41,7 @@ const EditableProductRow = ({ product, orderId }) => {
       })
     );
     await dispatch(getOrderById({ orderId }));
-    await dispatch(getOrderBalance({ orderId: orderId }));
+    await dispatch(getOrderBalance({ orderId }));
     setIsEditing(false);
   };
 
@@ -62,27 +65,27 @@ const EditableProductRow = ({ product, orderId }) => {
   ).toFixed(2);
 
   return (
-    <div className="grid grid-cols-12 items-center py-3 gap-2 border-b last:border-0 sm:gap-4 sm:py-3 text-sm">
-      {/* Producto */}
-      <div className="col-span-12 sm:col-span-4 flex items-center gap-3">
-        <img
-          src={product.media_url}
-          alt={product.name}
-          className="w-12 h-12 rounded-md object-cover flex-shrink-0"
-        />
-        <div className="min-w-0">
-          <p className="font-medium text-gray-900 truncate">{product.name}</p>
-          <p className="text-xs text-gray-500 truncate">
-            {product.description}
-          </p>
+    <div className="py-3 text-sm">
+      {/* Layout desktop */}
+      <div className="hidden sm:grid sm:grid-cols-[5fr_1.3fr_1.7fr_1.3fr_1.4fr] items-center gap-2">
+        {/* Producto */}
+        <div className="flex items-center gap-3">
+          <img
+            src={product.media_url}
+            alt={product.name}
+            className="w-12 h-12 rounded-md object-cover flex-shrink-0"
+          />
+          <div className="min-w-0 flex flex-col">
+            <p className="font-medium text-gray-900 leading-snug break-words whitespace-normal">
+              {product.name}
+            </p>
+            <p className="text-xs text-gray-500 leading-tight whitespace-normal break-words">
+              {product.description}
+            </p>
+          </div>
         </div>
-      </div>
 
-      {/* Inputs agrupados en mobile */}
-      <div className="col-span-12 sm:col-span-8 grid grid-cols-2 sm:grid-cols-8 gap-2 items-center">
-        {/* Cantidad */}
-        <div className="col-span-1 sm:col-span-2 flex flex-col sm:flex-row sm:items-center sm:gap-2">
-          <label className="block sm:hidden text-xs text-gray-500">Cant.</label>
+        <div className="flex justify-center">
           <InputCell
             value={temp.quantity}
             onChange={(val) => handleChange("quantity", Math.max(0, val))}
@@ -92,11 +95,7 @@ const EditableProductRow = ({ product, orderId }) => {
           />
         </div>
 
-        {/* Precio */}
-        <div className="col-span-1 sm:col-span-2 flex flex-col sm:flex-row sm:items-center sm:gap-2">
-          <label className="block sm:hidden text-xs text-gray-500">
-            Precio
-          </label>
+        <div className="flex justify-center">
           <InputCell
             value={temp.price}
             onChange={(val) => handleChange("price", val)}
@@ -106,9 +105,7 @@ const EditableProductRow = ({ product, orderId }) => {
           />
         </div>
 
-        {/* Descuento */}
-        <div className="col-span-1 sm:col-span-2 flex flex-col sm:flex-row sm:items-center sm:gap-2">
-          <label className="block sm:hidden text-xs text-gray-500">Desc.</label>
+        <div className="flex justify-center">
           <InputCell
             value={temp.discount_pct}
             onChange={(val) => handleChange("discount_pct", val)}
@@ -118,10 +115,84 @@ const EditableProductRow = ({ product, orderId }) => {
           />
         </div>
 
-        {/* Total + acciones */}
-        <div className="col-span-2 sm:col-span-2 flex justify-between sm:justify-end items-center gap-2">
-          <span className="font-semibold text-gray-900">${total}</span>
+        <div className="flex justify-end items-center gap-2">
+          <span className="font-semibold text-gray-900 w-16 text-right">
+            ${total}
+          </span>
 
+          <div className="flex gap-1">
+            {isEditing ? (
+              <button
+                onClick={handleSave}
+                className="p-2 rounded-full bg-blue-50 hover:bg-blue-100 transition"
+                title="Guardar"
+              >
+                <Pencil size={15} className="text-blue-600 rotate-45" />
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="p-2 rounded-full hover:bg-gray-100 transition"
+                title="Editar"
+              >
+                <Pencil size={15} className="text-gray-600" />
+              </button>
+            )}
+            <button
+              onClick={handleDelete}
+              className="p-2 rounded-full hover:bg-red-100 transition"
+              title="Eliminar"
+            >
+              <Trash2 size={15} className="text-red-500" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Layout mobile */}
+      <div className="flex flex-col sm:hidden gap-3">
+        <div className="flex items-center gap-3">
+          <img
+            src={product.media_url}
+            alt={product.name}
+            className="w-12 h-12 rounded-md object-cover flex-shrink-0"
+          />
+          <div>
+            <p className="font-medium text-gray-900 text-sm leading-tight break-words">
+              {product.name}
+            </p>
+            <p className="text-xs text-gray-500">{product.description}</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          <InputCell
+            value={temp.quantity}
+            onChange={(val) => handleChange("quantity", Math.max(0, val))}
+            disabled={!isEditing}
+            type="integer"
+            suffix={product.unit || "und"}
+          />
+          <InputCell
+            value={temp.price}
+            onChange={(val) => handleChange("price", val)}
+            disabled={!isEditing}
+            type="decimal"
+            suffix="USD"
+          />
+          <InputCell
+            value={temp.discount_pct}
+            onChange={(val) => handleChange("discount_pct", val)}
+            disabled={!isEditing}
+            type="decimal"
+            suffix="%"
+          />
+        </div>
+
+        <div className="flex justify-between items-center">
+          <span className="font-semibold text-gray-900 text-base">
+            ${total}
+          </span>
           <div className="flex gap-1">
             {isEditing ? (
               <button
@@ -182,11 +253,15 @@ const InputCell = ({
         value={value}
         disabled={disabled}
         onChange={handleChange}
-        className={`w-full outline-none text-gray-900 text-sm ${
+        className={`w-full outline-none text-gray-900 text-sm text-center ${
           disabled ? "text-gray-500" : ""
         }`}
       />
-      {suffix && <span className="text-gray-400 text-xs ml-2">{suffix}</span>}
+      {suffix && (
+        <span className="text-gray-400 text-xs ml-1 whitespace-nowrap">
+          {suffix}
+        </span>
+      )}
     </div>
   );
 };
