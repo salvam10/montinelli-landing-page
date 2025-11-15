@@ -11,7 +11,6 @@ const CategoryInsights = ({
   toggleProduct,
 }) => {
   const rows = productsSummary?.data ?? [];
-  console.log('rows', rows);
   
   const { agg = "median", category_center } = productsSummary?.meta ?? {};
   const centerLabel = agg === "mean" ? "Media" : "Mediana";

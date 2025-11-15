@@ -60,7 +60,11 @@ export const getCompetitorPrices = createAsyncThunk(
     {
       productIds, // number | number[]
       clientIds, // number | number[]
+      categoryId, // number (opcional)
       latest, // boolean
+      startDate,
+      endDate,
+      excludeClientIds, // string "1,2,3" o array
     } = {},
     { rejectWithValue, signal }
   ) => {
@@ -68,7 +72,14 @@ export const getCompetitorPrices = createAsyncThunk(
       const rawParams = {
         productIds,
         clientIds,
+        categoryId,
         latest: latest ? "true" : undefined,
+        startDate,
+        endDate,
+        excludeClientIds:
+          Array.isArray(excludeClientIds) && excludeClientIds.length
+            ? excludeClientIds.join(",")
+            : excludeClientIds,
       };
 
       const params = cleanParams(rawParams);
@@ -106,6 +117,9 @@ export const getCompetitorProductsSummary = createAsyncThunk(
       highlightProductId, // opcional: el que tienes seleccionado en el state
       excludeClientIds, // opcional: string con ids separados por coma
       excludeProductIds, // opcional: string con ids separados por coma
+      startDate,
+      endDate,
+      clientIds,
     },
     { rejectWithValue }
   ) => {
@@ -117,8 +131,9 @@ export const getCompetitorProductsSummary = createAsyncThunk(
       } else if (productIds != null) {
         const ids = Array.isArray(productIds) ? productIds : [productIds];
         const clean = ids.map(Number).filter(Boolean);
-        if (!clean.length)
-          throw new Error("Debes enviar categoryId o productIds válidos");
+        if (!clean.length) {
+          return { data: [], meta: {} };
+        }
         params.productIds = clean.join(",");
       } else {
         throw new Error("Debes enviar categoryId o productIds");
@@ -128,15 +143,19 @@ export const getCompetitorProductsSummary = createAsyncThunk(
       if (sinceDays != null) params.sinceDays = Number(sinceDays);
       if (highlightProductId != null)
         params.highlightProductId = Number(highlightProductId);
-
       if (excludeClientIds) {
         params.excludeClientIds = excludeClientIds;
       }
-
       if (excludeProductIds) {
         params.excludeProductIds = excludeProductIds;
       }
-
+      if (clientIds && clientIds.length) {
+        params.clientIds = clientIds.join(",");
+      }
+      if (startDate && endDate) {
+        params.startDate = startDate;
+        params.endDate = endDate;
+      }
       const res = await axios.get(
         `${SERVER_URL}/api/market-products/competitor-products-summary`,
         {
@@ -155,7 +174,6 @@ export const getCompetitorProductsSummary = createAsyncThunk(
   }
 );
 
-
 export const getMarketProductsByCat = createAsyncThunk(
   "products/getMarketProductsByCat",
   async ({ categoryId }, thunkAPI) => {
@@ -171,6 +189,68 @@ export const getMarketProductsByCat = createAsyncThunk(
   }
 );
 
+//thunk para filtros dinámicos inteligentes
+export const getFilteredMarketData = createAsyncThunk(
+  "marketProducts/getFilteredMarketData",
+  async (
+    { categoryId, brandId, presentation, weight, clientIds } = {},
+    { rejectWithValue }
+  ) => {
+    try {
+      if (!categoryId) throw new Error("categoryId es obligatorio");
+
+      const params = {};
+      params.categoryId = categoryId;
+      if (brandId) params.brandId = brandId;
+      if (presentation) params.presentation = presentation;
+      if (weight) params.weight = weight;
+      if (clientIds && clientIds.length) {
+        params.clientIds = clientIds.join(",");
+      }
+
+      const res = await axios.get(`${SERVER_URL}/api/market-products/filter`, {
+        params,
+      });
+
+      return res.data; // { brands, presentations, weights, products }
+    } catch (err) {
+      return rejectWithValue(err?.message || "Error al filtrar productos");
+    }
+  }
+);
+
+
+// Thunk para Client Dashboard: categorías + productos por cliente
+export const getClientCategoryFilters = createAsyncThunk(
+  "marketProducts/getClientCategoryFilters",
+  async (
+    { clientId, categoryId, presentation, weight } = {},
+    { rejectWithValue }
+  ) => {
+    try {
+      if (!clientId) throw new Error("clientId es obligatorio");
+
+      const params = { clientId };
+      if (categoryId) params.categoryId = categoryId;
+      if (presentation) params.presentation = presentation;
+      if (weight) params.weight = weight;
+
+      const res = await axios.get(
+        `${SERVER_URL}/api/market-products/client-filters`,
+        { params }
+      );
+
+      return res.data; // { categories, products, presentations, weights }
+    } catch (err) {
+      return rejectWithValue(
+        err?.message || "Error al obtener filtros cliente"
+      );
+    }
+  }
+);
+
+
+
 /* --------- slice --------- */
 
 const marketProductsSlice = createSlice({
@@ -180,6 +260,14 @@ const marketProductsSlice = createSlice({
     competitorPrices: [],
     productsSummary: [], // <-- nuevo
     bsExchangeRate: 36.6,
+    filteredBrands: [],
+    filteredProducts: [],
+    clientCategories: [],
+    clientCategoryProducts: [],
+    clientPresentations: [],
+    clientWeights: [],
+    filteredPresentations: [],
+    filteredWeights: [],
 
     // estados para loading/error
     isLoading: false,
@@ -251,6 +339,41 @@ const marketProductsSlice = createSlice({
         state.errorSummary =
           action.error?.message || "Error obteniendo resumen";
         state.productsSummary = [];
+      })
+      .addCase(getFilteredMarketData.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(getFilteredMarketData.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.filteredBrands = action.payload.brands || [];
+        state.filteredProducts = action.payload.products || [];
+        state.filteredPresentations = action.payload.presentations || [];
+        state.filteredWeights = action.payload.weights || [];
+      })
+      .addCase(getFilteredMarketData.rejected, (state) => {
+        state.isLoading = false;
+        state.filteredBrands = [];
+        state.filteredProducts = [];
+        state.filteredPresentations = [];
+        state.filteredWeights = [];    
+      })
+      // 🔹 Client Dashboard: categorías, productos, presentaciones y pesos por cliente
+      .addCase(getClientCategoryFilters.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(getClientCategoryFilters.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.clientCategories = action.payload.categories || [];
+        state.clientCategoryProducts = action.payload.products || [];
+        state.clientPresentations = action.payload.presentations || [];
+        state.clientWeights = action.payload.weights || [];
+      })
+      .addCase(getClientCategoryFilters.rejected, (state) => {
+        state.isLoading = false;
+        state.clientCategories = [];
+        state.clientCategoryProducts = [];
+        state.clientPresentations = [];
+        state.clientWeights = [];
       });
   },
 });

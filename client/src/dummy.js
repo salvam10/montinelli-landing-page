@@ -284,6 +284,11 @@ export const adminSidebarItems = [
     label: "Estadísticas",
     icon: <BarChartOutlinedIcon style={{ fontSize: "20px" }} />,
     route: "/admin/competitor-dashboard",
+    subItems: [
+      { label: "Productos", route: "/admin/competitor-dashboard/product" },
+      { label: "Categoria", route: "/admin/competitor-dashboard/category" },
+      { label: "Cliente", route: "/admin/competitor-dashboard/client" },
+    ],
   },
 ];
 

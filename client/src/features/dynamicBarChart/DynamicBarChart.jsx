@@ -53,7 +53,6 @@ const trelloColors = [
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   const entry = payload[0].payload;
-  console.log('entry', entry);
   // ← tu fila original
   const when  = entry.date
   const val   = Number(entry.value).toFixed(2);

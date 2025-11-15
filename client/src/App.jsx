@@ -28,6 +28,9 @@ import ClientDetailPage from "./pages/ClientDetailPage/ClientDetailPage.jsx";
 import AccountsReceivablePage from "./pages/AccountsReceivablePage/AccountsReceivablePage.jsx";
 import NewMarketCheckPage from "./pages/newMarketCheckPage/NewMarketCheckPage.jsx";
 import CompetitorDashboard from "./features/competitorDashboard/CompetitorDashboard.jsx";
+import ProductDashboard from "./features/competitorDashboard/ProductDashboard.jsx";
+import CategoryDashboard from "./features/competitorDashboard/CategoryDashboard.jsx";
+import ClientDashboard from "./features/competitorDashboard/ClientDashboard.jsx";
 
 export const AuthContext = React.createContext();
 
@@ -94,7 +97,12 @@ const App = () => {
             <Route
               path="competitor-dashboard"
               element={<CompetitorDashboard />}
-            />
+            >
+              <Route index element={<Navigate to="product" replace />} />
+              <Route path="product" element={<ProductDashboard />} />
+              <Route path="category" element={<CategoryDashboard />} />
+              <Route path="client" element={<ClientDashboard />} />
+            </Route>
           </Route>
         </Routes>
       </BrowserRouter>

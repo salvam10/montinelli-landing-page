@@ -189,6 +189,257 @@ router.get("/category/:id", async (req, res, next) => {
   }
 });
 
+
+// ENDPOINT DINÁMICO PARA FILTROS DE PRODUCTOS
+// GET /api/market-products/filter?categoryId=1&brandId=2&clientIds=10,12
+router.get("/filter", async (req, res) => {
+  try {
+    const { categoryId, brandId, presentation, weight, clientIds } = req.query;
+
+    if (!categoryId) {
+      return res.status(400).json({ error: "Falta categoryId" });
+    }
+
+    const hasClientIds = !!clientIds;
+    let products = [];
+
+    if (!hasClientIds) {
+      const params = [];
+      const where = [];
+
+      params.push(Number(categoryId));
+      where.push(`category_id = $${params.length}`);
+
+      if (brandId) {
+        params.push(Number(brandId));
+        where.push(`brand_id = $${params.length}`);
+      }
+
+      if (presentation) {
+        params.push(presentation);
+        where.push(`presentation = $${params.length}`);
+      }
+
+      if (weight) {
+        params.push(Number(weight));
+        where.push(`weight_g = $${params.length}`);
+      }
+
+      const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+
+      const productsSql = `
+        SELECT id, name, presentation, weight_g, brand_id, category_id
+        FROM market_products
+        ${whereSql}
+        ORDER BY name ASC;
+      `;
+
+      const productsRes = await postgresDB.query(productsSql, params);
+      products = productsRes.rows;
+    } else {
+      const clientIdList = String(clientIds)
+        .split(",")
+        .map((s) => Number(s.trim()))
+        .filter(Boolean);
+
+      if (!clientIdList.length) {
+        return res.status(400).json({ error: "clientIds inválidos" });
+      }
+
+      const params = [];
+      const whereParts = [];
+
+      params.push(Number(categoryId));
+      whereParts.push(`mp.category_id = $${params.length}`);
+
+      if (brandId) {
+        params.push(Number(brandId));
+        whereParts.push(`mp.brand_id = $${params.length}`);
+      }
+
+      if (presentation) {
+        params.push(presentation);
+        whereParts.push(`mp.presentation = $${params.length}`);
+      }
+
+      if (weight) {
+        params.push(Number(weight));
+        whereParts.push(`mp.weight_g = $${params.length}`);
+      }
+
+      params.push(clientIdList);
+      whereParts.push(`mc.client_id = ANY($${params.length})`);
+
+      const whereSql = `WHERE ${whereParts.join(" AND ")}`;
+
+      const productsSql = `
+        SELECT DISTINCT
+          mp.id,
+          mp.name,
+          mp.presentation,
+          mp.weight_g,
+          mp.brand_id,
+          mp.category_id
+        FROM market_check_items mci
+        JOIN market_checks mc   ON mc.id = mci.market_check_id
+        JOIN market_products mp ON mp.id = mci.market_product_id
+        ${whereSql}
+        ORDER BY mp.name ASC;
+      `;
+
+      const productsRes = await postgresDB.query(productsSql, params);
+      products = productsRes.rows;
+    }
+
+    const brandIds = [...new Set(products.map((p) => p.brand_id))].filter(
+      (id) => id != null
+    );
+
+    let brands = [];
+    if (brandIds.length) {
+      const placeholders = brandIds.map((_, i) => `$${i + 1}`).join(", ");
+      const brandsSql = `
+        SELECT id, name
+        FROM product_brands
+        WHERE id IN (${placeholders})
+        ORDER BY name ASC;
+      `;
+      const brandsRes = await postgresDB.query(brandsSql, brandIds);
+      brands = brandsRes.rows;
+    }
+
+    const presentations = [
+      ...new Set(
+        products
+          .map((p) => p.presentation)
+          .filter((v) => v !== null && v !== undefined && v !== "")
+      ),
+    ].sort((a, b) => a.localeCompare(b));
+
+    const weights = [
+      ...new Set(
+        products
+          .map((p) => p.weight_g)
+          .filter((v) => v !== null && v !== undefined)
+      ),
+    ].sort((a, b) => a - b);
+
+    res.json({ brands, presentations, weights, products });
+  } catch (err) {
+    console.error("Error en /filter:", err);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
+
+// 🔹 ENDPOINT PARA CLIENT DASHBOARD
+// GET /api/market-products/client-filters?clientId=10&categoryId=34&presentation=Trozos&weight=170
+router.get("/client-filters", async (req, res) => {
+  try {
+    const { clientId, categoryId, presentation, weight } = req.query;
+
+    if (!clientId) {
+      return res.status(400).json({ error: "Falta clientId" });
+    }
+
+    const clientIdNum = Number(clientId);
+    if (!Number.isInteger(clientIdNum)) {
+      return res.status(400).json({ error: "clientId inválido" });
+    }
+
+    // Categorías vendidas en ese cliente (no dependen de presentación/peso)
+    const categoriesParams = [clientIdNum];
+    const categoriesSql = `
+      SELECT DISTINCT
+        mp.category_id AS id,
+        pc.name        AS name
+      FROM market_check_items mci
+      JOIN market_checks mc     ON mc.id = mci.market_check_id
+      JOIN market_products mp   ON mp.id = mci.market_product_id
+      JOIN product_categories pc ON pc.id = mp.category_id
+      WHERE mc.client_id = $1
+        AND mp.category_id IS NOT NULL
+      ORDER BY pc.name ASC;
+    `;
+    const categoriesRes = await postgresDB.query(categoriesSql, categoriesParams);
+    const categories = categoriesRes.rows;
+
+    let products = [];
+    let presentations = [];
+    let weights = [];
+
+    // Productos / presentaciones / pesos de esa categoría en ese cliente
+    if (categoryId) {
+      const categoryIdNum = Number(categoryId);
+      if (!Number.isInteger(categoryIdNum)) {
+        return res.status(400).json({ error: "categoryId inválido" });
+      }
+
+      const params = [clientIdNum, categoryIdNum];
+      const whereParts = [
+        "mc.client_id = $1",
+        "mp.category_id = $2",
+      ];
+
+      if (presentation) {
+        params.push(presentation);
+        whereParts.push(`mp.presentation = $${params.length}`);
+      }
+
+      if (weight) {
+        const weightNum = Number(weight);
+        if (!Number.isFinite(weightNum)) {
+          return res.status(400).json({ error: "weight inválido" });
+        }
+        params.push(weightNum);
+        whereParts.push(`mp.weight_g = $${params.length}`);
+      }
+
+      const whereSql = `WHERE ${whereParts.join(" AND ")}`;
+
+      const productsSql = `
+        SELECT DISTINCT
+          mp.id,
+          mp.name,
+          mp.presentation,
+          mp.weight_g
+        FROM market_check_items mci
+        JOIN market_checks mc   ON mc.id = mci.market_check_id
+        JOIN market_products mp ON mp.id = mci.market_product_id
+        ${whereSql}
+        ORDER BY mp.name ASC;
+      `;
+
+      const productsRes = await postgresDB.query(productsSql, params);
+      products = productsRes.rows;
+
+      // presentaciones únicas según lo que vende ese cliente en esa categoría
+      presentations = [
+        ...new Set(
+          products
+            .map((p) => p.presentation)
+            .filter((v) => v !== null && v !== undefined && v !== "")
+        ),
+      ].sort((a, b) => a.localeCompare(b));
+
+      // pesos únicos
+      weights = [
+        ...new Set(
+          products
+            .map((p) => p.weight_g)
+            .filter((v) => v !== null && v !== undefined)
+        ),
+      ].sort((a, b) => a - b);
+    }
+
+    res.json({ categories, products, presentations, weights });
+  } catch (err) {
+    console.error("Error en /client-filters:", err);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
+
 /**
  * Espera:
  *   - productIds: "79,81,82"   (requerido)
@@ -201,22 +452,42 @@ router.get("/category/:id", async (req, res, next) => {
  *   /api/competitor-prices?productIds=79&latest=true
  */
 router.get("/competitor-prices", async (req, res) => {
-  const { productIds, clientIds, latest } = req.query;
+  const {
+    productIds,
+    clientIds,
+    latest,
+    startDate,
+    endDate,
+    categoryId,
+    excludeClientIds,
+  } = req.query;
 
   try {
-    // --- Validación mínima ---
-    if (!productIds) {
-      return res.status(400).json({ error: "Falta productIds (ej. 79,81,82)" });
+    let productIdList = [];
+    // Obtenemos productIds desde el query o desde categoryId
+    if (productIds) {
+      productIdList = String(productIds)
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .map(Number);
+    } else if (categoryId) {
+      const prodRes = await postgresDB.query(
+        `
+      SELECT id
+      FROM market_products
+      WHERE category_id = $1
+    `,
+        [Number(categoryId)]
+      );
+      productIdList = prodRes.rows.map((r) => Number(r.id));
     }
 
-    const productIdList = String(productIds)
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .map(Number);
-
+    // Validación mínima
     if (!productIdList.length || productIdList.some(Number.isNaN)) {
-      return res.status(400).json({ error: "productIds inválidos" });
+      return res.status(400).json({
+        error: "Faltan productIds válidos (o categoryId sin productos)",
+      });
     }
 
     const clientIdList = clientIds
@@ -231,6 +502,18 @@ router.get("/competitor-prices", async (req, res) => {
       return res.status(400).json({ error: "clientIds inválidos" });
     }
 
+    const excludeClientIdList = excludeClientIds
+      ? String(excludeClientIds)
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .map(Number)
+      : [];
+
+    if (excludeClientIdList.some(Number.isNaN)) {
+      return res.status(400).json({ error: "excludeClientIds inválidos" });
+    }
+
     const onlyLatest = String(latest).toLowerCase() === "true";
 
     // --- Construcción dinámica de SQL ---
@@ -243,10 +526,25 @@ router.get("/competitor-prices", async (req, res) => {
     params.push(productIdList);
     whereClauses.push(`mci.market_product_id = ANY($${params.length})`);
 
-    // clientIds (opcionales)
+    // clientIds (opcionales → incluir solo estos)
     if (clientIdList.length) {
       params.push(clientIdList);
       whereClauses.push(`mc.client_id = ANY($${params.length})`);
+    }
+
+    // excludeClientIds (opcionales → excluir estos)
+    if (excludeClientIdList.length) {
+      params.push(excludeClientIdList);
+      whereClauses.push(`NOT (mc.client_id = ANY($${params.length}))`);
+    }
+
+    // filtro de fecha
+    if (startDate && endDate) {
+      params.push(startDate);
+      params.push(endDate);
+      whereClauses.push(
+        `mc.created_at BETWEEN $${params.length - 1} AND $${params.length}`
+      );
     }
 
     // Base SELECT (todos los registros)
@@ -358,6 +656,9 @@ router.get("/competitor-products-summary", async (req, res) => {
       highlightProductId,
       excludeClientIds,
       excludeProductIds,
+      startDate,
+      endDate,
+      clientIds,
     } = req.query;
 
     if (!categoryId && !productIds) {
@@ -417,6 +718,26 @@ router.get("/competitor-products-summary", async (req, res) => {
 
       whereParts.push(`NOT (mci.market_product_id = ANY($${p++}))`);
       params.push(excludeProdList);
+    }
+
+    if (clientIds) {
+      const clientIdList = String(clientIds)
+        .split(",")
+        .map((s) => Number(s.trim()))
+        .filter(Boolean);
+
+      if (!clientIdList.length) {
+        return res.status(400).json({ error: "clientIds inválidos" });
+      }
+
+      whereParts.push(`mc.client_id = ANY($${p++})`);
+      params.push(clientIdList);
+    }
+
+
+    if (startDate && endDate) {
+      whereParts.push(`mc.created_at BETWEEN $${p++} AND $${p++}`);
+      params.push(startDate, endDate);
     }
 
     const whereSql = whereParts.length
@@ -497,7 +818,6 @@ router.get("/competitor-products-summary", async (req, res) => {
 
     const { rows } = await postgresDB.query(rowsSql, params);
     console.log(rows);
-    
 
     res.json({
       count: rows.length,

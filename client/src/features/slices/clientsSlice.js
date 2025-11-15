@@ -140,6 +140,29 @@ export const updateClient = createAsyncThunk(
   }
 );
 
+export const getClientsByLocation = createAsyncThunk(
+  "clients/getClientsByLocation",
+  async ({ state, city, municipality } = {}, { rejectWithValue }) => {
+    try {
+      const params = {};
+      if (state) params.state = state;
+      if (city) params.city = city;
+      if (municipality) params.municipality = municipality;
+
+      const res = await axios.get(`${SERVER_URL}/api/clients/locations`, {
+        params,
+      });
+
+      return res.data; // { states, cities, municipalities, clients }
+    } catch (err) {
+      return rejectWithValue(
+        err?.message || "Error al obtener clientes por ubicación"
+      );
+    }
+  }
+);
+
+
 /* Slice */
 const clientsSlice = createSlice({
   name: "clients",
@@ -147,6 +170,12 @@ const clientsSlice = createSlice({
     clients: [],
     client: {},
     newClient: {},
+    locationStates: [],
+    locationCities: [],
+    locationMunicipalities: [],
+    locationClients: [],
+    isLoadingLocations: false,
+    errorLocations: null, 
     hasError: false,
     isLoading: false,
   },
@@ -204,6 +233,28 @@ const clientsSlice = createSlice({
       .addCase(updateClient.rejected, (state) => {
         state.isLoading = false;
         state.hasError = true;
+      })
+      // Ubicación de clientes
+      .addCase(getClientsByLocation.pending, (state) => {
+        state.isLoadingLocations = true;
+        state.errorLocations = null;
+      })
+      .addCase(getClientsByLocation.fulfilled, (state, action) => {
+        state.isLoadingLocations = false;
+        state.errorLocations = null;
+        state.locationStates = action.payload.states || [];
+        state.locationCities = action.payload.cities || [];
+        state.locationMunicipalities = action.payload.municipalities || [];
+        state.locationClients = action.payload.clients || [];
+      })
+      .addCase(getClientsByLocation.rejected, (state, action) => {
+        state.isLoadingLocations = false;
+        state.errorLocations =
+          action.payload || action.error?.message || "Error ubicaciones";
+        state.locationStates = [];
+        state.locationCities = [];
+        state.locationMunicipalities = [];
+        state.locationClients = [];
       });
   },
 });

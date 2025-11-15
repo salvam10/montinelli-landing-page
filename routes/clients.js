@@ -92,6 +92,104 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+// Filtros de clientes por ubicación
+// GET /api/clients/locations?state=Distrito%20Capital&city=Caracas&municipality=El%20Hatillo
+router.get("/locations", async (req, res) => {
+  try {
+    const { state, city, municipality } = req.query;
+
+    // 1) Estados (siempre todos los distintos)
+    const statesSql = `
+      SELECT DISTINCT state
+      FROM clients
+      WHERE state IS NOT NULL AND state <> ''
+      ORDER BY state ASC;
+    `;
+    const statesRes = await postgresDB.query(statesSql);
+    const states = statesRes.rows.map((r) => r.state);
+
+    // 2) Ciudades, filtradas opcionalmente por estado
+    const cityWhere = ["city IS NOT NULL", "city <> ''"];
+    const cityParams = [];
+
+    if (state) {
+      cityParams.push(state);
+      cityWhere.push(`state = $${cityParams.length}`);
+    }
+
+    const citiesSql = `
+      SELECT DISTINCT city
+      FROM clients
+      WHERE ${cityWhere.join(" AND ")}
+      ORDER BY city ASC;
+    `;
+    const citiesRes = await postgresDB.query(citiesSql, cityParams);
+    const cities = citiesRes.rows.map((r) => r.city);
+
+    // 3) Municipios, filtrados opcionalmente por estado y ciudad
+    const muniWhere = ["municipality IS NOT NULL", "municipality <> ''"];
+    const muniParams = [];
+
+    if (state) {
+      muniParams.push(state);
+      muniWhere.push(`state = $${muniParams.length}`);
+    }
+
+    if (city) {
+      muniParams.push(city);
+      muniWhere.push(`city = $${muniParams.length}`);
+    }
+
+    const muniSql = `
+      SELECT DISTINCT municipality
+      FROM clients
+      WHERE ${muniWhere.join(" AND ")}
+      ORDER BY municipality ASC;
+    `;
+    const muniRes = await postgresDB.query(muniSql, muniParams);
+    const municipalities = muniRes.rows.map((r) => r.municipality);
+
+    // 4) Clientes filtrados por combinación de estado / ciudad / municipio
+    const clientWhere = ["1 = 1"];
+    const clientParams = [];
+
+    if (state) {
+      clientParams.push(state);
+      clientWhere.push(`state = $${clientParams.length}`);
+    }
+
+    if (city) {
+      clientParams.push(city);
+      clientWhere.push(`city = $${clientParams.length}`);
+    }
+
+    if (municipality) {
+      clientParams.push(municipality);
+      clientWhere.push(`municipality = $${clientParams.length}`);
+    }
+
+    const clientsSql = `
+      SELECT id, name, state, city, municipality
+      FROM clients
+      WHERE ${clientWhere.join(" AND ")}
+      ORDER BY name ASC;
+    `;
+
+    const clientsRes = await postgresDB.query(clientsSql, clientParams);
+    const clients = clientsRes.rows;
+
+    res.json({
+      states,
+      cities,
+      municipalities,
+      clients,
+    });
+  } catch (err) {
+    console.error("Error en /clients/locations:", err);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
 
 // Obtener un cliente por su ID
 router.get("/:id", async (req, res) => {
