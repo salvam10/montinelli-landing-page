@@ -22,6 +22,8 @@ const CustomCombobox = ({
   onCreate,
   selectedLabel, // mostrar texto aunque la opción aún no esté en options
   onProvideClose, // el padre recibe una función para cerrar definitivamente
+  py = "py-[5px]", // padding vertical opcional
+  px = "px-[15px]", // padding horizontal opcional
 }) => {
   const [query, setQuery] = useState("");
   const inputRef = useRef(null);
@@ -108,7 +110,7 @@ const CustomCombobox = ({
           <div className="relative">
             <ComboboxInput
               ref={inputRef}
-              className="w-full py-[5px] px-[15px] bg-white border border-[#EBEBEB] rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm xs:text-[12px]"
+              className={`w-full ${py} ${px}bg-white border border-[#EBEBEB] rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm xs:text-[12px]`}
               displayValue={() => effectiveDisplay}
               onChange={(e) => {
                 const v = e.target.value;

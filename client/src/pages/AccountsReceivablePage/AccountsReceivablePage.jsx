@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import { getClients } from "../../features/slices/clientsSlice";
 import DeleteOrderModal from "../../features/modals/DeleteOrderModal";
+import CustomCombobox from "../../features/customCombobox/CustomCombobox";
 import CustomFormButton from "../../features/customFormButton/CustomFormButton";
 import DataTable from "../../features/dataTable/DataTable";
 import { orderTableFilters } from "../../dummy";
@@ -14,6 +15,8 @@ const fmtMoney = (v) =>
   isNaN(Number(v))
     ? "$0.00"
     : `$${Number(v).toLocaleString("es-VE", { minimumFractionDigits: 2 })}`;
+
+const SELLER_STORAGE_KEY = "ar_selectedSeller";
 
 const columns = [
   {
@@ -116,6 +119,7 @@ const AccountsReceivablePage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { clients } = useSelector((state) => state.clients);
+  const [selectedSellerId, setSelectedSellerId] = useState(null);
   const [isDeleteConfirmed, setIsDeleteConfirmed] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -123,15 +127,71 @@ const AccountsReceivablePage = () => {
     dispatch(getClients());
   }, []);
 
-  const totals = useMemo(() => {
-    const acc = { total: 0, overdue: 0, pending: 0 };
+  // Cargar vendedor desde localStorage al iniciar
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(SELLER_STORAGE_KEY);
+      if (stored) {
+        const parsed = Number(stored);
+        if (!Number.isNaN(parsed)) {
+          setSelectedSellerId(parsed);
+        }
+      }
+    } catch (err) {
+      console.error("Error leyendo vendedor desde localStorage", err);
+    }
+  }, []);
+
+  // Guardar vendedor en localStorage cuando cambie
+  useEffect(() => {
+    try {
+      if (selectedSellerId) {
+        localStorage.setItem(SELLER_STORAGE_KEY, String(selectedSellerId));
+      } else {
+        localStorage.removeItem(SELLER_STORAGE_KEY);
+      }
+    } catch (err) {
+      console.error("Error guardando vendedor en localStorage", err);
+    }
+  }, [selectedSellerId]);
+
+  // Lista de vendedores disponibles (deduplicados) a partir de los clientes
+  const sellers = useMemo(() => {
+    const map = new Map();
     (clients || []).forEach((c) => {
+      if (c.user_id && !map.has(c.user_id)) {
+        map.set(c.user_id, {
+          id: c.user_id,
+          name: c.seller_name || `Vendedor ${c.user_id}`,
+        });
+      }
+    });
+
+    return Array.from(map.values()).sort((a, b) =>
+      String(a.name).localeCompare(String(b.name), "es", {
+        sensitivity: "base",
+      })
+    );
+  }, [clients]);
+
+  // Clientes filtrados por vendedor y totales calculados solo con ese filtro
+  const { filteredClients, totals } = useMemo(() => {
+    const acc = { total: 0, overdue: 0, pending: 0 };
+    let list = clients || [];
+
+    if (selectedSellerId) {
+      const sellerIdNumber = Number(selectedSellerId);
+      list = list.filter((c) => Number(c.user_id) === sellerIdNumber);
+    }
+
+    list.forEach((c) => {
       acc.total += Number(c?.debt_total) || 0;
       acc.overdue += Number(c?.overdue_amount) || 0;
       acc.pending += Number(c?.pending_amount) || 0;
     });
-    return acc;
-  }, [clients]);
+
+    return { filteredClients: list, totals: acc };
+  }, [clients, selectedSellerId]);
 
   const onRowClick = (id) => navigate(`/admin/clients/${id}`);
   const handleOnDelete = () => {
@@ -176,18 +236,59 @@ const AccountsReceivablePage = () => {
       </div>
 
       <div className="bg-white border-x border-b p-4">
-        <input
-          type="text"
-          placeholder="Buscar cliente..."
-          onChange={(e) => setSearchTerm(e.target.value)}
-          value={searchTerm}
-          className="w-full md:w-1/3 px-3 py-2 border rounded-md text-sm"
-        />
+        <div className="flex flex-col gap-4 md:flex-row md:items-end">
+          <div className="flex-1">
+            <label className="block mb-1 text-xs text-gray-500">
+              Buscar cliente
+            </label>
+            <input
+              type="text"
+              placeholder="Buscar cliente..."
+              onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchTerm}
+              className="w-full px-3 py-2 border rounded-md text-sm"
+            />
+          </div>
+
+          <div className="w-full md:w-1/3">
+            <label className="block mb-1 text-xs text-gray-500">Vendedor</label>
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <CustomCombobox
+                  options={[
+                    { value: "", label: "Todos los vendedores" },
+                    ...sellers.map((s) => ({
+                      value: s.id,
+                      label: s.name,
+                    })),
+                  ]}
+                  selected={selectedSellerId ?? ""}
+                  setSelected={(val) => {
+                    const parsed = val === "" ? null : Number(val);
+                    setSelectedSellerId(parsed);
+                  }}
+                  px="px-3 "
+                  py="py-2 "
+                />
+              </div>
+
+              {selectedSellerId && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedSellerId(null)}
+                  className="px-3 py-2 text-sm border rounded-md hover:bg-gray-100"
+                >
+                  X
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       <DataTable
         columns={columns}
-        data={clients}
+        data={filteredClients}
         onDelete={handleOnDelete}
         globalFilter={searchTerm}
         onRowClick={onRowClick}

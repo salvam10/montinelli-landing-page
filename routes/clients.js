@@ -15,6 +15,8 @@ router.get("/", async (req, res, next) => {
         c.city,
         c.municipality,
         c.state,
+        c.user_id,
+        COALESCE(u.firstname || ' ' || u.lastname, u.username) AS seller_name,
 
         /* --- FACTURAS (solo si invoice_number & invoice_date existen) --- */
         COUNT(*) FILTER (
@@ -78,8 +80,9 @@ router.get("/", async (req, res, next) => {
       LEFT JOIN orders o           ON o.client_id = c.id
       LEFT JOIN order_balances ob  ON ob.order_id  = o.id        -- clave: mantener filas aunque no exista balance aún
       LEFT JOIN payment_terms pt   ON pt.id = c.payment_term_id
+      LEFT JOIN users u            ON u.id = c.user_id
       GROUP BY
-        c.id, c.name, c.rif, c.city, c.municipality, c.state, pt.days
+        c.id, c.name, c.rif, c.city, c.municipality, c.state, pt.days, c.user_id, seller_name
       ORDER BY
         max_days_overdue DESC,
         c.name;
@@ -190,7 +193,6 @@ router.get("/locations", async (req, res) => {
   }
 });
 
-
 // Obtener un cliente por su ID
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
@@ -300,7 +302,7 @@ router.post("/", async (req, res, next) => {
     sunagro_code,
     created_at,
     user_id,
-    is_prospect
+    is_prospect,
   } = req.body;
 
   let insertQuery = "INSERT INTO clients(";
@@ -532,6 +534,5 @@ router.put("/:id", async (req, res) => {
     res.status(500).json({ message: "Error interno del servidor" });
   }
 });
-
 
 module.exports = router;
