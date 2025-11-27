@@ -102,7 +102,7 @@ const NewMarketCheckPage = () => {
 
         return {
           market_product_id: Number(productId),
-          currency_code: "USD", // siempre enviamos USD
+          currency_code: currency === "VES" ? "VES" : "USD", // siempre enviamos USD
           price_usd,
           fx_rate_used: currency === "VES" ? rate : null, // referencia de conversión
         };
@@ -118,6 +118,8 @@ const NewMarketCheckPage = () => {
       lines: linesArray,
     };
 
+    console.log('payload',payload);
+    
     await dispatch(submitMarketCheck(payload));
     setSelectedCatId(null);
     setSelectedClientId(null);
