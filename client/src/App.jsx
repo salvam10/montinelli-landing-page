@@ -31,6 +31,7 @@ import CompetitorDashboard from "./features/competitorDashboard/CompetitorDashbo
 import ProductDashboard from "./features/competitorDashboard/ProductDashboard.jsx";
 import CategoryDashboard from "./features/competitorDashboard/CategoryDashboard.jsx";
 import ClientDashboard from "./features/competitorDashboard/ClientDashboard.jsx";
+import InvoiceReconciliationPage from "./features/InvoiceReconciliationPage/InvoiceReconciliationPage.jsx";
 
 export const AuthContext = React.createContext();
 
@@ -93,6 +94,10 @@ const App = () => {
             <Route
               path="accounts-receivable"
               element={<AccountsReceivablePage />}
+            />
+            <Route
+              path="invoice-reconciliation"
+              element={<InvoiceReconciliationPage />}
             />
             <Route
               path="competitor-dashboard"

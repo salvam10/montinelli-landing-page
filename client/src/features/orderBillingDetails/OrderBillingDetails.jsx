@@ -104,7 +104,7 @@ const OrderBillingDetails = ({
           </ul>
 
           {/* Columna derecha */}
-          <ul className="flex flex-col gap-3">
+          {/* <ul className="flex flex-col gap-3">
             <li className="flex justify-between">
               <div className="text-gray-700">Pagado</div>
               <div className="text-gray-800">
@@ -127,7 +127,7 @@ const OrderBillingDetails = ({
                 )}
               </div>
             </li>
-          </ul>
+          </ul> */}
         </div>
 
         {/* Fecha de vencimiento */}

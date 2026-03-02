@@ -279,6 +279,9 @@ export const adminSidebarItems = [
     label: "Cobranza",
     icon: <AttachMoneyOutlinedIcon style={{ fontSize: "20px" }} />,
     route: "/admin/accounts-receivable",
+    subItems: [
+      { label: "Conciliación", route: "/admin/invoice-reconciliation" },
+    ],
   },
   {
     label: "Estadísticas",

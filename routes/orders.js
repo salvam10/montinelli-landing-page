@@ -75,6 +75,7 @@ router.get("/", async (req, res) => {
   }
 });
 
+
 // Obtener una orden por su id
 router.get("/:orderId", async (req, res) => {
   const raw = req.params.orderId;
@@ -532,6 +533,112 @@ router.post("/split-by-category", async (req, res) => {
     });
   }
 });
+
+// Preview de conciliación por número de factura
+router.post("/reconcile-preview", async (req, res) => {
+  const { invoice_numbers = [] } = req.body;
+
+  if (!Array.isArray(invoice_numbers)) {
+    return res.status(400).json({ message: "invoice_numbers debe ser un array" });
+  }
+
+  const normalized = invoice_numbers
+    .map((v) =>
+      String(v || "")
+        .trim()
+        .toUpperCase()
+        .replace(/^#/, "")
+        .replace(/\s+/g, " ")
+    )
+    .filter(Boolean);
+
+  if (!normalized.length) {
+    return res.status(200).json({ orders: [] });
+  }
+
+  try {
+    const { rows } = await postgresDB.query(
+      `
+      SELECT
+        o.id,
+        o.invoice_number,
+        o.total,
+        o.payment_status_id,
+        o.client_id,
+        c.name AS client_name
+      FROM orders o
+      JOIN clients c ON c.id = o.client_id
+      WHERE REGEXP_REPLACE(UPPER(TRIM(o.invoice_number)), '^#', '') = ANY($1)
+      `,
+      [normalized]
+    );
+
+    return res.status(200).json({ orders: rows });
+  } catch (error) {
+    console.error("Error en reconcile-preview:", error);
+    return res.status(500).json({ message: "Error interno del servidor" });
+  }
+});
+
+// Aplicar conciliación aprobada (bulk)
+router.post("/reconcile-apply", async (req, res) => {
+  const { updates = [] } = req.body;
+
+  if (!Array.isArray(updates) || updates.length === 0) {
+    return res
+      .status(400)
+      .json({ message: "updates debe ser un array con elementos" });
+  }
+
+  try {
+    const updatedOrders = [];
+
+    for (const item of updates) {
+      const orderId = Number(item.order_id);
+      const paymentStatusId = Number(item.payment_status_id);
+
+      if (!Number.isInteger(orderId) || !Number.isInteger(paymentStatusId)) {
+        return res
+          .status(400)
+          .json({ message: "order_id o payment_status_id inválido" });
+      }
+
+      const paidAt =
+        paymentStatusId === 2 ? new Date().toISOString().slice(0, 10) : null;
+
+      const lastDebtCheck = new Date().toISOString();
+
+      const result = await postgresDB.query(
+        `
+        UPDATE orders
+        SET payment_status_id = $1,
+            paid_at = $2,
+            last_debt_check = $3
+        WHERE id = $4
+        RETURNING *
+        `,
+        [paymentStatusId, paidAt, lastDebtCheck, orderId]
+      );
+
+      if (result.rowCount === 0) {
+        return res
+          .status(404)
+          .json({ message: `Orden no encontrada: ${orderId}` });
+      }
+
+      updatedOrders.push(result.rows[0]);
+    }
+
+    return res.status(200).json({
+      updated_count: updatedOrders.length,
+      orders: updatedOrders,
+    });
+  } catch (error) {
+    console.error("Error en reconcile-apply:", error);
+    return res.status(500).json({ message: "Error interno del servidor" });
+  }
+});
+
 
 // Eliminar una orden
 router.delete("/:orderId", async (req, res) => {

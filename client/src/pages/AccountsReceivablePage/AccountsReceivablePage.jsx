@@ -1,20 +1,22 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { getClients } from "../../features/slices/clientsSlice";
-import DeleteOrderModal from "../../features/modals/DeleteOrderModal";
 import CustomCombobox from "../../features/customCombobox/CustomCombobox";
 import CustomFormButton from "../../features/customFormButton/CustomFormButton";
 import DataTable from "../../features/dataTable/DataTable";
-import { orderTableFilters } from "../../dummy";
-import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { formatInTimeZone } from "date-fns-tz";
 
 const fmtMoney = (v) =>
   isNaN(Number(v))
     ? "$0.00"
-    : `$${Number(v).toLocaleString("es-VE", { minimumFractionDigits: 2 })}`;
+    : `$${Number(v).toLocaleString("es-VE", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
+
+const num = (value) => Number(value) || 0;
 
 const SELLER_STORAGE_KEY = "ar_selectedSeller";
 
@@ -32,14 +34,26 @@ const columns = [
     meta: { width: "w-[350px] min-w-[250px]" },
   },
   {
+    header: "Deuda Bruta",
+    accessorFn: (row) => fmtMoney(row.gross_debt),
+    footer: "Deuda Bruta",
+    meta: { width: "w-[150px] min-w-[160px]", align: "right" },
+  },
+  {
+    header: "Crédito a Favor",
+    accessorFn: (row) => fmtMoney(row.client_credits),
+    footer: "Crédito",
+    meta: { width: "w-[150px] min-w-[160px]", align: "right" },
+  },
+  {
     header: "Deuda Total",
-    accessorFn: (row) => fmtMoney(row.debt_total),
+    accessorFn: (row) => fmtMoney(row.net_debt ?? row.debt_total),
     footer: "Total Deuda",
     meta: { width: "w-[130px] min-w-[160px]", align: "right" },
   },
   {
     header: "Morosidad (días)",
-    accessorKey: "max_days_overdue",
+    accessorFn: (row) => num(row.max_morosidad_days ?? row.max_days_overdue),
     footer: "Atraso",
     meta: { width: "w-[160px] min-w-[160px]", align: "center" },
   },
@@ -48,7 +62,7 @@ const columns = [
     accessorFn: (row) => fmtMoney(row.overdue_amount),
     footer: "Vencido",
     cell: (info) => {
-      const amount = info.row.original.overdue_amount || 0;
+      const amount = num(info.row.original.overdue_amount);
       const hasOverdue = amount > 0;
 
       const bg = hasOverdue ? "bg-[rgba(235,90,70,0.5)] font-bold" : "";
@@ -63,7 +77,8 @@ const columns = [
   },
   {
     header: "Facturas Vencidas",
-    accessorKey: "invoices_overdue",
+    accessorFn: (row) =>
+      num(row.overdue_invoices_count ?? row.invoices_overdue),
     footer: "Vencidas",
     meta: { width: "w-[150px] min-w-[110px]", align: "center" },
   },
@@ -75,7 +90,8 @@ const columns = [
   },
   {
     header: "Facturas Pendientes",
-    accessorKey: "invoices_pending",
+    accessorFn: (row) =>
+      num(row.pending_invoices_count ?? row.invoices_pending),
     footer: "Pendientes",
     meta: { width: "w-[180px] min-w-[110px]", align: "center" },
   },
@@ -120,7 +136,6 @@ const AccountsReceivablePage = () => {
   const navigate = useNavigate();
   const { clients } = useSelector((state) => state.clients);
   const [selectedSellerId, setSelectedSellerId] = useState(null);
-  const [isDeleteConfirmed, setIsDeleteConfirmed] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
@@ -176,7 +191,13 @@ const AccountsReceivablePage = () => {
 
   // Clientes filtrados por vendedor y totales calculados solo con ese filtro
   const { filteredClients, totals } = useMemo(() => {
-    const acc = { total: 0, overdue: 0, pending: 0 };
+    const acc = {
+      grossDebt: 0,
+      credits: 0,
+      netDebt: 0,
+      overdue: 0,
+      pending: 0,
+    };
     let list = clients || [];
 
     if (selectedSellerId) {
@@ -185,9 +206,11 @@ const AccountsReceivablePage = () => {
     }
 
     list.forEach((c) => {
-      acc.total += Number(c?.debt_total) || 0;
-      acc.overdue += Number(c?.overdue_amount) || 0;
-      acc.pending += Number(c?.pending_amount) || 0;
+      acc.grossDebt += num(c?.gross_debt);
+      acc.credits += num(c?.client_credits);
+      acc.netDebt += num(c?.net_debt ?? c?.debt_total);
+      acc.overdue += num(c?.overdue_amount);
+      acc.pending += num(c?.pending_amount);
     });
 
     return { filteredClients: list, totals: acc };
@@ -213,11 +236,23 @@ const AccountsReceivablePage = () => {
       </div>
 
       <div className="bg-white border rounded-md p-4 mb-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
           <div className="flex items-center justify-between border rounded-md p-3">
-            <span className="text-sm text-gray-600">Monto Total</span>
+            <span className="text-sm text-gray-600">Deuda Bruta</span>
             <span className="text-base font-semibold">
-              {fmtMoney(totals.total)}
+              {fmtMoney(totals.grossDebt)}
+            </span>
+          </div>
+          <div className="flex items-center justify-between border rounded-md p-3">
+            <span className="text-sm text-gray-600">Crédito a Favor</span>
+            <span className="text-base font-semibold">
+              {fmtMoney(totals.credits)}
+            </span>
+          </div>
+          <div className="flex items-center justify-between border rounded-md p-3">
+            <span className="text-sm text-gray-600">Deuda Neta</span>
+            <span className="text-base font-semibold">
+              {fmtMoney(totals.netDebt)}
             </span>
           </div>
           <div className="flex items-center justify-between border rounded-md p-3">

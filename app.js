@@ -8,7 +8,7 @@ const path = require("path");
 
 /* Cron Jobs */
 require("./jobs/checkOverdueOrders");
-require("./jobs/checkClientsDebt");
+require("./jobs/checkClientsDebt"); 
 
 /* Librerias para gestionar sesiones e inicio de sesión */
 var cookieParser = require("cookie-parser");

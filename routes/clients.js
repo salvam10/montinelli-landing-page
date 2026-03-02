@@ -8,84 +8,139 @@ const postgresDB = require("../db/postgres");
 router.get("/", async (req, res, next) => {
   try {
     const sql = `
+      WITH client_metrics AS (
+        SELECT
+          c.id AS client_id,
+          c.name AS client_name,
+          c.rif,
+          c.city,
+          c.municipality,
+          c.state,
+          c.user_id,
+          c.profit_code,
+          COALESCE(c.client_credits, 0)::numeric AS client_credits,
+          COALESCE(u.firstname || ' ' || u.lastname, u.username) AS seller_name,
+          pt.days AS credit_days,
+
+          COUNT(*) FILTER (
+            WHERE o.invoice_number IS NOT NULL
+              AND BTRIM(o.invoice_number) <> ''
+          ) AS invoices_total,
+          COUNT(*) FILTER (
+            WHERE o.invoice_number IS NOT NULL
+              AND BTRIM(o.invoice_number) <> ''
+              AND o.paid_at IS NOT NULL
+          ) AS invoices_paid,
+
+          COALESCE(
+            SUM(COALESCE(o.total, 0)) FILTER (
+              WHERE o.invoice_number IS NOT NULL
+                AND BTRIM(o.invoice_number) <> ''
+                AND o.paid_at IS NULL
+            ),
+            0
+          )::numeric AS gross_debt,
+
+          COALESCE(
+            SUM(COALESCE(o.total, 0)) FILTER (
+              WHERE o.paid_at IS NULL
+                AND o.invoice_number IS NOT NULL
+                AND BTRIM(o.invoice_number) <> ''
+                AND o.due_date < CURRENT_DATE
+            ),
+            0
+          )::numeric AS overdue_amount,
+
+          COUNT(*) FILTER (
+            WHERE o.paid_at IS NULL
+              AND o.invoice_number IS NOT NULL
+              AND BTRIM(o.invoice_number) <> ''
+              AND o.due_date < CURRENT_DATE
+          ) AS overdue_invoices_count,
+
+          COALESCE(
+            SUM(COALESCE(o.total, 0)) FILTER (
+              WHERE o.paid_at IS NULL
+                AND o.invoice_number IS NOT NULL
+                AND BTRIM(o.invoice_number) <> ''
+                AND o.due_date >= CURRENT_DATE
+            ),
+            0
+          )::numeric AS pending_amount,
+
+          COUNT(*) FILTER (
+            WHERE o.paid_at IS NULL
+              AND o.invoice_number IS NOT NULL
+              AND BTRIM(o.invoice_number) <> ''
+              AND o.due_date >= CURRENT_DATE
+          ) AS pending_invoices_count,
+
+          COALESCE(
+            MAX(
+              GREATEST(0, CURRENT_DATE - o.due_date::date)
+            ) FILTER (
+              WHERE o.paid_at IS NULL
+                AND o.invoice_number IS NOT NULL
+                AND BTRIM(o.invoice_number) <> ''
+                AND o.due_date IS NOT NULL
+                AND o.due_date::date < CURRENT_DATE
+            ),
+            0
+          )::int AS max_morosidad_days,
+
+          MAX(o.last_debt_check) AS last_debt_check
+
+        FROM clients c
+        LEFT JOIN orders o ON o.client_id = c.id
+        LEFT JOIN payment_terms pt ON pt.id = c.payment_term_id
+        LEFT JOIN users u ON u.id = c.user_id
+        GROUP BY
+          c.id,
+          c.name,
+          c.rif,
+          c.city,
+          c.municipality,
+          c.state,
+          c.user_id,
+          c.profit_code,
+          c.client_credits,
+          pt.days,
+          COALESCE(u.firstname || ' ' || u.lastname, u.username)
+      )
       SELECT
-        c.id,
-        c.name,
-        c.rif,
-        c.city,
-        c.municipality,
-        c.state,
-        c.user_id,
-        COALESCE(u.firstname || ' ' || u.lastname, u.username) AS seller_name,
+        client_id,
+        client_name,
+        rif,
+        city,
+        municipality,
+        state,
+        user_id,
+        profit_code,
+        seller_name,
+        credit_days,
+        invoices_paid,
+        invoices_total,
+        last_debt_check,
 
-        /* --- FACTURAS (solo si invoice_number & invoice_date existen) --- */
-        COUNT(*) FILTER (
-          WHERE o.invoice_number IS NOT NULL AND o.invoice_date IS NOT NULL
-        ) AS invoices_total,
+        gross_debt,
+        client_credits,
+        GREATEST(gross_debt - client_credits, 0)::numeric AS net_debt,
+        overdue_amount,
+        overdue_invoices_count,
+        pending_amount,
+        pending_invoices_count,
+        max_morosidad_days,
 
-        COUNT(*) FILTER (
-          WHERE o.invoice_number IS NOT NULL AND o.invoice_date IS NOT NULL
-            AND o.payment_status_id = 2
-        ) AS invoices_paid,
-
-        COUNT(*) FILTER (
-          WHERE o.invoice_number IS NOT NULL AND o.invoice_date IS NOT NULL
-            AND o.payment_status_id = 1
-            AND CURRENT_DATE <= o.due_date
-        ) AS invoices_pending,   -- pendientes dentro de plazo
-
-        COUNT(*) FILTER (
-          WHERE o.invoice_number IS NOT NULL AND o.invoice_date IS NOT NULL
-            AND (o.payment_status_id <> 2)
-            AND CURRENT_DATE > o.due_date
-        ) AS invoices_overdue,
-
-        /* --- MONTOS (usando order_balances.balance) --- */
-        COALESCE(SUM(GREATEST(COALESCE(ob.balance, 0), 0)) FILTER (
-          WHERE o.invoice_number IS NOT NULL AND o.invoice_date IS NOT NULL
-            AND (o.payment_status_id <> 2)         -- no pagadas
-            AND CURRENT_DATE > o.due_date          -- vencidas
-        ), 0) AS overdue_amount,
-
-        COALESCE(SUM(GREATEST(COALESCE(ob.balance, 0), 0)) FILTER (
-          WHERE o.invoice_number IS NOT NULL AND o.invoice_date IS NOT NULL
-            AND o.payment_status_id = 1            -- pendientes
-            AND CURRENT_DATE <= o.due_date         -- dentro de plazo
-        ), 0) AS pending_amount,
-
-        COALESCE(SUM(GREATEST(COALESCE(ob.balance, 0), 0)) FILTER (
-          WHERE o.invoice_number IS NOT NULL AND o.invoice_date IS NOT NULL
-            AND (
-              (o.payment_status_id = 1 AND CURRENT_DATE <= o.due_date) OR
-              ((o.payment_status_id <> 2) AND CURRENT_DATE > o.due_date)
-            )
-        ), 0) AS debt_total,
-
-        /* --- DÍAS DE CRÉDITO (desde clients.payment_term_id) --- */
-        pt.days AS credit_days,
-
-        /* --- ATRASOS (solo facturas vencidas con payment_status_id = 3) --- */
-        MAX(
-          CASE
-            WHEN CURRENT_DATE > o.due_date AND o.payment_status_id = 3 THEN
-              GREATEST(0, (CURRENT_DATE - o.due_date))
-            ELSE 0
-          END
-        )::int AS max_days_overdue,
-
-        /* --- ÚLTIMA ACTUALIZACIÓN DE UNA ORDEN --- */
-        MAX(o.last_debt_check) AS last_debt_check
-
-      FROM clients c
-      LEFT JOIN orders o           ON o.client_id = c.id
-      LEFT JOIN order_balances ob  ON ob.order_id  = o.id        -- clave: mantener filas aunque no exista balance aún
-      LEFT JOIN payment_terms pt   ON pt.id = c.payment_term_id
-      LEFT JOIN users u            ON u.id = c.user_id
-      GROUP BY
-        c.id, c.name, c.rif, c.city, c.municipality, c.state, pt.days, c.user_id, seller_name
+        client_id AS id,
+        client_name AS name,
+        GREATEST(gross_debt - client_credits, 0)::numeric AS debt_total,
+        overdue_invoices_count AS invoices_overdue,
+        pending_invoices_count AS invoices_pending,
+        max_morosidad_days AS max_days_overdue
+      FROM client_metrics
       ORDER BY
-        max_days_overdue DESC,
-        c.name;
+        max_morosidad_days DESC,
+        client_name;
     `;
 
     const { rows } = await postgresDB.query(sql);
@@ -215,6 +270,7 @@ router.get("/:id", async (req, res) => {
         c.city,
         c.municipality,
         c.state,
+        c.client_credits,
 
         /* --- FACTURAS (solo si invoice_number & invoice_date existen) --- */
         COUNT(*) FILTER (
@@ -266,7 +322,16 @@ router.get("/:id", async (req, res) => {
         pt.name AS credit_name,
 
         /* --- ATRASOS --- */
-        COALESCE(MAX(GREATEST(0, (CURRENT_DATE - o.due_date)))::int, 0) AS max_days_overdue
+        COALESCE(
+          MAX(
+            GREATEST(0, CURRENT_DATE - o.due_date::date)
+          ) FILTER (
+            WHERE o.paid_at IS NULL
+              AND o.due_date IS NOT NULL
+              AND o.due_date::date < CURRENT_DATE
+          ),
+          0
+        )::int AS max_days_overdue
 
       FROM clients c
       LEFT JOIN orders o         ON o.client_id = c.id
@@ -437,6 +502,7 @@ router.put("/:id", async (req, res) => {
     profit_code,
     sunagro_code,
     has_debt,
+    client_credits,
     created_at,
     user_id,
     payment_term_id,
@@ -470,6 +536,11 @@ router.put("/:id", async (req, res) => {
   if (has_debt !== undefined) {
     updateQuery += `has_debt = $${count}, `;
     updateValues.push(has_debt);
+    count++;
+  }
+  if (client_credits !== undefined) {
+    updateQuery += `client_credits = $${count}, `;
+    updateValues.push(client_credits);
     count++;
   }
   if (name !== undefined) {
