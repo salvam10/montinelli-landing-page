@@ -43,44 +43,33 @@ const authRouter = require("./routes/auth");
 
 const CLIENT_URL = process.env.CLIENT_URL;
 
-/* React como motor de vistas */
-app.use(express.static("client/build"));
-// Define las rutas que deseas que sean manejadas por React Router
+/* ─── Archivos estáticos del SPA de pedidos ─── */
+app.use(express.static(path.join(__dirname, "client/build")));
 
+/* ─── Rutas del SPA de pedidos (React Router) ─── */
 const reactRouterRoutes = [
-  "/", // Página principal
-  "/signin", // Inicio de sesión
-  "/privacy-policy", // Política de privacidad
-
-  // Categorías
+  "/",
+  "/signin",
+  "/privacy-policy",
   "/categorias",
   "/categorias/:name",
-
-  // Carrito y proceso de compra
   "/carrito",
   "/checkout",
   "/order-confirmation",
-
-  // Pedidos del usuario
   "/mis-pedidos",
   "/orders",
   "/orders/:orderId",
   "/orders/category/:prodCategoryId",
-
-  //Estudio de mercado
   "/market-check",
   "/market-check-confirmation",
-
-  // Panel de administración
   "/admin",
   "/admin/orders",
   "/admin/orders/:orderId",
   "/admin/competitor-dashboard",
 ];
 
-// Middleware para las rutas manejadas por React Router
 const reactRouterMiddleware = (req, res, next) => {
-  const url = req.url.replace(/\/$/, ""); // Elimina el slash final si existe
+  const url = req.url.replace(/\/$/, "");
   if (
     reactRouterRoutes.some(
       (route) => url === route || url.startsWith(route + "/")
@@ -92,7 +81,6 @@ const reactRouterMiddleware = (req, res, next) => {
   }
 };
 
-// Aplica el middleware para las rutas manejadas por React Router
 app.use(reactRouterMiddleware);
 
 app.use(express.json({ limit: "25mb" }));

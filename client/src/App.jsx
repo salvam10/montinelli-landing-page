@@ -32,6 +32,8 @@ import ProductDashboard from "./features/competitorDashboard/ProductDashboard.js
 import CategoryDashboard from "./features/competitorDashboard/CategoryDashboard.jsx";
 import ClientDashboard from "./features/competitorDashboard/ClientDashboard.jsx";
 import InvoiceReconciliationPage from "./features/InvoiceReconciliationPage/InvoiceReconciliationPage.jsx";
+import SellerReceivablesPage from "./features/receivables/SellerReceivablesPage";
+import PendingReceiptsPage from "./features/PendingReceiptsPage/PendingReceiptsPage";
 
 export const AuthContext = React.createContext();
 
@@ -75,6 +77,10 @@ const App = () => {
             <Route path="carrito" element={<CartPage />} />
             <Route path="checkout" element={<CheckoutPage />} />
             <Route path="order-confirmation" element={<SuccesfullPage />} />
+            <Route
+              path="cuenta-por-cobrar"
+              element={<SellerReceivablesPage />}
+            />
           </Route>
           <Route path="/admin" element={<AdminLayout />}>
             <Route
@@ -98,6 +104,10 @@ const App = () => {
             <Route
               path="invoice-reconciliation"
               element={<InvoiceReconciliationPage />}
+            />
+            <Route
+              path="pending-receipts"
+              element={<PendingReceiptsPage />}
             />
             <Route
               path="competitor-dashboard"

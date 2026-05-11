@@ -281,6 +281,7 @@ export const adminSidebarItems = [
     route: "/admin/accounts-receivable",
     subItems: [
       { label: "Conciliación", route: "/admin/invoice-reconciliation" },
+      { label: "Pagos reportados", route: "/admin/pending-receipts" },
     ],
   },
   {

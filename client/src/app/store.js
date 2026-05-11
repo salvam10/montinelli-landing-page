@@ -11,6 +11,10 @@ import marketCheckReducer from "../features/slices/marketCheckSlice";
 import brandsReducer from "../features/slices/brandsSlice";
 import paymentsReducer from "../features/slices/paymentsSlice";
 import orderItemsReducer from "../features/slices/orderItemsSlice";
+import sellerReceivablesReducer from "../features/slices/sellerReceivablesSlice";
+import clientInvoicesReducer from "../features/slices/clientInvoicesSlice";
+import sellerPaymentsReducer from "../features/slices/sellerPaymentsSlice";
+import pendingReceiptsReducer from "../features/slices/pendingReceiptsSlice";
 
 export const store = configureStore({
   reducer: {
@@ -25,6 +29,10 @@ export const store = configureStore({
     marketChecks: marketCheckReducer,
     brands: brandsReducer,
     payments: paymentsReducer,
-    orderItems: orderItemsReducer
+    orderItems: orderItemsReducer,
+    sellerReceivables: sellerReceivablesReducer,
+    clientInvoices: clientInvoicesReducer,
+    sellerPayments: sellerPaymentsReducer,
+    pendingReceipts: pendingReceiptsReducer,
   },
 });

@@ -1,109 +1,145 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
 import MenuIcon from "@mui/icons-material/Menu";
 import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
+import InboxOutlinedIcon from "@mui/icons-material/InboxOutlined";
+import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
+import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
 import { getProductsInCart } from "../slices/cartSlice";
 import { AuthContext } from "../../App";
 import { userLogout } from "../slices/usersSlice";
 import MobileMenu from "../mobileMenu/MobileMenu";
-import InboxOutlinedIcon from "@mui/icons-material/InboxOutlined";
-import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
+
+const BrandLogo = ({ compact = false }) => (
+  <img
+    src="/montinelli-logo.png"
+    alt="Montinelli"
+    className={`block h-auto object-contain ${
+      compact ? "w-[140px]" : "w-[180px] sm:w-[240px] lg:w-[300px]"
+    }`}
+  />
+);
 
 const NavBar = () => {
   const { user, setUser } = useContext(AuthContext);
   const { cartItemsCount } = useSelector((state) => state.cart);
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // 👈 estado del menú
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   useEffect(() => {
-    try {
-      dispatch(getProductsInCart({ user_id: user.id }));
-    } catch (error) {
-      console.log(error);
-    }
-  }, []);
+    if (!user?.id) return;
 
-  useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+    dispatch(getProductsInCart({ user_id: user.id }));
+  }, [dispatch, user?.id]);
 
-  const handleCartClick = () => navigate(`/carrito`);
-  const handleLogoClick = () => navigate(`/`);
-  const handleOrdersClick = () => navigate(`/mis-pedidos`);
-  const handlePriceResearchClick = () => navigate(`/market-check`);
   const logout = () => {
     dispatch(userLogout());
     setUser(null);
   };
 
+  const navItems = [
+    {
+      key: "orders",
+      label: "Mis pedidos",
+      icon: InboxOutlinedIcon,
+      onClick: () => navigate("/mis-pedidos"),
+    },
+    {
+      key: "prices",
+      label: "Estudio Precios",
+      icon: LocalOfferOutlinedIcon,
+      onClick: () => navigate("/market-check"),
+    },
+    {
+      key: "receivables",
+      label: "Estados de cuenta",
+      icon: AccountBalanceWalletOutlinedIcon,
+      onClick: () => navigate("/cuenta-por-cobrar"),
+    },
+    {
+      key: "logout",
+      label: "Cerrar sesión",
+      icon: PersonOutlineOutlinedIcon,
+      onClick: logout,
+    },
+  ];
+
   return (
     <>
-      {windowWidth > 640 ? (
-        /* DESKTOP NAVBAR */
-        <div className="w-full flex-end p-[15px] bg-white">
-          <div className="w-[65%] flex-start cursor-pointer hover:font-bold">
-            <span className="text-lg font-bold pl-4" onClick={handleLogoClick}>
-              CORPORACION GSM
-            </span>
-          </div>
-          <div className="w-[35%] flex-start gap-5 text-[#0079bf]">
-            <div className="flex gap-1 cursor-pointer hover:font-bold">
-              <InboxOutlinedIcon />
-              <span onClick={handleOrdersClick}>Mis pedidos</span>
-            </div>
-            <div className=" flex gap-1 cursor-pointer hover:font-bold">
-              <LocalOfferOutlinedIcon />
-              <span onClick={handlePriceResearchClick}>Estudio Precios</span>
-            </div>
-            <div className="flex gap-1 cursor-pointer hover:font-bold">
-              <PersonOutlineOutlinedIcon />
-              <span onClick={logout}>Cerrar sesión</span>
-            </div>
-          </div>
-          <div
-            className="w-[5%] relative flex justify-between cursor-pointer text-[#0079bf] hover:font-bold"
-            onClick={handleCartClick}
-          >
-            <ShoppingCartOutlinedIcon />
-            <span className="w-[20px] h-[20px] orange-bg flex-center absolute -top-3 right-7 border rounded-full text-xs">
-              {cartItemsCount}
-            </span>
-          </div>
-        </div>
-      ) : (
-        /* MOBILE NAV */
-        <div className="w-full relative flex-end p-[15px]">
-          <div
-            className="w-[25%] flex-start gap-1 cursor-pointer text-[#0079bf]"
-            onClick={() => setIsMenuOpen(true)} // 👈 abre el menú
-          >
-            <MenuIcon />
-          </div>
-          <div className="w-[50%] flex-start cursor-pointer hover:font-bold">
-            <span className="text-lg font-bold pl-4" onClick={handleLogoClick}>
-              CORPORACION GSM
-            </span>
-          </div>
-          <div
-            className="w-[25%] relative flex-end cursor-pointer text-[#0079bf]"
-            onClick={handleCartClick}
-          >
-            <ShoppingCartOutlinedIcon />
-            <span className="w-[20px] h-[20px] orange-bg flex-center absolute -top-3 -right-2 border rounded-full text-xs">
-              {cartItemsCount}
-            </span>
-          </div>
-        </div>
-      )}
+      <header className="sticky top-0 z-40 border-b border-stone-200 bg-white/95 backdrop-blur-sm">
+        <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              aria-label="Abrir menú"
+              onClick={() => setIsMenuOpen(true)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-stone-200 text-stone-700 transition-colors hover:bg-stone-50 md:hidden"
+            >
+              <MenuIcon fontSize="small" />
+            </button>
 
-      {/* Render del menú lateral */}
-      <MobileMenu isOpen={isMenuOpen} setIsOpen={setIsMenuOpen} />
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="inline-flex shrink-0 items-center rounded-lg text-left leading-none"
+            >
+              <BrandLogo />
+            </button>
+          </div>
+
+          <div className="hidden items-center gap-5 md:flex">
+            <nav className="flex items-center gap-1">
+              {navItems.map(({ key, label, icon: Icon, onClick }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={onClick}
+                  className="inline-flex items-center gap-2 rounded-lg px-3.5 py-2.5 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-50 hover:text-stone-900"
+                >
+                  <Icon sx={{ fontSize: 18 }} />
+                  <span>{label}</span>
+                </button>
+              ))}
+            </nav>
+
+            <div className="h-7 w-px bg-stone-200" />
+
+            <button
+              type="button"
+              aria-label="Ir al carrito"
+              onClick={() => navigate("/carrito")}
+              className="relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-stone-200 bg-white text-stone-800 shadow-sm transition-colors hover:bg-stone-50"
+            >
+              <ShoppingCartOutlinedIcon sx={{ fontSize: 20 }} />
+              <span className="absolute -right-1.5 -top-1.5 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-1.5 text-[11px] font-bold text-white shadow-sm">
+                {cartItemsCount}
+              </span>
+            </button>
+          </div>
+
+          <button
+            type="button"
+            aria-label="Ir al carrito"
+            onClick={() => navigate("/carrito")}
+            className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-stone-200 bg-white text-stone-800 shadow-sm transition-colors hover:bg-stone-50 md:hidden"
+          >
+            <ShoppingCartOutlinedIcon sx={{ fontSize: 20 }} />
+            <span className="absolute -right-1.5 -top-1.5 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-1.5 text-[11px] font-bold text-white shadow-sm">
+              {cartItemsCount}
+            </span>
+          </button>
+        </div>
+      </header>
+
+      <MobileMenu
+        isOpen={isMenuOpen}
+        setIsOpen={setIsMenuOpen}
+        navItems={navItems}
+        brand={<BrandLogo compact />}
+      />
     </>
   );
 };

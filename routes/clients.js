@@ -248,6 +248,206 @@ router.get("/locations", async (req, res) => {
   }
 });
 
+// Obtener clientes de un vendedor con métricas de cobranzas
+// GET /api/clients/seller/:userId
+router.get("/seller/:userId", async (req, res, next) => {
+  const userId = parseInt(req.params.userId, 10);
+
+  // Auth guard: el vendedor solo puede ver sus propios clientes; admin puede ver cualquiera
+  if (!req.user) {
+    return res.status(401).json({ message: "No autenticado" });
+  }
+
+  const sessionUserId = Number(req.user.id);
+  const isPrivilegedUser = ["admin", "superadmin"].includes(req.user.role);
+
+  if (sessionUserId !== userId && !isPrivilegedUser) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+
+  try {
+    const sql = `
+      WITH client_metrics AS (
+        SELECT
+          c.id AS client_id,
+          c.name AS client_name,
+          c.phone,
+          COALESCE(c.client_credits, 0)::numeric AS client_credits,
+          COALESCE(pt.days, 0)::int AS credit_days,
+
+          COALESCE(
+            SUM(COALESCE(o.total, 0)) FILTER (
+              WHERE o.invoice_number IS NOT NULL
+                AND BTRIM(o.invoice_number) <> ''
+                AND o.paid_at IS NULL
+            ),
+            0
+          )::numeric AS gross_debt,
+
+          COALESCE(
+            SUM(COALESCE(o.total, 0)) FILTER (
+              WHERE o.paid_at IS NULL
+                AND o.invoice_number IS NOT NULL
+                AND BTRIM(o.invoice_number) <> ''
+                AND o.due_date < CURRENT_DATE
+            ),
+            0
+          )::numeric AS overdue_amount,
+
+          COUNT(*) FILTER (
+            WHERE o.paid_at IS NULL
+              AND o.invoice_number IS NOT NULL
+              AND BTRIM(o.invoice_number) <> ''
+              AND o.due_date < CURRENT_DATE
+          ) AS overdue_invoices_count,
+
+          COALESCE(
+            SUM(COALESCE(o.total, 0)) FILTER (
+              WHERE o.paid_at IS NULL
+                AND o.invoice_number IS NOT NULL
+                AND BTRIM(o.invoice_number) <> ''
+                AND o.due_date >= CURRENT_DATE
+            ),
+            0
+          )::numeric AS pending_amount,
+
+          COUNT(*) FILTER (
+            WHERE o.paid_at IS NULL
+              AND o.invoice_number IS NOT NULL
+              AND BTRIM(o.invoice_number) <> ''
+              AND o.due_date >= CURRENT_DATE
+          ) AS pending_invoices_count,
+
+          COALESCE(
+            MAX(
+              GREATEST(0, CURRENT_DATE - o.due_date::date)
+            ) FILTER (
+              WHERE o.paid_at IS NULL
+                AND o.invoice_number IS NOT NULL
+                AND BTRIM(o.invoice_number) <> ''
+                AND o.due_date IS NOT NULL
+                AND o.due_date::date < CURRENT_DATE
+            ),
+            0
+          )::int AS max_morosidad_days
+
+        FROM clients c
+        LEFT JOIN orders o ON o.client_id = c.id
+        LEFT JOIN payment_terms pt ON pt.id = c.payment_term_id
+        WHERE c.user_id = $1
+        GROUP BY
+          c.id,
+          c.name,
+          c.phone,
+          c.client_credits,
+          pt.days
+      ),
+      last_payments AS (
+        SELECT
+          p.client_id,
+          MAX(p.created_at)::date AS last_payment
+        FROM payments p
+        WHERE p.client_id IN (SELECT client_id FROM client_metrics)
+        GROUP BY p.client_id
+      ),
+      monthly_trend AS (
+        SELECT
+          o.client_id,
+          ARRAY_AGG(
+            COALESCE(month_total, 0)::numeric
+            ORDER BY month_start
+          ) AS trend
+        FROM (
+          SELECT DISTINCT client_id FROM client_metrics
+        ) cm
+        CROSS JOIN LATERAL (
+          SELECT generate_series(
+            date_trunc('month', CURRENT_DATE - INTERVAL '4 months'),
+            date_trunc('month', CURRENT_DATE),
+            '1 month'
+          )::date AS month_start
+        ) months
+        LEFT JOIN LATERAL (
+          SELECT
+            o2.client_id,
+            SUM(o2.total) AS month_total
+          FROM orders o2
+          WHERE o2.client_id = cm.client_id
+            AND o2.invoice_number IS NOT NULL
+            AND BTRIM(o2.invoice_number) <> ''
+            AND o2.paid_at IS NULL
+            AND date_trunc('month', o2.due_date) = months.month_start
+          GROUP BY o2.client_id
+        ) o ON o.client_id = cm.client_id
+        GROUP BY o.client_id
+      )
+      SELECT
+        cm.client_id,
+        cm.client_name,
+        cm.phone,
+        cm.credit_days,
+        cm.gross_debt,
+        cm.client_credits,
+        GREATEST(cm.gross_debt - cm.client_credits, 0)::numeric AS net_debt,
+        cm.overdue_amount,
+        cm.overdue_invoices_count,
+        cm.pending_amount,
+        cm.pending_invoices_count,
+        cm.max_morosidad_days,
+        lp.last_payment,
+        COALESCE(mt.trend, ARRAY[0,0,0,0,0]) AS trend
+      FROM client_metrics cm
+      LEFT JOIN last_payments lp ON lp.client_id = cm.client_id
+      LEFT JOIN monthly_trend mt ON mt.client_id = cm.client_id
+      ORDER BY
+        cm.max_morosidad_days DESC,
+        cm.client_name;
+    `;
+
+    const { rows } = await postgresDB.query(sql, [userId]);
+    res.status(200).json(rows);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/clients/:clientId/invoices — facturas individuales (pendientes/vencidas)
+router.get("/:clientId/invoices", async (req, res, next) => {
+  const clientId = parseInt(req.params.clientId, 10);
+
+  if (!req.user) {
+    return res.status(401).json({ message: "No autenticado" });
+  }
+
+  try {
+    const sql = `
+      SELECT
+        o.id AS order_id,
+        o.invoice_number,
+        o.invoice_date::date AS date,
+        o.due_date::date AS due,
+        o.total::numeric AS amount,
+        CASE
+          WHEN o.paid_at IS NOT NULL THEN 'pagada'
+          WHEN o.due_date < CURRENT_DATE THEN 'vencida'
+          ELSE 'pendiente'
+        END AS status,
+        GREATEST(0, CURRENT_DATE - o.due_date::date)::int AS days_overdue
+      FROM orders o
+      WHERE o.client_id = $1
+        AND o.invoice_number IS NOT NULL
+        AND BTRIM(o.invoice_number) <> ''
+        AND o.paid_at IS NULL
+      ORDER BY o.due_date ASC;
+    `;
+
+    const { rows } = await postgresDB.query(sql, [clientId]);
+    res.status(200).json(rows);
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Obtener un cliente por su ID
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
