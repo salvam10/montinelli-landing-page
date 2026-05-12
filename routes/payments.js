@@ -4,6 +4,11 @@ const router = express.Router();
 const postgresDB = require("../db/postgres");
 const { uploadReceipt, getReceiptUrl } = require("../services/r2Storage");
 
+const VALID_PAYMENT_TYPES = ["pago_factura", "retencion", "ambos"];
+
+const isValidPaymentType = (paymentType) =>
+  VALID_PAYMENT_TYPES.includes(paymentType);
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
@@ -61,6 +66,7 @@ router.get("/seller/:userId", async (req, res, next) => {
         p.payment_date,
         p.reported_by,
         p.bank,
+        p.payment_type,
         p.created_at
       FROM payments p
       JOIN clients c ON c.id = p.client_id
@@ -90,7 +96,12 @@ router.post("/", async (req, res, next) => {
     payment_date,
     reported_by,
     bank,
+    payment_type,
   } = req.body;
+
+  if (!isValidPaymentType(payment_type)) {
+    return res.status(400).json({ message: "Tipo de pago inválido" });
+  }
   
   let insertQuery = "INSERT INTO payments(";
   let valueQuery = "VALUES(";
@@ -111,6 +122,7 @@ router.post("/", async (req, res, next) => {
     ["payment_date", payment_date],
     ["reported_by", reported_by],
     ["bank", bank],
+    ["payment_type", payment_type],
   ];
 
   for (const [col, val] of fields) {
@@ -163,6 +175,7 @@ router.get("/pending-receipts", async (req, res, next) => {
         p.reported_by,
         u.firstname || ' ' || u.lastname AS reported_by_name,
         p.bank,
+        p.payment_type,
         p.created_at
       FROM payments p
       JOIN clients c ON c.id = p.client_id
