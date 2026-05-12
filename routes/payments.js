@@ -281,7 +281,7 @@ router.patch("/:paymentId/status", async (req, res, next) => {
     return res.status(403).json({ message: "Forbidden" });
   }
 
-  if (!["validado", "rechazado"].includes(status)) {
+  if (!["validado", "rechazado", "pendiente_validacion"].includes(status)) {
     return res.status(400).json({ message: "Estado inválido" });
   }
 

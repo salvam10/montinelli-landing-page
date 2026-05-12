@@ -11,6 +11,7 @@ import CheckOutlinedIcon from "@mui/icons-material/CheckOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
+import UndoOutlinedIcon from "@mui/icons-material/UndoOutlined";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -133,103 +134,179 @@ const PaymentRow = ({
   onReview,
   onApprove,
   onReject,
+  onRevert,
 }) => {
   const methodStyle =
     METHOD_STYLES[payment.method] || METHOD_STYLES.efectivo;
+  const st = payment.status;
 
   return (
-    <div className="flex items-center gap-4 border-b border-gray-100 px-4 py-3.5 transition-colors hover:bg-stone-50/50">
-      {/* Checkbox */}
-      <div className="w-[3%] flex justify-center">
-        <input
-          type="checkbox"
-          checked={selected}
-          onChange={onToggle}
-          className="h-4 w-4 rounded border-gray-300 accent-gray-800 cursor-pointer"
-        />
-      </div>
-
-      {/* Reportado */}
-      <div className="w-[12%]">
-        <div className="text-sm font-medium text-gray-900">
-          {fmtDate(payment.created_at)}
+    <>
+      {/* Desktop row */}
+      <div className="hidden md:flex items-center gap-4 border-b border-gray-100 px-4 py-3.5 transition-colors hover:bg-stone-50/50">
+        {/* Checkbox */}
+        <div className="w-[3%] flex justify-center">
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={onToggle}
+            className="h-4 w-4 rounded border-gray-300 accent-gray-800 cursor-pointer"
+          />
         </div>
-        <div className="text-[11px] text-gray-400">
-          {timeAgo(payment.created_at)}
-        </div>
-      </div>
 
-      {/* Cliente + Vendedor */}
-      <div className="w-[22%] flex items-center gap-2.5 min-w-0">
-        <ReceiptThumb hasReceipt={!!payment.receipt_url} />
-        <div className="min-w-0">
-          <div className="truncate text-sm font-semibold text-gray-900">
-            {payment.client_name}
+        {/* Reportado */}
+        <div className="w-[12%]">
+          <div className="text-sm font-medium text-gray-900">
+            {fmtDate(payment.created_at)}
           </div>
-          <div className="text-[11px] text-gray-400 truncate">
-            {payment.reported_by_name || "—"}
+          <div className="text-[11px] text-gray-400">
+            {timeAgo(payment.created_at)}
           </div>
         </div>
-      </div>
 
-      {/* Método */}
-      <div className="w-[10%]">
-        <span
-          className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-semibold ${methodStyle}`}
-        >
-          {METHOD_LABELS[payment.method] || payment.method}
-        </span>
-      </div>
-
-      {/* Monto + Referencia */}
-      <div className="w-[16%]">
-        <div className="text-sm font-bold text-gray-900 tabular-nums">
-          {fmtMoney(payment.amount)}
-        </div>
-        <div className="text-[11px] text-gray-400 font-mono truncate">
-          {payment.reference || "—"}
-        </div>
-      </div>
-
-      {/* Banco */}
-      <div className="w-[10%]">
-        <div className="text-sm text-gray-700">{payment.bank || "—"}</div>
-        {payment.bank ? (
-          <div className="text-[11px] text-green-600 font-medium flex items-center gap-0.5">
-            <CheckOutlinedIcon sx={{ fontSize: 12 }} /> Banco
+        {/* Cliente + Vendedor */}
+        <div className="w-[22%] flex items-center gap-2.5 min-w-0">
+          <ReceiptThumb hasReceipt={!!payment.receipt_url} />
+          <div className="min-w-0">
+            <div className="truncate text-sm font-semibold text-gray-900">
+              {payment.client_name}
+            </div>
+            <div className="text-[11px] text-gray-400 truncate">
+              {payment.reported_by_name || "—"}
+            </div>
           </div>
-        ) : (
-          <div className="text-[11px] text-amber-600 font-medium">
-            Sin match
+        </div>
+
+        {/* Método */}
+        <div className="w-[10%]">
+          <span
+            className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-semibold ${methodStyle}`}
+          >
+            {METHOD_LABELS[payment.method] || payment.method}
+          </span>
+        </div>
+
+        {/* Monto + Referencia */}
+        <div className="w-[18%]">
+          <div className="text-sm font-bold text-gray-900 tabular-nums">
+            {fmtMoney(payment.amount)}
+          </div>
+          <div className="text-[11px] text-gray-400 font-mono truncate">
+            {payment.reference || "—"}
+          </div>
+        </div>
+
+        {/* Acciones */}
+        <div className="w-[35%] flex items-center justify-end gap-2">
+          <button
+            onClick={onReview}
+            className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white h-8 w-8 text-gray-500 transition-colors hover:bg-gray-50"
+            title="Revisar comprobante"
+          >
+            <VisibilityOutlinedIcon sx={{ fontSize: 16 }} />
+          </button>
+
+          {st === "pendiente_validacion" && (
+            <>
+              <button
+                onClick={onReject}
+                className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white h-8 w-8 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                title="Rechazar"
+              >
+                <CloseIcon sx={{ fontSize: 16 }} />
+              </button>
+              <button
+                onClick={onApprove}
+                className="inline-flex items-center justify-center rounded-lg bg-green-700 h-8 w-8 text-white transition-colors hover:bg-green-800"
+                title="Aprobar"
+              >
+                <CheckOutlinedIcon sx={{ fontSize: 16 }} />
+              </button>
+            </>
+          )}
+
+          {(st === "validado" || st === "rechazado") && (
+            <button
+              onClick={onRevert}
+              className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white h-8 w-8 text-gray-400 transition-colors hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200"
+              title="Volver a pendiente"
+            >
+              <UndoOutlinedIcon sx={{ fontSize: 16 }} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Mobile card */}
+      <div className="md:hidden border-b border-gray-100 px-4 py-3.5">
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <ReceiptThumb hasReceipt={!!payment.receipt_url} />
+            <div className="min-w-0">
+              <div className="truncate text-sm font-semibold text-gray-900">
+                {payment.client_name}
+              </div>
+              <div className="text-[11px] text-gray-400">
+                {payment.reported_by_name || "—"} · {fmtDate(payment.created_at)}
+              </div>
+            </div>
+          </div>
+          <div className="text-right shrink-0">
+            <div className="text-sm font-bold text-gray-900 tabular-nums">
+              {fmtMoney(payment.amount)}
+            </div>
+            <span
+              className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold ${methodStyle}`}
+            >
+              {METHOD_LABELS[payment.method] || payment.method}
+            </span>
+          </div>
+        </div>
+        {payment.reference && (
+          <div className="text-[11px] text-gray-400 font-mono mb-2">
+            Ref: {payment.reference}
           </div>
         )}
-      </div>
+        <div className="flex items-center justify-end gap-2">
+          <button
+            onClick={onReview}
+            className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white h-8 w-8 text-gray-500 transition-colors hover:bg-gray-50"
+            title="Revisar comprobante"
+          >
+            <VisibilityOutlinedIcon sx={{ fontSize: 16 }} />
+          </button>
 
-      {/* Acciones */}
-      <div className="w-[27%] flex items-center justify-end gap-2">
-        <button
-          onClick={onReview}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50"
-        >
-          <VisibilityOutlinedIcon sx={{ fontSize: 15 }} />
-          Revisar
-        </button>
-        <button
-          onClick={onReject}
-          className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white h-8 w-8 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 hover:border-red-200"
-          title="Rechazar"
-        >
-          <CloseIcon sx={{ fontSize: 16 }} />
-        </button>
-        <button
-          onClick={onApprove}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-green-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-green-800"
-        >
-          <CheckOutlinedIcon sx={{ fontSize: 15 }} />
-          Aprobar
-        </button>
+          {st === "pendiente_validacion" && (
+            <>
+              <button
+                onClick={onReject}
+                className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white h-8 w-8 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                title="Rechazar"
+              >
+                <CloseIcon sx={{ fontSize: 16 }} />
+              </button>
+              <button
+                onClick={onApprove}
+                className="inline-flex items-center justify-center rounded-lg bg-green-700 h-8 w-8 text-white transition-colors hover:bg-green-800"
+                title="Aprobar"
+              >
+                <CheckOutlinedIcon sx={{ fontSize: 16 }} />
+              </button>
+            </>
+          )}
+
+          {(st === "validado" || st === "rechazado") && (
+            <button
+              onClick={onRevert}
+              className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white h-8 w-8 text-gray-400 transition-colors hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200"
+              title="Volver a pendiente"
+            >
+              <UndoOutlinedIcon sx={{ fontSize: 16 }} />
+            </button>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
@@ -240,9 +317,8 @@ const COL_HEADERS = [
   { label: "Reportado", width: "w-[12%]" },
   { label: "Cliente · Vendedor", width: "w-[22%]" },
   { label: "Método", width: "w-[10%]" },
-  { label: "Monto / Referencia", width: "w-[16%]" },
-  { label: "Banco", width: "w-[10%]" },
-  { label: "Acciones", width: "w-[27%]", align: "right" },
+  { label: "Monto / Referencia", width: "w-[18%]" },
+  { label: "Acciones", width: "w-[35%]", align: "right" },
 ];
 
 // ─── Page ───────────────────────────────────────────────────────────────────────
@@ -335,6 +411,13 @@ const PendingReceiptsPage = () => {
   const handleReject = useCallback(
     (paymentId) => {
       dispatch(changePaymentStatus({ paymentId, status: "rechazado" }));
+    },
+    [dispatch]
+  );
+
+  const handleRevert = useCallback(
+    (paymentId) => {
+      dispatch(changePaymentStatus({ paymentId, status: "pendiente_validacion" }));
     },
     [dispatch]
   );
@@ -507,7 +590,7 @@ const PendingReceiptsPage = () => {
       {/* Table */}
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
         {/* Table header */}
-        <div className="flex items-center px-4 py-3 border-b border-gray-200 bg-stone-50/50">
+        <div className="hidden md:flex items-center px-4 py-3 border-b border-gray-200 bg-stone-50/50">
           <div className="w-[3%] flex justify-center">
             <input
               type="checkbox"
@@ -546,6 +629,7 @@ const PendingReceiptsPage = () => {
               onReview={() => handleViewReceipt(payment.id)}
               onApprove={() => handleApprove(payment.id)}
               onReject={() => handleReject(payment.id)}
+              onRevert={() => handleRevert(payment.id)}
             />
           ))
         )}
