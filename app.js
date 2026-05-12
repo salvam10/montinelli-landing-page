@@ -7,8 +7,8 @@ const app = express();
 const path = require("path");
 
 /* Cron Jobs */
-require("./jobs/checkOverdueOrders");
-require("./jobs/checkClientsDebt"); 
+/* require("./jobs/checkOverdueOrders");
+require("./jobs/checkClientsDebt");  */
 
 /* Librerias para gestionar sesiones e inicio de sesión */
 var cookieParser = require("cookie-parser");
@@ -101,7 +101,7 @@ app.use(passport.authenticate("session"));
 app.use(
   cors({
     origin: `${CLIENT_URL}`,
-    methods: "GET,POST,PUT,DELETE",
+    methods: "GET,POST,PUT,PATCH,DELETE",
     credentials: true,
   })
 );

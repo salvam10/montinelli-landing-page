@@ -7,9 +7,14 @@ jest.mock("../services/r2Storage", () => ({
   getReceiptUrl: jest.fn(),
 }));
 
+jest.mock("../services/receiptOcr", () => ({
+  extractReceiptData: jest.fn(),
+}));
+
 const express = require("express");
 const http = require("http");
 const postgresDB = require("../db/postgres");
+const receiptOcr = require("../services/receiptOcr");
 const paymentsRouter = require("./payments");
 
 const createApp = () => {
@@ -76,6 +81,57 @@ const requestJson = async (server, path, { body, method = "GET", user } = {}) =>
   });
 };
 
+const requestMultipart = async (
+  server,
+  path,
+  { fieldName = "receipt", fileContent = "archivo", filename = "receipt.png", contentType = "image/png", method = "POST", user } = {}
+) => {
+  const boundary = `----gsm-boundary-${Date.now()}`;
+  const body = Buffer.from(
+    [
+      `--${boundary}\r\n`,
+      `Content-Disposition: form-data; name="${fieldName}"; filename="${filename}"\r\n`,
+      `Content-Type: ${contentType}\r\n\r\n`,
+      fileContent,
+      `\r\n--${boundary}--\r\n`,
+    ].join("")
+  );
+
+  return new Promise((resolve, reject) => {
+    const request = http.request(
+      {
+        host: "127.0.0.1",
+        port: server.address().port,
+        path,
+        method,
+        headers: {
+          "Content-Type": `multipart/form-data; boundary=${boundary}`,
+          "Content-Length": body.length,
+          ...(user ? { "x-test-user": JSON.stringify(user) } : {}),
+        },
+      },
+      (response) => {
+        let rawData = "";
+
+        response.on("data", (chunk) => {
+          rawData += chunk;
+        });
+
+        response.on("end", () => {
+          resolve({
+            status: response.statusCode,
+            body: JSON.parse(rawData),
+          });
+        });
+      }
+    );
+
+    request.on("error", reject);
+    request.write(body);
+    request.end();
+  });
+};
+
 describe("routes/payments", () => {
   let app;
   let server;
@@ -91,6 +147,7 @@ describe("routes/payments", () => {
 
   beforeEach(() => {
     postgresDB.query.mockReset();
+    receiptOcr.extractReceiptData.mockReset();
   });
 
   test("POST /api/payments responde 201 y persiste payment_type válido", async () => {
@@ -178,5 +235,92 @@ describe("routes/payments", () => {
     expect(postgresDB.query).toHaveBeenCalledWith(
       expect.stringContaining("p.payment_type")
     );
+  });
+
+  test("POST /api/payments/extract-receipt responde 401 sin auth", async () => {
+    const response = await requestMultipart(server, "/api/payments/extract-receipt");
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ message: "No autenticado" });
+    expect(receiptOcr.extractReceiptData).not.toHaveBeenCalled();
+  });
+
+  test("POST /api/payments/extract-receipt responde 400 sin archivo", async () => {
+    const response = await requestJson(server, "/api/payments/extract-receipt", {
+      method: "POST",
+      user: { id: 7, role: "seller" },
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ message: "No se envió ningún archivo" });
+    expect(receiptOcr.extractReceiptData).not.toHaveBeenCalled();
+  });
+
+  test("POST /api/payments/extract-receipt responde 200 con datos normalizados cuando OCR funciona", async () => {
+    receiptOcr.extractReceiptData.mockResolvedValueOnce({
+      amount: "155.75",
+      date: "2026-05-11",
+      reference: "ABC123",
+      bank: "banesco banco universal",
+      method: "transferencia bancaria",
+    });
+
+    const response = await requestMultipart(server, "/api/payments/extract-receipt", {
+      user: { id: 7, role: "seller" },
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      amount: 155.75,
+      date: "2026-05-11",
+      reference: "ABC123",
+      bank: "Banesco",
+      method: "transferencia",
+      raw: {
+        amount: "155.75",
+        date: "2026-05-11",
+        reference: "ABC123",
+        bank: "banesco banco universal",
+        method: "transferencia bancaria",
+      },
+    });
+  });
+
+  test("POST /api/payments/extract-receipt responde 200 con nulls cuando OCR falla", async () => {
+    receiptOcr.extractReceiptData.mockResolvedValueOnce({});
+
+    const response = await requestMultipart(server, "/api/payments/extract-receipt", {
+      user: { id: 7, role: "seller" },
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      amount: null,
+      date: null,
+      reference: null,
+      bank: null,
+      method: null,
+      raw: {},
+    });
+  });
+
+  test("POST /api/payments/extract-receipt normaliza pago movil y banco por coincidencia parcial", async () => {
+    receiptOcr.extractReceiptData.mockResolvedValueOnce({
+      amount: 50,
+      date: null,
+      reference: "PM-1",
+      bank: "mercantil banco",
+      method: "pago movil",
+    });
+
+    const response = await requestMultipart(server, "/api/payments/extract-receipt", {
+      user: { id: 7, role: "seller" },
+      filename: "receipt.jpg",
+      contentType: "image/jpeg",
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body.bank).toBe("Mercantil");
+    expect(response.body.method).toBe("pago_movil");
   });
 });
