@@ -76,6 +76,12 @@ const BANKS = [
   "Otro",
 ];
 
+const PAYMENT_TYPES = [
+  { value: "pago_factura", label: "Pago de factura" },
+  { value: "retencion", label: "Retención" },
+  { value: "ambos", label: "Ambos" },
+];
+
 const ReportPaymentModal = ({ clients, initialClient, onClose, userId }) => {
   const dispatch = useDispatch();
   const { isSubmitting } = useSelector((state) => state.sellerPayments);
@@ -91,6 +97,7 @@ const ReportPaymentModal = ({ clients, initialClient, onClose, userId }) => {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [method, setMethod] = useState("transferencia");
   const [bank, setBank] = useState("");
+  const [paymentType, setPaymentType] = useState("");
   const [notes, setNotes] = useState("");
   const [selectedInv, setSelectedInv] = useState({});
   const [submitted, setSubmitted] = useState(false);
@@ -175,6 +182,7 @@ const ReportPaymentModal = ({ clients, initialClient, onClose, userId }) => {
       payment_date: date,
       notes,
       bank: bank || undefined,
+      payment_type: paymentType,
       receipt_url: null,
       reported_by: userId,
       status: "pendiente_validacion",
@@ -205,7 +213,7 @@ const ReportPaymentModal = ({ clients, initialClient, onClose, userId }) => {
   };
 
   const canProceedStep0 = !!receipt;
-  const canProceedStep1 = !!client && amountNum > 0;
+  const canProceedStep1 = !!client && amountNum > 0 && !!paymentType;
 
   if (submitted) {
     return (
@@ -469,6 +477,25 @@ const ReportPaymentModal = ({ clients, initialClient, onClose, userId }) => {
                     {BANKS.map((b) => (
                       <option key={b} value={b}>
                         {b}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] text-gray-400 uppercase tracking-wide font-bold mb-1.5">
+                    Tipo de pago
+                  </label>
+                  <select
+                    value={paymentType}
+                    onChange={(e) => setPaymentType(e.target.value)}
+                    className={inputClass}
+                  >
+                    <option value="" disabled>
+                      Seleccionar tipo de pago...
+                    </option>
+                    {PAYMENT_TYPES.map((paymentOption) => (
+                      <option key={paymentOption.value} value={paymentOption.value}>
+                        {paymentOption.label}
                       </option>
                     ))}
                   </select>
