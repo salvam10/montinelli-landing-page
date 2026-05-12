@@ -3,11 +3,62 @@ const multer = require("multer");
 const router = express.Router();
 const postgresDB = require("../db/postgres");
 const { uploadReceipt, getReceiptUrl } = require("../services/r2Storage");
+const receiptOcr = require("../services/receiptOcr");
 
 const VALID_PAYMENT_TYPES = ["pago_factura", "retencion", "ambos"];
+const BANKS = [
+  "Banesco",
+  "Mercantil",
+  "Provincial",
+  "BNC",
+  "Venezuela",
+  "Bicentenario",
+  "Tesoro",
+  "Exterior",
+  "Caribe",
+  "Sofitasa",
+  "Plaza",
+  "Fondo Común",
+  "Activo",
+  "BOD",
+  "Bancrecer",
+  "Zelle",
+  "Otro",
+];
+const METHOD_ALIASES = {
+  "transferencia bancaria": "transferencia",
+  transferencia: "transferencia",
+  "pago movil": "pago_movil",
+  "pago móvil": "pago_movil",
+  pago_movil: "pago_movil",
+  zelle: "zelle",
+  efectivo: "efectivo",
+  cash: "efectivo",
+  cheque: "cheque",
+};
 
 const isValidPaymentType = (paymentType) =>
   VALID_PAYMENT_TYPES.includes(paymentType);
+
+function normalizeMethod(raw) {
+  if (!raw) return null;
+  const key = raw.toLowerCase().trim();
+  return METHOD_ALIASES[key] || null;
+}
+
+function normalizeBank(raw, banksList) {
+  if (!raw) return null;
+  const lower = raw.toLowerCase().trim();
+  const exact = banksList.find((bank) => bank.toLowerCase() === lower);
+
+  if (exact) return exact;
+
+  const partial = banksList.find(
+    (bank) => lower.includes(bank.toLowerCase()) || bank.toLowerCase().includes(lower)
+  );
+
+  return partial || null;
+}
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -192,6 +243,31 @@ router.get("/pending-receipts", async (req, res, next) => {
   }
 });
 
+router.post("/extract-receipt", upload.single("receipt"), async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: "No autenticado" });
+  }
+
+  if (!req.file) {
+    return res.status(400).json({ message: "No se envió ningún archivo" });
+  }
+
+  const raw = await receiptOcr.extractReceiptData(req.file.buffer, req.file.mimetype);
+
+  const paymentTypeRaw = raw.payment_type;
+  const validPaymentType = VALID_PAYMENT_TYPES.includes(paymentTypeRaw) ? paymentTypeRaw : null;
+
+  res.status(200).json({
+    amount: raw.amount != null ? Number(raw.amount) : null,
+    date: raw.date || null,
+    reference: raw.reference || null,
+    bank: normalizeBank(raw.bank, BANKS),
+    method: normalizeMethod(raw.method),
+    payment_type: validPaymentType,
+    raw,
+  });
+});
+
 // PATCH /api/payments/:paymentId/status — validar o rechazar un pago (admin)
 router.patch("/:paymentId/status", async (req, res, next) => {
   const paymentId = parseInt(req.params.paymentId, 10);
@@ -205,7 +281,7 @@ router.patch("/:paymentId/status", async (req, res, next) => {
     return res.status(403).json({ message: "Forbidden" });
   }
 
-  if (!["validado", "rechazado"].includes(status)) {
+  if (!["validado", "rechazado", "pendiente_validacion"].includes(status)) {
     return res.status(400).json({ message: "Estado inválido" });
   }
 

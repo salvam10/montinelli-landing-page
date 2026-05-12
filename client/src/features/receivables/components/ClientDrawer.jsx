@@ -59,7 +59,7 @@ const DrawerTabs = ({ client, invoices, invoicesLoading, sellerPayments }) => {
   const [tab, setTab] = useState("facturas");
 
   const clientPayments = sellerPayments.filter(
-    (p) => p.client_id === client.client_id
+    (p) => String(p.client_id) === String(client.client_id)
   );
 
   const tabs = [
