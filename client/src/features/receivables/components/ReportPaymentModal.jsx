@@ -1,8 +1,11 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { submitPaymentReport } from "../../slices/sellerPaymentsSlice";
-import { fetchClientInvoices } from "../../slices/clientInvoicesSlice";
-import { uploadReceipt as uploadReceiptApi } from "../../../api/receivablesApi";
+// import { fetchClientInvoices } from "../../slices/clientInvoicesSlice";
+import {
+  extractReceiptData,
+  uploadReceipt as uploadReceiptApi,
+} from "../../../api/receivablesApi";
 import ClientAvatar from "./ClientAvatar";
 import { fmtMoney } from "../receivablesHelpers";
 
@@ -54,7 +57,13 @@ const Stepper = ({ step }) => (
 const inputClass =
   "w-full px-2.5 py-2 rounded-lg border border-gray-200 text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400";
 
-const METHODS = ["transferencia", "pago_movil", "zelle", "efectivo", "cheque"];
+const METHODS_BS = ["transferencia", "pago_movil"];
+const METHODS_USD = ["zelle", "efectivo"];
+
+const CURRENCIES = [
+  { value: "VES", label: "Bs" },
+  { value: "USD", label: "USD" },
+];
 
 const BANKS = [
   "Banesco",
@@ -85,7 +94,7 @@ const PAYMENT_TYPES = [
 const ReportPaymentModal = ({ clients, initialClient, onClose, userId }) => {
   const dispatch = useDispatch();
   const { isSubmitting } = useSelector((state) => state.sellerPayments);
-  const { items: invoices } = useSelector((state) => state.clientInvoices);
+  // const { items: invoices } = useSelector((state) => state.clientInvoices);
 
   const [step, setStep] = useState(0);
   const [receipt, setReceipt] = useState(null);
@@ -95,12 +104,15 @@ const ReportPaymentModal = ({ clients, initialClient, onClose, userId }) => {
   const [amount, setAmount] = useState("");
   const [reference, setReference] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [currency, setCurrency] = useState("VES");
   const [method, setMethod] = useState("transferencia");
   const [bank, setBank] = useState("");
   const [paymentType, setPaymentType] = useState("");
   const [notes, setNotes] = useState("");
-  const [selectedInv, setSelectedInv] = useState({});
+  // const [selectedInv, setSelectedInv] = useState({});
   const [submitted, setSubmitted] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [ocrNotice, setOcrNotice] = useState("");
   const fileRef = useRef(null);
 
   // Cerrar con Escape
@@ -112,15 +124,45 @@ const ReportPaymentModal = ({ clients, initialClient, onClose, userId }) => {
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  // Cargar facturas cuando se selecciona un cliente
-  useEffect(() => {
-    if (client?.client_id) {
-      dispatch(fetchClientInvoices(client.client_id));
+  // Facturas deshabilitadas — la asignación la hace admin
+  // useEffect(() => {
+  //   if (client?.client_id) {
+  //     dispatch(fetchClientInvoices(client.client_id));
+  //   }
+  // }, [dispatch, client?.client_id]);
+
+  const runOcr = async (file) => {
+    setIsExtracting(true);
+    setOcrNotice("");
+
+    try {
+      const data = await extractReceiptData(file);
+
+      if (data && (data.amount || data.date || data.reference || data.bank || data.method || data.payment_type)) {
+        if (data.amount) {
+          const num = Number(data.amount);
+          setAmount(num > 0 ? formatAmount(num, currency) : String(data.amount));
+        }
+        if (data.date) setDate(data.date);
+        if (data.reference) setReference(data.reference);
+        if (data.bank) setBank(data.bank);
+        if (data.method) setMethod(data.method);
+        if (data.payment_type) setPaymentType(data.payment_type);
+
+        setOcrNotice("Datos extraídos del comprobante. Verificá y corregí si es necesario.");
+      } else {
+        setOcrNotice("No pudimos extraer los datos, completá manualmente.");
+      }
+    } catch {
+      setOcrNotice("No pudimos extraer los datos, completá manualmente.");
+    } finally {
+      setIsExtracting(false);
     }
-  }, [dispatch, client?.client_id]);
+  };
 
   const handleFile = (file) => {
     if (!file) return;
+
     const reader = new FileReader();
     reader.onload = () => {
       setReceipt({
@@ -130,6 +172,8 @@ const ReportPaymentModal = ({ clients, initialClient, onClose, userId }) => {
         type: file.type,
         size: file.size,
       });
+
+      runOcr(file);
     };
     reader.readAsDataURL(file);
   };
@@ -148,25 +192,27 @@ const ReportPaymentModal = ({ clients, initialClient, onClose, userId }) => {
       .slice(0, 12);
   }, [clients, query]);
 
-  const totalApplied = Object.values(selectedInv).reduce(
-    (a, v) => a + (Number(v) || 0),
-    0
-  );
-  const amountNum = Number(amount) || 0;
-
-  const autoApply = () => {
-    let remaining = amountNum;
-    const next = {};
-    const sorted = invoices
-      .slice()
-      .sort((a, b) => (b.days_overdue || 0) - (a.days_overdue || 0));
-    for (const inv of sorted) {
-      if (remaining <= 0) break;
-      const apply = Math.min(remaining, Number(inv.amount));
-      next[inv.invoice_number] = apply;
-      remaining -= apply;
+  // Parsear monto crudo a número
+  const parseAmount = (raw) => {
+    if (!raw) return 0;
+    // Quitar todo excepto dígitos, puntos y comas
+    const clean = raw.replace(/[^0-9.,]/g, "");
+    // Si tiene coma como decimal (formato Bs: 140.758,00)
+    if (clean.includes(",") && clean.lastIndexOf(",") > clean.lastIndexOf(".")) {
+      return Number(clean.replace(/\./g, "").replace(",", ".")) || 0;
     }
-    setSelectedInv(next);
+    // Formato USD normal: 1,500.50 o plain number
+    return Number(clean.replace(/,/g, "")) || 0;
+  };
+  const amountNum = parseAmount(amount);
+
+  // Formatear número para display
+  const formatAmount = (num, curr) => {
+    if (!num || num === 0) return "";
+    if (curr === "VES") {
+      return num.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
   const [submitError, setSubmitError] = useState(null);
@@ -177,6 +223,7 @@ const ReportPaymentModal = ({ clients, initialClient, onClose, userId }) => {
     const paymentData = {
       client_id: client.client_id,
       amount: amountNum,
+      currency_code: currency,
       method,
       reference,
       payment_date: date,
@@ -329,7 +376,10 @@ const ReportPaymentModal = ({ clients, initialClient, onClose, userId }) => {
                     </div>
                   </div>
                   <button
-                    onClick={() => setReceipt(null)}
+                    onClick={() => {
+                      setReceipt(null);
+                      setOcrNotice("");
+                    }}
                     className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 border border-gray-200 rounded"
                   >
                     Cambiar
@@ -342,6 +392,36 @@ const ReportPaymentModal = ({ clients, initialClient, onClose, userId }) => {
           {/* Step 1: Details + invoice assignment */}
           {step === 1 && (
             <div className="space-y-4">
+              {(isExtracting || ocrNotice) && (
+                <div
+                  role="status"
+                  className={`rounded-xl border px-3 py-2 text-xs flex items-start justify-between gap-3 ${
+                    isExtracting || ocrNotice.includes("No pudimos")
+                      ? "border-yellow-200 bg-yellow-50 text-yellow-700"
+                      : "border-blue-200 bg-blue-50 text-blue-700"
+                  }`}
+                >
+                  <div>
+                    {isExtracting && (
+                      <div className="font-semibold animate-pulse">
+                        Extrayendo datos del comprobante...
+                      </div>
+                    )}
+                    {!isExtracting && ocrNotice && <div>{ocrNotice}</div>}
+                  </div>
+                  {ocrNotice && !isExtracting && (
+                    <button
+                      type="button"
+                      aria-label="Ocultar aviso de OCR"
+                      onClick={() => setOcrNotice("")}
+                      className="shrink-0 text-[11px] font-semibold hover:opacity-80"
+                    >
+                      Ocultar
+                    </button>
+                  )}
+                </div>
+              )}
+
               {/* Client picker */}
               <div>
                 <label className="block text-[11px] text-gray-400 uppercase tracking-wide font-bold mb-1.5">
@@ -396,10 +476,7 @@ const ReportPaymentModal = ({ clients, initialClient, onClose, userId }) => {
                       </div>
                     </div>
                     <button
-                      onClick={() => {
-                        setClient(null);
-                        setSelectedInv({});
-                      }}
+                      onClick={() => setClient(null)}
                       className="text-xs text-gray-500 hover:text-gray-700"
                     >
                       Cambiar
@@ -412,15 +489,53 @@ const ReportPaymentModal = ({ clients, initialClient, onClose, userId }) => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] text-gray-400 uppercase tracking-wide font-bold mb-1.5">
-                    Monto
+                    Moneda
+                  </label>
+                  <div className="flex gap-1.5">
+                    {CURRENCIES.map((c) => (
+                      <button
+                        key={c.value}
+                        type="button"
+                        onClick={() => {
+                          setCurrency(c.value);
+                          const methods = c.value === "VES" ? METHODS_BS : METHODS_USD;
+                          setMethod(methods[0]);
+                        }}
+                        aria-pressed={currency === c.value}
+                        className={`px-3 py-1.5 rounded text-xs font-semibold border ${
+                          currency === c.value
+                            ? "border-orange-400 bg-orange-50 text-orange-600"
+                            : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
+                        }`}
+                      >
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[11px] text-gray-400 uppercase tracking-wide font-bold mb-1.5">
+                    Monto ({currency === "VES" ? "Bs" : "$"})
                   </label>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    step="0.01"
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/[^0-9.,]/g, "");
+                      setAmount(raw);
+                    }}
+                    onBlur={() => {
+                      const num = parseAmount(amount);
+                      if (num > 0) setAmount(formatAmount(num, currency));
+                    }}
+                    onFocus={() => {
+                      // Al enfocar, mostrar el número crudo para editar fácil
+                      const num = parseAmount(amount);
+                      if (num > 0) setAmount(String(num));
+                    }}
                     className={inputClass}
-                    placeholder="0.00"
+                    placeholder={currency === "VES" ? "0,00" : "0.00"}
                   />
                 </div>
                 <div>
@@ -449,10 +564,12 @@ const ReportPaymentModal = ({ clients, initialClient, onClose, userId }) => {
                     Método
                   </label>
                   <div className="flex gap-1.5 flex-wrap">
-                    {METHODS.map((m) => (
+                    {(currency === "VES" ? METHODS_BS : METHODS_USD).map((m) => (
                       <button
                         key={m}
+                        type="button"
                         onClick={() => setMethod(m)}
+                        aria-pressed={method === m}
                         className={`px-3 py-1.5 rounded text-xs font-semibold border capitalize ${
                           method === m
                             ? "border-orange-400 bg-orange-50 text-orange-600"
@@ -466,154 +583,27 @@ const ReportPaymentModal = ({ clients, initialClient, onClose, userId }) => {
                 </div>
                 <div>
                   <label className="block text-[11px] text-gray-400 uppercase tracking-wide font-bold mb-1.5">
-                    Banco
-                  </label>
-                  <select
-                    value={bank}
-                    onChange={(e) => setBank(e.target.value)}
-                    className={inputClass}
-                  >
-                    <option value="">Seleccionar banco</option>
-                    {BANKS.map((b) => (
-                      <option key={b} value={b}>
-                        {b}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[11px] text-gray-400 uppercase tracking-wide font-bold mb-1.5">
                     Tipo de pago
                   </label>
-                  <select
-                    value={paymentType}
-                    onChange={(e) => setPaymentType(e.target.value)}
-                    className={inputClass}
-                  >
-                    <option value="" disabled>
-                      Seleccionar tipo de pago...
-                    </option>
+                  <div className="flex gap-1.5 flex-wrap">
                     {PAYMENT_TYPES.map((paymentOption) => (
-                      <option key={paymentOption.value} value={paymentOption.value}>
+                      <button
+                        key={paymentOption.value}
+                        type="button"
+                        onClick={() => setPaymentType(paymentOption.value)}
+                        aria-pressed={paymentType === paymentOption.value}
+                        className={`px-3 py-1.5 rounded text-xs font-semibold border ${
+                          paymentType === paymentOption.value
+                            ? "border-orange-400 bg-orange-50 text-orange-600"
+                            : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
+                        }`}
+                      >
                         {paymentOption.label}
-                      </option>
+                      </button>
                     ))}
-                  </select>
+                  </div>
                 </div>
               </div>
-
-              {/* Invoice assignment */}
-              {client && invoices.length > 0 && (
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-[11px] text-gray-400 uppercase tracking-wide font-bold">
-                      Aplicar a facturas
-                    </span>
-                    <div className="flex gap-1.5">
-                      <button
-                        onClick={autoApply}
-                        className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 border border-gray-200 rounded"
-                      >
-                        Auto-asignar
-                      </button>
-                      <button
-                        onClick={() => setSelectedInv({})}
-                        className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 border border-gray-200 rounded"
-                      >
-                        Limpiar
-                      </button>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-1.5 max-h-48 overflow-auto">
-                    {invoices.map((inv) => {
-                      const checked = inv.invoice_number in selectedInv;
-                      return (
-                        <div
-                          key={inv.order_id}
-                          className={`grid grid-cols-[24px_1fr_100px_110px] gap-2.5 items-center px-3 py-2 bg-white rounded-lg border ${
-                            checked ? "border-orange-400" : "border-gray-100"
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() =>
-                              setSelectedInv((p) => {
-                                const n = { ...p };
-                                if (checked) delete n[inv.invoice_number];
-                                else n[inv.invoice_number] = Number(inv.amount);
-                                return n;
-                              })
-                            }
-                            className="w-4 h-4 accent-orange-500 cursor-pointer"
-                          />
-                          <div>
-                            <div className="text-[13px] font-semibold font-mono">
-                              {inv.invoice_number}
-                            </div>
-                            <div className="text-[11px] text-gray-400">
-                              Vence {inv.due}
-                              {inv.status === "vencida" && (
-                                <span className="text-red-500 font-semibold">
-                                  {" "}
-                                  · {inv.days_overdue}d
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="text-right text-[13px] font-bold tabular-nums">
-                            {fmtMoney(inv.amount)}
-                          </div>
-                          <div>
-                            {checked ? (
-                              <input
-                                type="number"
-                                value={selectedInv[inv.invoice_number]}
-                                step="0.01"
-                                min="0"
-                                max={inv.amount}
-                                onChange={(e) =>
-                                  setSelectedInv((p) => ({
-                                    ...p,
-                                    [inv.invoice_number]: Math.max(
-                                      0,
-                                      Math.min(
-                                        Number(e.target.value) || 0,
-                                        Number(inv.amount)
-                                      )
-                                    ),
-                                  }))
-                                }
-                                className={`${inputClass} text-right py-1.5`}
-                              />
-                            ) : (
-                              <span className="text-gray-400 text-[11px]">
-                                —
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="mt-2.5 p-2.5 bg-white rounded-lg border border-gray-100 flex justify-between text-xs">
-                    <div className="text-gray-400">
-                      Aplicado:{" "}
-                      <span className="font-bold text-gray-900 tabular-nums">
-                        {fmtMoney(totalApplied)}
-                      </span>
-                    </div>
-                    {amountNum > 0 && totalApplied < amountNum && (
-                      <div className="text-gray-400">
-                        Sin asignar:{" "}
-                        <span className="font-bold tabular-nums">
-                          {fmtMoney(amountNum - totalApplied)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
 
               {/* Notes */}
               <div>
@@ -665,17 +655,13 @@ const ReportPaymentModal = ({ clients, initialClient, onClose, userId }) => {
                   </span>
                 </div>
                 <div className="flex justify-between border-b border-dashed border-gray-100 pb-1">
-                  <span className="text-gray-400">Banco</span>
-                  <span className="font-semibold">{bank || "—"}</span>
-                </div>
-                <div className="flex justify-between border-b border-dashed border-gray-100 pb-1">
                   <span className="text-gray-400">Comprobante</span>
                   <span className="font-semibold">{receipt?.name || "—"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Aplicado a</span>
+                  <span className="text-gray-400">Moneda</span>
                   <span className="font-semibold">
-                    {Object.keys(selectedInv).length} factura(s)
+                    {currency === "VES" ? "Bolívares" : "Dólares"}
                   </span>
                 </div>
               </div>

@@ -80,6 +80,21 @@ export const uploadReceipt = async (paymentId, file) => {
   return response.json();
 };
 
+export const extractReceiptData = async (file) => {
+  const formData = new FormData();
+  formData.append("receipt", file);
+
+  const response = await fetch(`${SERVER_URL}/api/payments/extract-receipt`, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+  });
+
+  if (!response.ok) return null;
+
+  return response.json();
+};
+
 /** Obtener URL firmada del comprobante (admin) */
 export const getReceiptUrl = async (paymentId) => {
   const response = await fetch(

@@ -1,8 +1,9 @@
-import React, { act } from "react";
+import React from "react";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useDispatch, useSelector } from "react-redux";
 import ReportPaymentModal from "./ReportPaymentModal";
 import { submitPaymentReport } from "../../slices/sellerPaymentsSlice";
+import { extractReceiptData } from "../../../api/receivablesApi";
 
 jest.mock("react-redux", () => ({
   useDispatch: jest.fn(),
@@ -21,6 +22,7 @@ jest.mock("../../slices/clientInvoicesSlice", () => ({
 }));
 
 jest.mock("../../../api/receivablesApi", () => ({
+  extractReceiptData: jest.fn(),
   uploadReceipt: jest.fn(),
 }));
 
@@ -42,6 +44,18 @@ const renderModal = () =>
       userId={99}
     />
   );
+
+const createDeferred = () => {
+  let resolve;
+  let reject;
+
+  const promise = new Promise((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+
+  return { promise, resolve, reject };
+};
 
 const goToStepOne = async () => {
   const view = renderModal();
@@ -71,6 +85,7 @@ beforeAll(() => {
 beforeEach(() => {
   dispatchMock.mockReset();
   submitPaymentReport.mockReset();
+  extractReceiptData.mockReset();
 
   useDispatch.mockReturnValue(dispatchMock);
   useSelector.mockImplementation((selector) =>
@@ -94,25 +109,127 @@ beforeEach(() => {
 
     return action;
   });
+
+  extractReceiptData.mockResolvedValue(null);
 });
 
 describe("ReportPaymentModal", () => {
-  test("muestra el select de tipo de pago con sus opciones en el paso 1", async () => {
+  test("muestra el estado de extracción mientras corre el OCR", async () => {
+    const deferred = createDeferred();
+    extractReceiptData.mockReturnValue(deferred.promise);
+
     await goToStepOne();
 
-    const placeholderOption = screen.getByRole("option", {
-      name: /seleccionar tipo de pago/i,
-    });
-    const paymentTypeSelect = placeholderOption.closest("select");
+    expect(
+      screen.getByText(/extrayendo datos del comprobante/i)
+    ).toBeInTheDocument();
 
-    expect(paymentTypeSelect).toBeInTheDocument();
-    expect(within(paymentTypeSelect).getByRole("option", { name: "Pago de factura" })).toBeInTheDocument();
-    expect(within(paymentTypeSelect).getByRole("option", { name: "Retención" })).toBeInTheDocument();
-    expect(within(paymentTypeSelect).getByRole("option", { name: "Ambos" })).toBeInTheDocument();
-    expect(within(paymentTypeSelect).getAllByRole("option")).toHaveLength(4);
+    deferred.resolve({});
+
+    await waitFor(() => {
+      expect(
+        screen.queryByText(/extrayendo datos del comprobante/i)
+      ).not.toBeInTheDocument();
+    });
   });
 
-  test("no permite avanzar al paso 2 sin seleccionar tipo de pago", async () => {
+  test("precompleta datos del OCR y permite editarlos", async () => {
+    extractReceiptData.mockResolvedValue({
+      amount: 1500,
+      date: "2026-05-10",
+      reference: "12345",
+      bank: "Banesco",
+      method: "zelle",
+    });
+
+    await goToStepOne();
+
+    expect(
+      await screen.findByText(/datos extraídos del comprobante/i)
+    ).toBeInTheDocument();
+
+    const amountInput = screen.getByDisplayValue("1500");
+    const dateInput = screen.getByDisplayValue("2026-05-10");
+    const referenceInput = screen.getByDisplayValue("12345");
+    const bankSelect = screen.getByDisplayValue("Banesco");
+    const zelleButton = screen.getByRole("button", { name: "zelle" });
+
+    expect(amountInput).toBeInTheDocument();
+    expect(dateInput).toBeInTheDocument();
+    expect(referenceInput).toBeInTheDocument();
+    expect(bankSelect).toBeInTheDocument();
+    expect(zelleButton).toHaveAttribute("aria-pressed", "true");
+
+    fireEvent.change(amountInput, { target: { value: "1750.5" } });
+    fireEvent.change(dateInput, { target: { value: "2026-05-11" } });
+    fireEvent.change(referenceInput, { target: { value: "54321" } });
+    fireEvent.change(bankSelect, { target: { value: "Mercantil" } });
+    fireEvent.click(screen.getByRole("button", { name: /transferencia/i }));
+
+    expect(screen.getByDisplayValue("1750.5")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("2026-05-11")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("54321")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Mercantil")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /transferencia/i })
+    ).toHaveAttribute("aria-pressed", "true");
+  });
+
+  test("muestra fallback cuando OCR falla y no bloquea el avance al paso 1", async () => {
+    extractReceiptData.mockRejectedValue(new Error("ocr failed"));
+
+    await goToStepOne();
+
+    expect(
+      await screen.findByText(/no pudimos extraer los datos, completá manualmente/i)
+    ).toBeInTheDocument();
+
+    expect(screen.getByText("Cliente")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("0.00")).toHaveValue(null);
+  });
+
+  test("muestra chips de tipo de pago en lugar de un select", async () => {
+    await goToStepOne();
+
+    expect(
+      screen.queryByRole("option", { name: /pago de factura/i })
+    ).not.toBeInTheDocument();
+
+    const paymentTypeButtons = [
+      screen.getByRole("button", { name: /pago de factura/i }),
+      screen.getByRole("button", { name: /retención/i }),
+      screen.getByRole("button", { name: /ambos/i }),
+    ];
+
+    expect(paymentTypeButtons).toHaveLength(3);
+  });
+
+  test("permite seleccionar un solo chip de tipo de pago a la vez", async () => {
+    await goToStepOne();
+
+    const invoiceButton = screen.getByRole("button", {
+      name: /pago de factura/i,
+    });
+    const retentionButton = screen.getByRole("button", { name: /retención/i });
+    const bothButton = screen.getByRole("button", { name: /ambos/i });
+
+    expect(invoiceButton).toHaveAttribute("aria-pressed", "false");
+    expect(retentionButton).toHaveAttribute("aria-pressed", "false");
+    expect(bothButton).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(retentionButton);
+
+    expect(retentionButton).toHaveAttribute("aria-pressed", "true");
+    expect(invoiceButton).toHaveAttribute("aria-pressed", "false");
+    expect(bothButton).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(bothButton);
+
+    expect(bothButton).toHaveAttribute("aria-pressed", "true");
+    expect(retentionButton).toHaveAttribute("aria-pressed", "false");
+  });
+
+  test("sigue requiriendo seleccionar tipo de pago para avanzar al paso 2", async () => {
     await goToStepOne();
 
     fireEvent.change(screen.getByPlaceholderText("0.00"), {
@@ -129,15 +246,11 @@ describe("ReportPaymentModal", () => {
       target: { value: "250" },
     });
 
-    fireEvent.change(screen.getByRole("option", {
-      name: /seleccionar tipo de pago/i,
-    }).closest("select"), {
-      target: { value: "retencion" },
-    });
+    fireEvent.click(screen.getByRole("button", { name: /retención/i }));
 
     fireEvent.click(screen.getByRole("button", { name: /revisar/i }));
 
-    await act(async () => {
+    await waitFor(() => {
       fireEvent.click(screen.getByRole("button", { name: /enviar a tesorería/i }));
     });
 
