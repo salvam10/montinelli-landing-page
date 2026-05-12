@@ -48,6 +48,12 @@ const XSmallIcon = () => (
   </svg>
 );
 
+const PAYMENT_TYPE_LABELS = {
+  pago_factura: "Pago de factura",
+  retencion: "Retención",
+  ambos: "Ambos",
+};
+
 // ─── Tabs del drawer ─────────────────────────────────────────────────────────
 const DrawerTabs = ({ client, invoices, invoicesLoading, sellerPayments }) => {
   const [tab, setTab] = useState("facturas");
@@ -156,6 +162,7 @@ const DrawerTabs = ({ client, invoices, invoicesLoading, sellerPayments }) => {
                           {p.payment_date || p.created_at?.slice(0, 10)} ·{" "}
                           {p.method?.replace("_", " ")}
                           {p.reference && ` · Ref. ${p.reference}`}
+                          {p.payment_type && PAYMENT_TYPE_LABELS[p.payment_type] && ` · ${PAYMENT_TYPE_LABELS[p.payment_type]}`}
                         </div>
                       </div>
                       <span
