@@ -276,6 +276,7 @@ describe("routes/payments", () => {
       reference: "ABC123",
       bank: "Banesco",
       method: "transferencia",
+      payment_type: null,
       raw: {
         amount: "155.75",
         date: "2026-05-11",
@@ -300,6 +301,7 @@ describe("routes/payments", () => {
       reference: null,
       bank: null,
       method: null,
+      payment_type: null,
       raw: {},
     });
   });

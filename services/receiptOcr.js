@@ -6,8 +6,6 @@ async function pdfToImage(pdfBuffer) {
   const secret = process.env.CONVERTAPI_SECRET;
   const url = `https://v2.convertapi.com/convert/pdf/to/png?Secret=${secret}&StoreFile=true&PageRange=1&ImageResolution=150`;
 
-  const FormData = (await import("node-fetch")).default ? null : null;
-  // Use multipart boundary manually
   const boundary = "----ConvertApiBoundary" + Date.now();
   const fileName = "receipt.pdf";
 

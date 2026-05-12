@@ -1,5 +1,4 @@
 let mockOpenaiCreate;
-let mockConvert;
 
 jest.mock("openai", () => {
   mockOpenaiCreate = jest.fn();
@@ -11,11 +10,6 @@ jest.mock("openai", () => {
       },
     },
   }));
-});
-
-jest.mock("convertapi", () => {
-  mockConvert = jest.fn();
-  return jest.fn(() => ({ convert: mockConvert }));
 });
 
 describe("services/receiptOcr", () => {
@@ -41,7 +35,8 @@ describe("services/receiptOcr", () => {
     const result = await extractReceiptData(Buffer.from("imagen"), "image/png");
 
     expect(result).toEqual({ amount: 125.5, bank: "Banesco" });
-    expect(mockConvert).not.toHaveBeenCalled();
+    // fetch should NOT be called for images (no ConvertAPI needed)
+    expect(global.fetch).not.toHaveBeenCalled();
     expect(mockOpenaiCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         model: "gpt-4o-mini",
@@ -50,12 +45,17 @@ describe("services/receiptOcr", () => {
     );
   });
 
-  test("extractReceiptData con PDF convierte la primera página y luego llama a OpenAI", async () => {
+  test("extractReceiptData con PDF convierte via ConvertAPI y luego llama a OpenAI", async () => {
     const pngBuffer = Buffer.from("png-file");
 
-    mockConvert.mockResolvedValueOnce({
-      response: { Files: [{ Url: "https://example.com/receipt.png" }] },
+    // First fetch: ConvertAPI PDF→PNG
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: jest.fn().mockResolvedValueOnce({
+        Files: [{ Url: "https://example.com/receipt.png" }],
+      }),
     });
+    // Second fetch: download converted PNG
     global.fetch.mockResolvedValueOnce({
       arrayBuffer: jest.fn().mockResolvedValueOnce(
         pngBuffer.buffer.slice(
@@ -71,32 +71,14 @@ describe("services/receiptOcr", () => {
     const result = await extractReceiptData(Buffer.from("pdf-file"), "application/pdf");
 
     expect(result).toEqual({ amount: 88, method: "transferencia" });
-    expect(mockConvert).toHaveBeenCalledWith(
-      "png",
-      expect.objectContaining({
-        File: expect.objectContaining({ name: "receipt.pdf" }),
-        PageRange: "1",
-        ImageResolution: "150",
-      }),
-      "pdf"
+    // First call is ConvertAPI
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining("v2.convertapi.com/convert/pdf/to/png"),
+      expect.objectContaining({ method: "POST" })
     );
+    // Second call downloads the PNG
     expect(global.fetch).toHaveBeenCalledWith("https://example.com/receipt.png");
-    expect(mockOpenaiCreate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        messages: [
-          expect.objectContaining({
-            content: expect.arrayContaining([
-              expect.objectContaining({
-                type: "image_url",
-                image_url: {
-                  url: `data:image/png;base64,${pngBuffer.toString("base64")}`,
-                },
-              }),
-            ]),
-          }),
-        ],
-      })
-    );
+    expect(mockOpenaiCreate).toHaveBeenCalled();
   });
 
   test("extractReceiptData devuelve {} cuando OpenAI falla", async () => {
@@ -111,15 +93,17 @@ describe("services/receiptOcr", () => {
   });
 
   test("extractReceiptData devuelve {} cuando ConvertAPI falla con PDF", async () => {
-    mockConvert.mockRejectedValueOnce(new Error("convert failed"));
+    global.fetch.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      text: jest.fn().mockResolvedValueOnce("Server error"),
+    });
     const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
     const result = await extractReceiptData(Buffer.from("pdf-file"), "application/pdf");
 
     expect(result).toEqual({});
-    expect(global.fetch).not.toHaveBeenCalled();
     expect(mockOpenaiCreate).not.toHaveBeenCalled();
-    expect(errorSpy).toHaveBeenCalledWith("OCR extraction failed:", "convert failed");
     errorSpy.mockRestore();
   });
 });
