@@ -66,6 +66,8 @@ const reactRouterRoutes = [
   "/admin/orders",
   "/admin/orders/:orderId",
   "/admin/competitor-dashboard",
+  "/admin/pending-receipts",
+  "/cuenta-por-cobrar",
 ];
 
 const reactRouterMiddleware = (req, res, next) => {
