@@ -893,16 +893,18 @@ function Contact() {
               contacto@grupomontinelli.com
             </a>
             <a
-              href="tel:+58000000000"
+              href="tel:+584129659226"
               className="flex items-center gap-4 text-cream/80 hover:text-gold transition-colors"
             >
-              <Phone size={18} className="text-gold" /> +58 (000) 000 00 00
+              <Phone size={18} className="text-gold" /> +58 412 965 9226
             </a>
             <div className="flex items-center gap-4 text-cream/80">
-              <MapPin size={18} className="text-gold" /> Caracas, Venezuela
+              <MapPin size={18} className="text-gold" /> Av. Abraham Lincoln con
+              Calle Olimpo, Edif. Torre Domus, Piso 13, Of. 13B-1, Plaza
+              Venezuela, Caracas 1053
             </div>
             <a
-              href="https://wa.me/580000000000"
+              href="https://wa.me/584129659226"
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-3 mt-4 bg-gold text-[var(--ink)] px-6 py-3 text-[12px] tracking-[0.2em] uppercase hover:bg-[var(--gold-soft)] transition-all"
@@ -1027,8 +1029,12 @@ function Footer() {
           </h4>
           <ul className="space-y-3 text-sm">
             <li>contacto@grupomontinelli.com</li>
-            <li>Caracas, Venezuela</li>
-            <li>+58 (000) 000 00 00</li>
+            <li>+58 412 965 9226</li>
+            <li className="leading-relaxed text-cream/60">
+              Av. Abraham Lincoln con Calle Olimpo, Edif. Torre Domus, Piso 13,
+              Of. 13B-1, Plaza Venezuela, Caracas 1053
+            </li>
+            <li className="text-cream/40">RIF: J-503669837</li>
           </ul>
         </div>
       </div>
