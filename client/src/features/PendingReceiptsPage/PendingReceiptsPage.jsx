@@ -5,6 +5,7 @@ import {
   changePaymentStatus,
 } from "../slices/pendingReceiptsSlice";
 import { getReceiptUrl } from "../../api/receivablesApi";
+import AdminReportPaymentModal from "../receivables/components/AdminReportPaymentModal";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import CheckOutlinedIcon from "@mui/icons-material/CheckOutlined";
@@ -336,6 +337,7 @@ const PendingReceiptsPage = () => {
   const [lightboxUrl, setLightboxUrl] = useState(null);
   const [loadingReceipt, setLoadingReceipt] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [isReportPaymentOpen, setIsReportPaymentOpen] = useState(false);
 
   useEffect(() => {
     dispatch(fetchPendingReceipts());
@@ -490,10 +492,18 @@ const PendingReceiptsPage = () => {
             Validación de pagos enviados por vendedores · {items.length} total
           </p>
         </div>
-        <button className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-          <FileDownloadOutlinedIcon sx={{ fontSize: 18 }} />
-          Exportar
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsReportPaymentOpen(true)}
+            className="inline-flex items-center gap-2 rounded-lg bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-600 transition-colors"
+          >
+            Reportar pago
+          </button>
+          <button className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+            <FileDownloadOutlinedIcon sx={{ fontSize: 18 }} />
+            Exportar
+          </button>
+        </div>
       </div>
 
       {/* Status chips */}
@@ -656,6 +666,16 @@ const PendingReceiptsPage = () => {
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/20">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-gray-800" />
         </div>
+      )}
+
+      {isReportPaymentOpen && (
+        <AdminReportPaymentModal
+          onClose={() => setIsReportPaymentOpen(false)}
+          onSuccess={async () => {
+            setIsReportPaymentOpen(false);
+            await dispatch(fetchPendingReceipts());
+          }}
+        />
       )}
     </div>
   );

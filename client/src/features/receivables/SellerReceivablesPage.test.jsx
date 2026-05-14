@@ -74,11 +74,41 @@ jest.mock("../slices/clientInvoicesSlice", () => {
 
 // Mock heavy child components to keep tests focused on page behavior
 jest.mock("./components/ClientDrawer", () => {
-  return function MockClientDrawer({ client, onClose }) {
+  const mockReact = require("react");
+
+  return function MockClientDrawer({ client, onClose, sellerPayments = [] }) {
+    const [activeTab, setActiveTab] = mockReact.useState("facturas");
+
     if (!client) return null;
+
+    const clientPayments = sellerPayments.filter(
+      (payment) => String(payment.client_id) === String(client.client_id)
+    );
+
     return (
       <div data-testid="client-drawer">
         <span>{client.client_name}</span>
+        <button onClick={() => setActiveTab("facturas")}>Facturas (0)</button>
+        <button onClick={() => setActiveTab("pagos")}>
+          Pagos reportados ({clientPayments.length})
+        </button>
+        {activeTab === "pagos" && (
+          <div data-testid="seller-payments-panel">
+            {clientPayments.map((payment) => (
+              <div key={payment.id}>
+                <span>{payment.client_name}</span>
+                {payment.receipt_url && <span>{payment.receipt_url.split("/").pop()}</span>}
+                <span>
+                  {payment.status === "validado"
+                    ? "Validado"
+                    : payment.status === "rechazado"
+                      ? "Rechazado"
+                      : "En revisión"}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
         <button onClick={onClose}>Cerrar</button>
       </div>
     );
@@ -251,11 +281,10 @@ describe("SellerReceivablesPage — data state", () => {
 
   test("renders summary cards", () => {
     renderPage(storeState);
-    expect(screen.getByText(/por cobrar.*neto/i)).toBeInTheDocument();
-    // "Vencido" and "Crítico" appear in both summary card and filter chips
+    expect(screen.getAllByText(/deuda neta/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/deuda bruta/i)).toBeInTheDocument();
     expect(screen.getAllByText("Vencido").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(/crítico/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(/composición de cartera/i)).toBeInTheDocument();
+    expect(screen.getByText(/peor mora/i)).toBeInTheDocument();
   });
 
   test("filters clients by search", () => {
@@ -278,7 +307,7 @@ describe("SellerReceivablesPage — data state", () => {
     expect(screen.getByTestId("report-payment-modal")).toBeInTheDocument();
   });
 
-  test("opens seller payments panel when clicking header button", () => {
+  test("opens seller payments panel from the client drawer payments tab", () => {
     renderPage(storeState, {
       items: [
         {
@@ -300,7 +329,8 @@ describe("SellerReceivablesPage — data state", () => {
       isSubmitting: false,
     });
 
-    fireEvent.click(screen.getByText(/mis pagos reportados/i));
+    fireEvent.click(screen.getByText("Cliente Alpha"));
+    fireEvent.click(screen.getByText(/pagos reportados/i));
 
     const panel = screen.getByTestId("seller-payments-panel");
 
@@ -310,7 +340,7 @@ describe("SellerReceivablesPage — data state", () => {
     expect(within(panel).getAllByText(/en revisión/i).length).toBeGreaterThan(0);
   });
 
-  test("filters seller payments panel by search and status", () => {
+  test("shows the current payment statuses in the client drawer payments tab", () => {
     renderPage(storeState, {
       items: [
         {
@@ -340,20 +370,13 @@ describe("SellerReceivablesPage — data state", () => {
       isSubmitting: false,
     });
 
-    fireEvent.click(screen.getByText(/mis pagos reportados/i));
+    fireEvent.click(screen.getByText("Cliente Alpha"));
+    fireEvent.click(screen.getByText(/pagos reportados/i));
     const panel = screen.getByTestId("seller-payments-panel");
 
-    fireEvent.click(within(panel).getByRole("button", { name: /validados/i }));
-
-    expect(within(panel).getByText(/cliente beta/i)).toBeInTheDocument();
-    expect(within(panel).queryByText(/cliente alpha/i)).not.toBeInTheDocument();
-
-    fireEvent.change(
-      within(panel).getByPlaceholderText(/buscar por cliente, referencia o método/i),
-      { target: { value: "XYZ999" } }
-    );
-
-    expect(within(panel).getByText(/cliente beta/i)).toBeInTheDocument();
+    expect(within(panel).getByText(/cliente alpha/i)).toBeInTheDocument();
+    expect(within(panel).getByText(/en revisión/i)).toBeInTheDocument();
+    expect(within(panel).queryByText(/cliente beta/i)).not.toBeInTheDocument();
   });
 });
 

@@ -28,6 +28,8 @@ const createApp = () => {
       req.user = JSON.parse(testUserHeader);
     }
 
+    req.isAuthenticated = () => Boolean(req.user);
+
     next();
   });
   app.use("/api/payments", paymentsRouter);
@@ -157,6 +159,7 @@ describe("routes/payments", () => {
 
     const response = await requestJson(server, "/api/payments", {
       method: "POST",
+      user: { id: 7, role: "seller" },
       body: {
         client_id: 10,
         amount: 150,
@@ -176,6 +179,7 @@ describe("routes/payments", () => {
   test("POST /api/payments rechaza payment_type inválido", async () => {
     const response = await requestJson(server, "/api/payments", {
       method: "POST",
+      user: { id: 7, role: "seller" },
       body: {
         client_id: 10,
         amount: 150,
@@ -192,6 +196,7 @@ describe("routes/payments", () => {
   test("POST /api/payments rechaza cuando falta payment_type", async () => {
     const response = await requestJson(server, "/api/payments", {
       method: "POST",
+      user: { id: 7, role: "seller" },
       body: {
         client_id: 10,
         amount: 150,
@@ -202,6 +207,80 @@ describe("routes/payments", () => {
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ message: "Tipo de pago inválido" });
     expect(postgresDB.query).not.toHaveBeenCalled();
+  });
+
+  test("POST /api/payments responde 401 sin sesión autenticada", async () => {
+    const response = await requestJson(server, "/api/payments", {
+      method: "POST",
+      body: {
+        client_id: 10,
+        amount: 150,
+        method: "transferencia",
+        payment_type: "retencion",
+      },
+    });
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ message: "No autenticado" });
+    expect(postgresDB.query).not.toHaveBeenCalled();
+  });
+
+  test("POST /api/payments ignora reported_by del body y usa el usuario de sesión", async () => {
+    postgresDB.query.mockResolvedValueOnce({
+      rows: [{ id: 1, reported_by: 77, status: "pendiente_validacion" }],
+    });
+
+    const response = await requestJson(server, "/api/payments", {
+      method: "POST",
+      user: { id: 77, role: "seller" },
+      body: {
+        client_id: 10,
+        amount: 150,
+        method: "transferencia",
+        payment_type: "retencion",
+        reported_by: 999,
+      },
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body.reported_by).toBe(77);
+    expect(postgresDB.query).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.arrayContaining([77])
+    );
+    expect(postgresDB.query).not.toHaveBeenCalledWith(
+      expect.any(String),
+      expect.arrayContaining([999])
+    );
+  });
+
+  test("POST /api/payments fuerza status pendiente_validacion aunque el body mande otro", async () => {
+    postgresDB.query.mockResolvedValueOnce({
+      rows: [{ id: 1, status: "pendiente_validacion" }],
+    });
+
+    const response = await requestJson(server, "/api/payments", {
+      method: "POST",
+      user: { id: 77, role: "seller" },
+      body: {
+        client_id: 10,
+        amount: 150,
+        method: "transferencia",
+        payment_type: "retencion",
+        status: "validado",
+      },
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body.status).toBe("pendiente_validacion");
+    expect(postgresDB.query).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.arrayContaining(["pendiente_validacion"])
+    );
+    expect(postgresDB.query).not.toHaveBeenCalledWith(
+      expect.any(String),
+      expect.arrayContaining(["validado"])
+    );
   });
 
   test("GET /api/payments/seller/:userId incluye payment_type", async () => {

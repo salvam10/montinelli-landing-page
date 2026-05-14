@@ -40,7 +40,7 @@ export const getSellerPayments = async (userId) => {
   return response.json();
 };
 
-/** Reportar un pago (vendedor → tesorería) */
+/** Reportar un pago con campos de negocio; el backend deriva reported_by y status */
 export const reportPayment = async (paymentData) => {
   const response = await fetch(`${SERVER_URL}/api/payments`, {
     method: "POST",

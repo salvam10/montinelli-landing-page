@@ -1,7 +1,10 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchSellerReceivables } from "../slices/sellerReceivablesSlice";
-import { fetchSellerPayments } from "../slices/sellerPaymentsSlice";
+import {
+  fetchSellerPayments,
+  submitPaymentReport,
+} from "../slices/sellerPaymentsSlice";
 import CircularProgress from "@mui/material/CircularProgress";
 import SummaryCard from "./components/SummaryCard";
 import ClientAvatar from "./components/ClientAvatar";
@@ -105,7 +108,7 @@ const SellerReceivablesPage = ({ user: propUser }) => {
   const { items, isLoading, hasError, error } = useSelector(
     (s) => s.sellerReceivables
   );
-  const { items: sellerPayments } = useSelector((s) => s.sellerPayments);
+  const { items: sellerPayments, isSubmitting: isSubmittingPayment } = useSelector((s) => s.sellerPayments);
 
   const [search, setSearch] = useState("");
   const [activeBucket, setActiveBucket] = useState("todos");
@@ -339,7 +342,11 @@ const SellerReceivablesPage = ({ user: propUser }) => {
           clients={items}
           initialClient={paymentClient.client_id ? paymentClient : null}
           onClose={() => setPaymentClient(null)}
-          userId={userId}
+          isSubmitting={isSubmittingPayment}
+          submitPayment={(paymentData) =>
+            dispatch(submitPaymentReport(paymentData)).unwrap()
+          }
+          onSuccess={() => dispatch(fetchSellerPayments(userId))}
         />
       )}
         </div>

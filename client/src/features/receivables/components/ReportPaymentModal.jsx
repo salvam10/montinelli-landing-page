@@ -1,6 +1,4 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { submitPaymentReport } from "../../slices/sellerPaymentsSlice";
 // import { fetchClientInvoices } from "../../slices/clientInvoicesSlice";
 import {
   extractReceiptData,
@@ -91,9 +89,29 @@ const PAYMENT_TYPES = [
   { value: "ambos", label: "Ambos" },
 ];
 
-const ReportPaymentModal = ({ clients, initialClient, onClose, userId }) => {
-  const dispatch = useDispatch();
-  const { isSubmitting } = useSelector((state) => state.sellerPayments);
+const DEFAULT_STEP_COPY = {
+  upload: "Sube el comprobante que te envió el cliente",
+  details: "Confirma los datos y asigna a facturas",
+  review: "Revisa y envía a tesorería",
+};
+
+const DEFAULT_SUCCESS_COPY = {
+  title: "Pago enviado",
+  description: ({ amountLabel }) =>
+    `Tu reporte de ${amountLabel} fue enviado a tesorería para validación.`,
+};
+
+const ReportPaymentModal = ({
+  clients = [],
+  initialClient = null,
+  onClose,
+  submitPayment,
+  isSubmitting = false,
+  onSuccess,
+  stepCopy = DEFAULT_STEP_COPY,
+  successCopy = DEFAULT_SUCCESS_COPY,
+  renderClientSelector,
+}) => {
   // const { items: invoices } = useSelector((state) => state.clientInvoices);
 
   const [step, setStep] = useState(0);
@@ -215,6 +233,14 @@ const ReportPaymentModal = ({ clients, initialClient, onClose, userId }) => {
     return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
+  const resolvedSuccessDescription =
+    typeof successCopy.description === "function"
+      ? successCopy.description({
+          amountLabel: fmtMoney(amountNum),
+          client,
+        })
+      : successCopy.description;
+
   const [submitError, setSubmitError] = useState(null);
 
   const submit = async () => {
@@ -231,13 +257,11 @@ const ReportPaymentModal = ({ clients, initialClient, onClose, userId }) => {
       bank: bank || undefined,
       payment_type: paymentType,
       receipt_url: null,
-      reported_by: userId,
-      status: "pendiente_validacion",
     };
 
     let payment;
     try {
-      payment = await dispatch(submitPaymentReport(paymentData)).unwrap();
+      payment = await submitPayment(paymentData);
     } catch (err) {
       setSubmitError(err?.message || err || "Error al crear el pago");
       return;
@@ -252,6 +276,8 @@ const ReportPaymentModal = ({ clients, initialClient, onClose, userId }) => {
         // El pago se creó — no bloquear por fallo de upload
       }
     }
+
+    await onSuccess?.(payment);
 
     setSubmitted(true);
     setTimeout(() => {
@@ -275,11 +301,8 @@ const ReportPaymentModal = ({ clients, initialClient, onClose, userId }) => {
           <div className="w-14 h-14 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-4">
             <CheckIcon />
           </div>
-          <div className="font-bold text-lg">Pago enviado</div>
-          <div className="text-sm text-gray-500 mt-2">
-            Tu reporte de {fmtMoney(amountNum)} fue enviado a tesorería para
-            validación.
-          </div>
+          <div className="font-bold text-lg">{successCopy.title}</div>
+          <div className="text-sm text-gray-500 mt-2">{resolvedSuccessDescription}</div>
         </div>
       </div>
     );
@@ -300,10 +323,10 @@ const ReportPaymentModal = ({ clients, initialClient, onClose, userId }) => {
             <div className="text-base font-bold">Reportar pago</div>
             <div className="text-xs text-gray-400 mt-0.5">
               {step === 0
-                ? "Sube el comprobante que te envió el cliente"
+                ? stepCopy.upload
                 : step === 1
-                  ? "Confirma los datos y asigna a facturas"
-                  : "Revisa y envía a tesorería"}
+                  ? stepCopy.details
+                  : stepCopy.review}
             </div>
           </div>
           <div className="flex items-center gap-3.5">
@@ -424,64 +447,78 @@ const ReportPaymentModal = ({ clients, initialClient, onClose, userId }) => {
 
               {/* Client picker */}
               <div>
-                <label className="block text-[11px] text-gray-400 uppercase tracking-wide font-bold mb-1.5">
-                  Cliente
-                </label>
-                {!client ? (
-                  <div>
-                    <input
-                      value={query}
-                      onChange={(e) => {
-                        setQuery(e.target.value);
-                        setShowClientPicker(true);
-                      }}
-                      onFocus={() => setShowClientPicker(true)}
-                      placeholder="Buscar cliente…"
-                      className={inputClass}
-                    />
-                    {showClientPicker && (
-                      <div className="mt-1.5 bg-white border border-gray-200 rounded-lg max-h-48 overflow-auto">
-                        {filteredClients.map((c) => (
-                          <button
-                            key={c.client_id}
-                            onClick={() => {
-                              setClient(c);
-                              setShowClientPicker(false);
-                              setQuery("");
-                            }}
-                            className="flex items-center gap-2.5 px-3 py-2 w-full text-left hover:bg-gray-50 border-b border-gray-100 text-[13px]"
-                          >
-                            <ClientAvatar name={c.client_name} size={26} />
-                            <span className="flex-1 truncate">
-                              {c.client_name}
-                            </span>
-                            <span className="text-[11px] text-gray-400 tabular-nums">
-                              {fmtMoney(c.net_debt)}
-                            </span>
-                          </button>
-                        ))}
+                {renderClientSelector ? (
+                  renderClientSelector({
+                    client,
+                    clients,
+                    query,
+                    setClient,
+                    setQuery,
+                    setShowClientPicker,
+                    filteredClients,
+                  })
+                ) : (
+                  <>
+                    <label className="block text-[11px] text-gray-400 uppercase tracking-wide font-bold mb-1.5">
+                      Cliente
+                    </label>
+                    {!client ? (
+                      <div>
+                        <input
+                          value={query}
+                          onChange={(e) => {
+                            setQuery(e.target.value);
+                            setShowClientPicker(true);
+                          }}
+                          onFocus={() => setShowClientPicker(true)}
+                          placeholder="Buscar cliente…"
+                          className={inputClass}
+                        />
+                        {showClientPicker && (
+                          <div className="mt-1.5 bg-white border border-gray-200 rounded-lg max-h-48 overflow-auto">
+                            {filteredClients.map((c) => (
+                              <button
+                                key={c.client_id}
+                                onClick={() => {
+                                  setClient(c);
+                                  setShowClientPicker(false);
+                                  setQuery("");
+                                }}
+                                className="flex items-center gap-2.5 px-3 py-2 w-full text-left hover:bg-gray-50 border-b border-gray-100 text-[13px]"
+                              >
+                                <ClientAvatar name={c.client_name} size={26} />
+                                <span className="flex-1 truncate">
+                                  {c.client_name}
+                                </span>
+                                <span className="text-[11px] text-gray-400 tabular-nums">
+                                  {fmtMoney(c.net_debt)}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2.5 p-2.5 bg-white border border-gray-200 rounded-lg">
+                        <ClientAvatar name={client.client_name} size={32} />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[13px] font-semibold">
+                            {client.client_name}
+                          </div>
+                          <div className="text-[11px] text-gray-400">
+                            Bruto {fmtMoney(client.gross_debt)} · Neto{" "}
+                            {fmtMoney(client.net_debt)}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setClient(null)}
+                          className="text-xs text-gray-500 hover:text-gray-700"
+                        >
+                          Cambiar
+                        </button>
                       </div>
                     )}
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2.5 p-2.5 bg-white border border-gray-200 rounded-lg">
-                    <ClientAvatar name={client.client_name} size={32} />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[13px] font-semibold">
-                        {client.client_name}
-                      </div>
-                      <div className="text-[11px] text-gray-400">
-                        Bruto {fmtMoney(client.gross_debt)} · Neto{" "}
-                        {fmtMoney(client.net_debt)}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setClient(null)}
-                      className="text-xs text-gray-500 hover:text-gray-700"
-                    >
-                      Cambiar
-                    </button>
-                  </div>
+                  </>
                 )}
               </div>
 

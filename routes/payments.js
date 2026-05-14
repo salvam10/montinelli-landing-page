@@ -134,6 +134,10 @@ router.get("/seller/:userId", async (req, res, next) => {
 
 
 router.post("/", async (req, res, next) => {
+  if (!req.isAuthenticated?.() || !req.user?.id) {
+    return res.status(401).json({ message: "No autenticado" });
+  }
+
   const {
     client_id,
     amount,
@@ -141,11 +145,9 @@ router.post("/", async (req, res, next) => {
     reference,
     currency_code,
     fx_rate_to_usd,
-    status,
     notes,
     receipt_url,
     payment_date,
-    reported_by,
     bank,
     payment_type,
   } = req.body;
@@ -167,11 +169,11 @@ router.post("/", async (req, res, next) => {
     ["reference", reference],
     ["currency_code", currency_code],
     ["fx_rate_to_usd", fx_rate_to_usd],
-    ["status", status],
+    ["status", "pendiente_validacion"],
     ["notes", notes],
     ["receipt_url", receipt_url],
     ["payment_date", payment_date],
-    ["reported_by", reported_by],
+    ["reported_by", Number(req.user.id)],
     ["bank", bank],
     ["payment_type", payment_type],
   ];

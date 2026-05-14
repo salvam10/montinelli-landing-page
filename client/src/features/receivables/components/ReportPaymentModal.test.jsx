@@ -1,18 +1,7 @@
 import React from "react";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { useDispatch, useSelector } from "react-redux";
 import ReportPaymentModal from "./ReportPaymentModal";
-import { submitPaymentReport } from "../../slices/sellerPaymentsSlice";
-import { extractReceiptData } from "../../../api/receivablesApi";
-
-jest.mock("react-redux", () => ({
-  useDispatch: jest.fn(),
-  useSelector: jest.fn(),
-}));
-
-jest.mock("../../slices/sellerPaymentsSlice", () => ({
-  submitPaymentReport: jest.fn(),
-}));
+import { extractReceiptData, uploadReceipt } from "../../../api/receivablesApi";
 
 jest.mock("../../slices/clientInvoicesSlice", () => ({
   fetchClientInvoices: jest.fn((clientId) => ({
@@ -26,8 +15,6 @@ jest.mock("../../../api/receivablesApi", () => ({
   uploadReceipt: jest.fn(),
 }));
 
-const dispatchMock = jest.fn();
-
 const defaultClient = {
   client_id: 7,
   client_name: "Farmacia Central",
@@ -35,13 +22,17 @@ const defaultClient = {
   net_debt: 1200,
 };
 
-const renderModal = () =>
+const submitPaymentMock = jest.fn();
+
+const renderModal = (props = {}) =>
   render(
     <ReportPaymentModal
-      clients={[defaultClient]}
-      initialClient={defaultClient}
+      clients={props.clients || [defaultClient]}
+      initialClient={Object.prototype.hasOwnProperty.call(props, "initialClient") ? props.initialClient : defaultClient}
       onClose={jest.fn()}
-      userId={99}
+      submitPayment={submitPaymentMock}
+      isSubmitting={false}
+      {...props}
     />
   );
 
@@ -73,6 +64,8 @@ const goToStepOne = async () => {
   return view;
 };
 
+const getAmountInput = () => screen.getByPlaceholderText("0,00");
+
 beforeAll(() => {
   global.FileReader = class MockFileReader {
     readAsDataURL() {
@@ -83,33 +76,11 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
-  dispatchMock.mockReset();
-  submitPaymentReport.mockReset();
+  submitPaymentMock.mockReset();
   extractReceiptData.mockReset();
+  uploadReceipt.mockReset();
 
-  useDispatch.mockReturnValue(dispatchMock);
-  useSelector.mockImplementation((selector) =>
-    selector({
-      sellerPayments: { isSubmitting: false },
-      clientInvoices: { items: [] },
-    })
-  );
-
-  submitPaymentReport.mockImplementation((paymentData) => ({
-    type: "sellerPayments/submitPaymentReport",
-    meta: { paymentData },
-  }));
-
-  dispatchMock.mockImplementation((action) => {
-    if (action?.type === "sellerPayments/submitPaymentReport") {
-      return {
-        unwrap: () => Promise.resolve({ id: 501 }),
-      };
-    }
-
-    return action;
-  });
-
+  submitPaymentMock.mockResolvedValue({ id: 501 });
   extractReceiptData.mockResolvedValue(null);
 });
 
@@ -148,28 +119,22 @@ describe("ReportPaymentModal", () => {
       await screen.findByText(/datos extraídos del comprobante/i)
     ).toBeInTheDocument();
 
-    const amountInput = screen.getByDisplayValue("1500");
+    const amountInput = screen.getByDisplayValue("1.500,00");
     const dateInput = screen.getByDisplayValue("2026-05-10");
     const referenceInput = screen.getByDisplayValue("12345");
-    const bankSelect = screen.getByDisplayValue("Banesco");
-    const zelleButton = screen.getByRole("button", { name: "zelle" });
 
     expect(amountInput).toBeInTheDocument();
     expect(dateInput).toBeInTheDocument();
     expect(referenceInput).toBeInTheDocument();
-    expect(bankSelect).toBeInTheDocument();
-    expect(zelleButton).toHaveAttribute("aria-pressed", "true");
 
     fireEvent.change(amountInput, { target: { value: "1750.5" } });
     fireEvent.change(dateInput, { target: { value: "2026-05-11" } });
     fireEvent.change(referenceInput, { target: { value: "54321" } });
-    fireEvent.change(bankSelect, { target: { value: "Mercantil" } });
     fireEvent.click(screen.getByRole("button", { name: /transferencia/i }));
 
     expect(screen.getByDisplayValue("1750.5")).toBeInTheDocument();
     expect(screen.getByDisplayValue("2026-05-11")).toBeInTheDocument();
     expect(screen.getByDisplayValue("54321")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Mercantil")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /transferencia/i })
     ).toHaveAttribute("aria-pressed", "true");
@@ -185,7 +150,7 @@ describe("ReportPaymentModal", () => {
     ).toBeInTheDocument();
 
     expect(screen.getByText("Cliente")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("0.00")).toHaveValue(null);
+    expect(getAmountInput()).toHaveValue("");
   });
 
   test("muestra chips de tipo de pago en lugar de un select", async () => {
@@ -232,17 +197,17 @@ describe("ReportPaymentModal", () => {
   test("sigue requiriendo seleccionar tipo de pago para avanzar al paso 2", async () => {
     await goToStepOne();
 
-    fireEvent.change(screen.getByPlaceholderText("0.00"), {
+    fireEvent.change(getAmountInput(), {
       target: { value: "250" },
     });
 
     expect(screen.getByRole("button", { name: /revisar/i })).toBeDisabled();
   });
 
-  test("incluye payment_type en el payload al enviar el reporte", async () => {
+  test("envía sólo campos de negocio al submit inyectado", async () => {
     await goToStepOne();
 
-    fireEvent.change(screen.getByPlaceholderText("0.00"), {
+    fireEvent.change(getAmountInput(), {
       target: { value: "250" },
     });
 
@@ -255,11 +220,55 @@ describe("ReportPaymentModal", () => {
     });
 
     await waitFor(() => {
-      expect(submitPaymentReport).toHaveBeenCalledWith(
-        expect.objectContaining({ payment_type: "retencion" })
+      expect(submitPaymentMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          client_id: defaultClient.client_id,
+          payment_type: "retencion",
+        })
       );
     });
 
+    expect(submitPaymentMock).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        reported_by: expect.anything(),
+      })
+    );
+    expect(submitPaymentMock).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        status: expect.anything(),
+      })
+    );
+
     await screen.findByText(/pago enviado/i);
+  });
+
+  test("muestra el buscador de clientes y copy inyectado en contexto admin", async () => {
+    renderModal({
+      initialClient: null,
+      successCopy: {
+        title: "Pago registrado",
+        description: "El pago quedó listo para validación administrativa.",
+      },
+      stepCopy: {
+        upload: "Subí el comprobante enviado por el cliente",
+        details: "Elegí el cliente y verificá los datos",
+        review: "Revisá y registrá el pago",
+      },
+    });
+
+    expect(screen.getByText(/subí el comprobante enviado por el cliente/i)).toBeInTheDocument();
+
+    const actualFileInput = document.querySelector('input[type="file"]');
+    const file = new File(["receipt"], "receipt.png", { type: "image/png" });
+    fireEvent.change(actualFileInput, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.getByText("receipt.png")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
+
+    expect(screen.getByPlaceholderText(/buscar cliente/i)).toBeInTheDocument();
+    expect(screen.getByText(/elegí el cliente y verificá los datos/i)).toBeInTheDocument();
   });
 });
