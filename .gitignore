@@ -1,4 +1,6 @@
 .env
-node_modules
-/node_modules
+node_modules/
+/node_modules/
+var/db/sessions.db
+coverage/
 .atl/
