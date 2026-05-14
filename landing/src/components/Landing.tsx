@@ -1030,6 +1030,9 @@ function Footer() {
           <ul className="space-y-3 text-sm">
             <li>contacto@grupomontinelli.com</li>
             <li>+58 412 965 9226</li>
+            <li className="font-medium text-cream/80">
+              Corporación GSM 747 (CORPGSM), C.A.
+            </li>
             <li className="leading-relaxed text-cream/60">
               Av. Abraham Lincoln con Calle Olimpo, Edif. Torre Domus, Piso 13,
               Of. 13B-1, Plaza Venezuela, Caracas 1053
