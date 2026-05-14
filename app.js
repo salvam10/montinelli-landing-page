@@ -5,6 +5,10 @@ const PORT = process.env.PORT || 5001;
 const express = require("express");
 const app = express();
 const path = require("path");
+const fs = require("fs");
+
+/* Asegurar que el directorio de sesiones exista */
+fs.mkdirSync(path.join(__dirname, "var", "db"), { recursive: true });
 
 /* Cron Jobs */
 require("./jobs/checkOverdueOrders");
